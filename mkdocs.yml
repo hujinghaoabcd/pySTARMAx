@@ -8,6 +8,7 @@ nav:
   - Home: index.md
   - Model convention: model.md
   - Ordinary STARIMA: starima.md
+  - Seasonal STARIMA: seasonal.md
   - Diagnostics: diagnostics.md
   - Roadmap: roadmap.md
   - References: references.md

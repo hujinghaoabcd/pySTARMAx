@@ -3,7 +3,8 @@
 
 """Model classes."""
 
+from pystarmax.models.seasonal_starima import SeasonalSTARIMA
 from pystarmax.models.starima import STARIMA
 from pystarmax.models.starma import STAR, STARMA
 
-__all__ = ["STAR", "STARMA", "STARIMA"]
+__all__ = ["STAR", "STARMA", "STARIMA", "SeasonalSTARIMA"]

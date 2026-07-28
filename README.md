@@ -8,13 +8,14 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: version 0.0.3 implements spatial-weight handling, STAR and iterative
-> conditional STARMA estimation, ordinary `STARIMA(p, d, q)` differencing,
+> Status: version 0.0.4 implements spatial-weight handling, STAR and iterative
+> conditional STARMA estimation, ordinary `STARIMA(p, d, q)` and multiplicative seasonal
+> `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal differencing,
 > original-scale forecast inversion, stationary and integrated simulation, the
 > classical Pfeifer–Deutsch STACF and nested Yule–Walker STPACF, the earlier
 > regression diagnostic as an explicit alternative, and a residual portmanteau
-> test. Seasonal operators, missing-data state-space estimation,
-> correlated-innovation likelihoods, and time-varying extensions are planned.
+> test. Missing-data state-space estimation, correlated-innovation likelihoods,
+> forecast intervals, and time-varying extensions are planned.
 
 ## Installation
 
@@ -71,6 +72,27 @@ print(model.predict(steps=6))
 and `predict_differenced()` returns forecasts before inverse differencing. See
 [`docs/starima.md`](docs/starima.md) for state and scale conventions.
 
+## Seasonal STARIMA
+
+```python
+from pystarmax import SeasonalSTARIMA
+
+model = SeasonalSTARIMA(
+    ar_order=1,
+    integration_order=1,
+    seasonal_ar_order=1,
+    seasonal_integration_order=1,
+    seasonal_period=24,
+    include_intercept=False,
+)
+result = model.fit(seasonal_series, weights)
+print(model.predict(steps=24))
+```
+
+Seasonal AR and MA factors are estimated under true multiplicative constraints.
+Cross-lag matrices are generated as ordered matrix products rather than fitted as
+independent coefficients. See [`docs/seasonal.md`](docs/seasonal.md).
+
 ## Diagnostics
 
 ```python
@@ -106,7 +128,8 @@ print(test)
 - structured fit results with coefficients, uncertainty, residual covariance,
   log likelihood, AIC, BIC, convergence state, and readable summaries;
 - deterministic stationary and integrated simulation with static numerical tests;
-- ordinary differencing with immutable forecast-inversion state;
+- ordinary and seasonal differencing with immutable forecast-inversion state;
+- factorized multiplicative seasonal operators with explicit matrix order;
 - exact-rational reference fixtures generated without importing pySTARMAx;
 - explicit covariance orientation for non-symmetric row-standardized weights;
 - one public numerical route first, with sparse and compiled acceleration hidden
@@ -120,7 +143,9 @@ retains the projection-based diagnostic shipped in 0.0.1 for reproducibility.
 ## Scope of the conditional estimator
 
 The current estimator uses ordinary least squares for pure STAR models and an
-iterative conditional least-squares procedure for STARMA models. It is intended
+iterative conditional least-squares procedure for STARMA models. Seasonal factor
+models use nonlinear conditional least squares so multiplicative cross terms remain
+parameter products rather than independent coefficients. The package is intended
 as a transparent, testable baseline. It is not yet a replacement for a fully
 specified state-space maximum-likelihood implementation when innovations are
 contemporaneously correlated, observations are missing, or uncertainty from

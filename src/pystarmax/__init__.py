@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 from pystarmax.diagnostics import (
     PortmanteauResult,
@@ -18,10 +18,23 @@ from pystarmax.diagnostics import (
     stpacf_regression,
     stpacf_yule_walker,
 )
-from pystarmax.differencing import DifferencingState, ordinary_difference
-from pystarmax.models import STAR, STARIMA, STARMA
+from pystarmax.differencing import (
+    CombinedDifferencingState,
+    DifferencingState,
+    SeasonalDifferencingState,
+    combined_difference,
+    ordinary_difference,
+    seasonal_difference,
+)
+from pystarmax.models import STAR, STARIMA, STARMA, SeasonalSTARIMA
 from pystarmax.results import STARMAResult
-from pystarmax.simulation import simulate_starima, simulate_starma
+from pystarmax.seasonal import LagOperator, expand_multiplicative_operators
+from pystarmax.simulation import (
+    simulate_seasonal_starima,
+    simulate_seasonal_starma,
+    simulate_starima,
+    simulate_starma,
+)
 from pystarmax.weights import (
     SpatialWeights,
     distance_weights,
@@ -33,13 +46,22 @@ __all__ = [
     "STAR",
     "STARMA",
     "STARIMA",
+    "SeasonalSTARIMA",
     "STARMAResult",
     "DifferencingState",
+    "SeasonalDifferencingState",
+    "CombinedDifferencingState",
     "SpatialWeights",
     "PortmanteauResult",
     "simulate_starma",
     "simulate_starima",
+    "simulate_seasonal_starma",
+    "simulate_seasonal_starima",
     "ordinary_difference",
+    "seasonal_difference",
+    "combined_difference",
+    "LagOperator",
+    "expand_multiplicative_operators",
     "stcov",
     "stacf",
     "stpacf",
