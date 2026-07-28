@@ -7,13 +7,16 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from pystarmax.diagnostics import (
     PortmanteauResult,
     space_time_portmanteau,
     stacf,
+    stcov,
     stpacf,
+    stpacf_regression,
+    stpacf_yule_walker,
 )
 from pystarmax.models import STAR, STARMA
 from pystarmax.results import STARMAResult
@@ -32,8 +35,11 @@ __all__ = [
     "SpatialWeights",
     "PortmanteauResult",
     "simulate_starma",
+    "stcov",
     "stacf",
     "stpacf",
+    "stpacf_yule_walker",
+    "stpacf_regression",
     "space_time_portmanteau",
     "row_standardize",
     "distance_weights",

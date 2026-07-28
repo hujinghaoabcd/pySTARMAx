@@ -8,10 +8,11 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: the first development baseline implements spatial-weight handling,
-> STAR and iterative conditional STARMA estimation, recursive forecasting,
-> simulation, STACF/STPACF diagnostics, and a residual portmanteau test.
-> STARIMA differencing, seasonal operators, missing-data state-space estimation,
+> Status: version 0.0.2 implements spatial-weight handling, STAR and iterative
+> conditional STARMA estimation, recursive forecasting, simulation, the classical
+> Pfeifer–Deutsch STACF and nested Yule–Walker STPACF, the earlier regression
+> diagnostic as an explicit alternative, and a residual portmanteau test. STARIMA
+> differencing, seasonal operators, missing-data state-space estimation,
 > correlated-innovation likelihoods, and time-varying extensions are planned.
 
 ## Installation
@@ -52,10 +53,17 @@ is the identity matrix; higher spatial lags are stored in `SpatialWeights`.
 ## Diagnostics
 
 ```python
-from pystarmax import space_time_portmanteau, stacf, stpacf
+from pystarmax import space_time_portmanteau, stacf, stcov, stpacf
 
+gamma_10_1 = stcov(
+    series,
+    weights,
+    past_spatial_lag=1,
+    future_spatial_lag=0,
+    temporal_lag=1,
+)
 acf = stacf(result.residuals, weights, max_tlag=8)
-pacf = stpacf(series, weights, max_tlag=4)
+pacf = stpacf(series, weights, max_tlag=4)  # classical Yule-Walker default
 test = space_time_portmanteau(
     result.residuals,
     weights,
@@ -63,6 +71,7 @@ test = space_time_portmanteau(
     fit_params=result.n_params,
 )
 
+print(gamma_10_1)
 print(acf)
 print(pacf)
 print(test)
@@ -76,11 +85,17 @@ print(test)
 - structured fit results with coefficients, uncertainty, residual covariance,
   log likelihood, AIC, BIC, convergence state, and readable summaries;
 - deterministic simulation and static numerical tests;
+- exact-rational reference fixtures generated without importing pySTARMAx;
+- explicit covariance orientation for non-symmetric row-standardized weights;
 - one public numerical route first, with sparse and compiled acceleration hidden
   behind stable interfaces later;
 - research references and implementation limitations documented in the repository.
 
-## Scope of the first baseline
+The classical STPACF is computed from nested leading-principal Yule–Walker
+systems in temporal-major, spatial-minor order. ``stpacf(..., method="regression")``
+retains the projection-based diagnostic shipped in 0.0.1 for reproducibility.
+
+## Scope of the conditional estimator
 
 The current estimator uses ordinary least squares for pure STAR models and an
 iterative conditional least-squares procedure for STARMA models. It is intended

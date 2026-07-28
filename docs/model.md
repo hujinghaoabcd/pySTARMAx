@@ -26,3 +26,31 @@ the number of locations.
 Fitted values and residuals are undefined for the first `max(p, q)` time steps
 and are returned as `NaN` there. Conditional estimation uses zero pre-sample
 innovations, a convention stated explicitly in the fitted result.
+
+
+## Classical covariance orientation
+
+For spatial lags `l` and `k` and temporal lag `h`, diagnostics use
+
+\[
+\widehat{\gamma}_{lk}(h) =
+\frac{1}{(T-h)N}
+\sum_{t=1}^{T-h}
+(W_l z_t)^\top(W_k z_{t+h}).
+\]
+
+The first weight therefore acts on the past observation and the second on the
+future observation. This distinction is observable when row standardisation
+makes a spatial-weight matrix non-symmetric.
+
+The STACF is
+
+\[
+\widehat{\rho}_l(h) =
+\frac{\widehat{\gamma}_{l0}(h)}
+{\sqrt{\widehat{\gamma}_{ll}(0)\widehat{\gamma}_{00}(0)}}.
+\]
+
+The default STPACF constructs block Yule–Walker systems from these covariance
+matrices and solves nested leading-principal systems, retaining the newest
+coefficient at every temporal–spatial order.
