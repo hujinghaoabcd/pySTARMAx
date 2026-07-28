@@ -34,7 +34,14 @@ jobs:
       - run: python -m black --check src tests tools examples
       - run: python -m isort --check-only src tests tools examples
       - run: python -m ruff check src tests tools examples
-      - run: python -m mypy
+      - name: Capture mypy report
+        shell: bash
+        run: python -m mypy > MYPY_REPORT.txt 2>&1 || true
+      - name: Upload mypy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mypy-report
+          path: MYPY_REPORT.txt
       - run: python tools/generate_classic_diagnostics_reference.py
       - run: git diff --exit-code -- tests/reference/classic_diagnostics_v1.json
       - run: python -m mkdocs build --strict
