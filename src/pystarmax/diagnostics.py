@@ -77,7 +77,7 @@ def _stcov(
         past_value = past_weight @ data[time_index]
         future_value = future_weight @ data[time_index + temporal_lag]
         total += float(past_value @ future_value)
-    return total / (n_pairs * data.shape[1])
+    return float(total / (n_pairs * data.shape[1]))
 
 
 def stcov(
