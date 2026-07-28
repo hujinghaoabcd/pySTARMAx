@@ -1,0 +1,35 @@
+name: Format STARIMA branch
+
+on:
+  push:
+    branches: [agent/starima-differencing]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/starima-differencing
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade pip black isort
+      - run: python -m black src tests tools examples
+      - run: python -m isort src tests tools examples
+      - name: Commit formatting and remove workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/format-starima.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Apply STARIMA formatting"
+          git push origin HEAD:agent/starima-differencing
