@@ -16,6 +16,7 @@ engineering conventions established in pyGWRx and pyKDEX.
 - Current development branch: `agent/seasonal-starima`.
 - Current draft pull request: PR #4.
 - Package version under development: `0.0.4`.
+- Formal implementation surface: 17 changed files with no temporary workflow files.
 
 ## Completed baseline
 
