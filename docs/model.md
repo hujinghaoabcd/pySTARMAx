@@ -54,3 +54,22 @@ The STACF is
 The default STPACF constructs block Yule–Walker systems from these covariance
 matrices and solves nested leading-principal systems, retaining the newest
 coefficient at every temporal–spatial order.
+
+## Ordinary integration
+
+For ordinary `STARIMA(p, d, q)`, pySTARMAx defines
+
+\[
+w_t = (1-B)^d z_t,
+\]
+
+and fits the documented STARMA equation to `w_t`. The operator acts only along
+the temporal axis; it does not change the spatial-weight matrices or their
+ordering. The end-of-sample values of the original series and all lower-order
+differences are stored so future forecasts can be integrated recursively.
+
+A `STARMAResult` returned by `STARIMA.fit()` is therefore expressed on the
+highest-difference scale. `STARIMA.predict_differenced()` retains that scale,
+whereas `STARIMA.predict()` returns the recursively reconstructed original
+scale. When an intercept is included and `d=1`, it is a drift term after
+inversion.
