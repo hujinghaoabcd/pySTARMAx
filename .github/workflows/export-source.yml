@@ -15,10 +15,9 @@ jobs:
       - name: Create source archive
         shell: bash
         run: |
-          tar --exclude=.git --exclude=source-snapshot.tar.gz \
-            -czf source-snapshot.tar.gz .
+          tar --exclude=.git -czf "$RUNNER_TEMP/source-snapshot.tar.gz" .
       - uses: actions/upload-artifact@v4
         with:
           name: source-snapshot
-          path: source-snapshot.tar.gz
+          path: ${{ runner.temp }}/source-snapshot.tar.gz
           retention-days: 1
