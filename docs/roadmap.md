@@ -29,15 +29,24 @@
 - integrated-process simulation with optional initial difference state;
 - zero-order compatibility tests against the existing STARMA API.
 
+## Implemented in 0.0.4
+
+- reversible seasonal differencing for arbitrary `D` and period `s`;
+- combined ordinary-seasonal differencing state;
+- factorized `(p,d,q)x(P,D,Q)_s` model specification;
+- ordered matrix-polynomial expansion with constrained cross terms;
+- nonlinear conditional least-squares estimation for seasonal factors;
+- stationary and integrated seasonal simulation;
+- compatibility routes for zero seasonal AR/MA orders.
+
 ## Next priorities
 
-1. Seasonal and multiplicative STARIMA operators.
-2. Original-scale fitted-value reconstruction and forecast intervals.
-3. Exact state-space/Kalman likelihood and missing observations.
-4. Diagonal and full contemporaneous innovation covariance models.
-5. Sparse spatial matrices and large-network computation.
-6. Automatic order selection using STACF/STPACF and information criteria.
-7. Exogenous regressors, interventions, and generalized/location-varying STARMA.
-8. Time-varying lag and time-varying coefficient extensions.
-9. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-10. Cross-language estimator fixtures and rolling-origin evaluation.
+1. Original-scale fitted-value reconstruction and forecast intervals.
+2. Exact state-space/Kalman likelihood and missing observations.
+3. Diagonal and full contemporaneous innovation covariance models.
+4. Sparse spatial matrices and large-network computation.
+5. Automatic order selection using STACF/STPACF and information criteria.
+6. Exogenous regressors, interventions, and generalized/location-varying STARMA.
+7. Time-varying lag and time-varying coefficient extensions.
+8. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+9. Cross-language estimator fixtures and rolling-origin evaluation.
