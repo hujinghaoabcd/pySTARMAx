@@ -19,10 +19,20 @@
 - exact-rational independent reference fixture and regeneration check;
 - singular-system solver policy and additional diagnostic validation tests.
 
+## Implemented in 0.0.3
+
+- ordinary temporal differencing for arbitrary non-negative order;
+- immutable end-of-sample differencing state;
+- recursive original-scale forecast inversion;
+- compositional `STARIMA(p, d, q)` wrapper over the STARMA estimator;
+- explicit stationary-scale forecasts through `predict_differenced()`;
+- integrated-process simulation with optional initial difference state;
+- zero-order compatibility tests against the existing STARMA API.
+
 ## Next priorities
 
-1. STARIMA differencing and forecast inversion.
-2. Seasonal STARIMA operators.
+1. Seasonal and multiplicative STARIMA operators.
+2. Original-scale fitted-value reconstruction and forecast intervals.
 3. Exact state-space/Kalman likelihood and missing observations.
 4. Diagonal and full contemporaneous innovation covariance models.
 5. Sparse spatial matrices and large-network computation.
