@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2026 Jinghao Hu
 # SPDX-License-Identifier: MIT
 
-"""Space-time correlation and residual diagnostics."""
+"""Space-time correlation, partial-correlation, and residual diagnostics."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, Literal, TypeAlias, cast
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,10 @@ from pystarmax._validation import (
     validate_nonnegative_int,
     validate_time_space,
 )
-from pystarmax.weights import coerce_weights
+from pystarmax.weights import SpatialWeights, coerce_weights
+
+STPACFMethod: TypeAlias = Literal["yule-walker", "regression"]
+YuleWalkerSolver: TypeAlias = Literal["auto", "solve", "lstsq"]
 
 
 def _as_time_space_allow_nan(data: Any, *, name: str) -> FloatArray:
@@ -39,18 +42,105 @@ def _drop_nan_rows(data: FloatArray) -> FloatArray:
     return result
 
 
+def _center_globally(data: FloatArray, *, center: bool) -> FloatArray:
+    values = data.copy()
+    if center:
+        values -= values.mean()
+    return values
+
+
+def _validate_spatial_lag(index: int, weights: SpatialWeights, *, name: str) -> int:
+    resolved = validate_nonnegative_int(index, name=name)
+    if resolved >= len(weights):
+        raise ValueError(f"{name} must be smaller than the number of weight matrices")
+    return resolved
+
+
 def _stcov(
     data: FloatArray,
-    left: FloatArray,
-    right: FloatArray,
+    past_weight: FloatArray,
+    future_weight: FloatArray,
     temporal_lag: int,
 ) -> float:
-    values = []
-    for time_index in range(temporal_lag, data.shape[0]):
-        left_value = left @ data[time_index]
-        right_value = right @ data[time_index - temporal_lag]
-        values.append(float(left_value @ right_value) / data.shape[1])
-    return float(np.mean(values))
+    """Compute the classical sample covariance ``gamma_lk(h)``.
+
+    The convention is
+
+    ``gamma_lk(h) = mean_t[(W_l z_t)' (W_k z_{t+h})] / N``.
+
+    Naming the matrices by their time role avoids the transpose ambiguity that
+    arises for non-symmetric row-standardized spatial weights.
+    """
+    n_pairs = data.shape[0] - temporal_lag
+    total = 0.0
+    for time_index in range(n_pairs):
+        past_value = past_weight @ data[time_index]
+        future_value = future_weight @ data[time_index + temporal_lag]
+        total += float(past_value @ future_value)
+    return float(total / (n_pairs * data.shape[1]))
+
+
+def stcov(
+    data: Any,
+    weights: Any,
+    *,
+    past_spatial_lag: int = 0,
+    future_spatial_lag: int = 0,
+    temporal_lag: int = 0,
+    center: bool = True,
+) -> float:
+    """Estimate a sample space-time covariance.
+
+    Parameters
+    ----------
+    data:
+        Observation matrix with shape ``(time, location)``.
+    weights:
+        Spatial-weight collection. Matrix zero is conventionally identity.
+    past_spatial_lag:
+        Spatial lag applied to the observation at time ``t``.
+    future_spatial_lag:
+        Spatial lag applied to the observation at time ``t + temporal_lag``.
+    temporal_lag:
+        Non-negative temporal displacement.
+    center:
+        Subtract the global space-time mean before computing the covariance.
+    """
+    observations = validate_time_space(data)
+    resolved = coerce_weights(weights, n_locations=observations.shape[1])
+    past_spatial_lag = _validate_spatial_lag(
+        past_spatial_lag, resolved, name="past_spatial_lag"
+    )
+    future_spatial_lag = _validate_spatial_lag(
+        future_spatial_lag, resolved, name="future_spatial_lag"
+    )
+    temporal_lag = validate_nonnegative_int(temporal_lag, name="temporal_lag")
+    if temporal_lag >= observations.shape[0]:
+        raise ValueError("temporal_lag must be smaller than the number of time rows")
+    values = _center_globally(observations, center=center)
+    return _stcov(
+        values,
+        resolved[past_spatial_lag],
+        resolved[future_spatial_lag],
+        temporal_lag,
+    )
+
+
+def _covariance_block(
+    data: FloatArray,
+    weights: SpatialWeights,
+    temporal_lag: int,
+) -> FloatArray:
+    block = np.empty((len(weights), len(weights)), dtype=float)
+    for past_lag, past_weight in enumerate(weights):
+        for future_lag, future_weight in enumerate(weights):
+            block[past_lag, future_lag] = _stcov(
+                data,
+                past_weight,
+                future_weight,
+                temporal_lag,
+            )
+    return block
 
 
 def stacf(
@@ -60,59 +150,170 @@ def stacf(
     max_tlag: int = 10,
     center: bool = True,
 ) -> pd.DataFrame:
-    """Estimate the sample space-time autocorrelation function.
+    """Estimate the classical sample space-time autocorrelation function.
 
-    The implementation follows the covariance normalization used in the
-    classical STARMA literature, with spatial lag zero represented by identity.
+    For spatial lag ``l`` and temporal lag ``h``, the estimator is
+
+    ``gamma_l0(h) / sqrt(gamma_ll(0) * gamma_00(0))``.
+
+    Spatial lag zero is represented by the identity matrix. Rows include
+    temporal lag zero because it is useful for numerical auditing, while the
+    classical identification plots usually display rows beginning at lag one.
     """
     max_tlag = validate_nonnegative_int(max_tlag, name="max_tlag")
     observations = _drop_nan_rows(_as_time_space_allow_nan(data, name="data"))
     resolved = coerce_weights(weights, n_locations=observations.shape[1])
     if max_tlag >= observations.shape[0]:
         raise ValueError("max_tlag must be smaller than the number of time rows")
-    values = observations.copy()
-    if center:
-        values -= values.mean()
+    values = _center_globally(observations, center=center)
     identity = resolved[0]
     base_variance = _stcov(values, identity, identity, 0)
     output = np.empty((max_tlag + 1, len(resolved)), dtype=float)
     for temporal_lag in range(max_tlag + 1):
         for spatial_lag, matrix in enumerate(resolved):
             numerator = _stcov(values, matrix, identity, temporal_lag)
-            left_variance = _stcov(values, matrix, matrix, 0)
-            denominator = np.sqrt(max(left_variance * base_variance, 0.0))
+            lag_variance = _stcov(values, matrix, matrix, 0)
+            denominator = np.sqrt(max(lag_variance * base_variance, 0.0))
             output[temporal_lag, spatial_lag] = (
                 numerator / denominator if denominator > 0 else np.nan
             )
-    return pd.DataFrame(
+    result = pd.DataFrame(
         output,
         index=pd.Index(range(max_tlag + 1), name="temporal_lag"),
         columns=pd.Index(resolved.names, name="spatial_lag"),
     )
+    result.attrs["definition"] = "Pfeifer-Deutsch sample STACF"
+    result.attrs["centered"] = center
+    return result
 
 
-def stpacf(
+def _yule_walker_system(
+    data: FloatArray,
+    weights: SpatialWeights,
+    max_tlag: int,
+) -> tuple[FloatArray, FloatArray]:
+    """Construct the block Yule-Walker matrix and covariance vector."""
+    spatial_lags = len(weights)
+    blocks = [
+        _covariance_block(data, weights, temporal_lag)
+        for temporal_lag in range(max_tlag)
+    ]
+    matrix = np.empty((max_tlag * spatial_lags, max_tlag * spatial_lags), dtype=float)
+    for row_lag in range(max_tlag):
+        for column_lag in range(max_tlag):
+            row_slice = slice(row_lag * spatial_lags, (row_lag + 1) * spatial_lags)
+            column_slice = slice(
+                column_lag * spatial_lags, (column_lag + 1) * spatial_lags
+            )
+            if row_lag == column_lag:
+                block = blocks[0]
+            elif row_lag > column_lag:
+                block = blocks[row_lag - column_lag]
+            else:
+                block = blocks[column_lag - row_lag].T
+            matrix[row_slice, column_slice] = block
+
+    vector = np.empty(max_tlag * spatial_lags, dtype=float)
+    identity = weights[0]
+    for temporal_lag in range(1, max_tlag + 1):
+        offset = (temporal_lag - 1) * spatial_lags
+        for spatial_lag, matrix_lag in enumerate(weights):
+            vector[offset + spatial_lag] = _stcov(
+                data,
+                matrix_lag,
+                identity,
+                temporal_lag,
+            )
+    return matrix, vector
+
+
+def _solve_yule_walker(
+    matrix: FloatArray,
+    vector: FloatArray,
+    *,
+    solver: YuleWalkerSolver,
+) -> tuple[FloatArray, str]:
+    if solver not in {"auto", "solve", "lstsq"}:
+        raise ValueError("solver must be 'auto', 'solve', or 'lstsq'")
+    if solver == "lstsq":
+        solution, *_ = np.linalg.lstsq(matrix, vector, rcond=None)
+        return np.asarray(solution, dtype=float), "lstsq"
+    try:
+        return np.asarray(np.linalg.solve(matrix, vector), dtype=float), "solve"
+    except np.linalg.LinAlgError:
+        if solver == "solve":
+            raise
+        solution, *_ = np.linalg.lstsq(matrix, vector, rcond=None)
+        return np.asarray(solution, dtype=float), "lstsq"
+
+
+def stpacf_yule_walker(
     data: Any,
     weights: Any,
     *,
     max_tlag: int = 5,
     center: bool = True,
+    solver: YuleWalkerSolver = "auto",
 ) -> pd.DataFrame:
-    """Estimate a regression-based finite-sample STPACF analogue.
+    """Estimate the classical STPACF from nested Yule-Walker systems.
 
-    For each temporal order ``h``, the process is regressed on all spatial lags
-    at temporal lags ``1..h``. Coefficients associated with lag ``h`` are
-    returned. This transparent diagnostic will later be complemented by a
-    dedicated Yule-Walker implementation.
+    A block Toeplitz covariance system is built for all temporal and spatial
+    lags through ``max_tlag``. Following the classical Durbin-style procedure,
+    leading principal systems are solved in temporal-major, spatial-minor
+    order, and the newest coefficient is retained as the partial correlation.
+
+    ``solver='auto'`` uses a direct solve and falls back to least squares only
+    when a leading principal covariance system is singular.
     """
     max_tlag = validate_nonnegative_int(max_tlag, name="max_tlag")
     if max_tlag == 0:
         raise ValueError("max_tlag must be positive")
     observations = validate_time_space(data)
     resolved = coerce_weights(weights, n_locations=observations.shape[1])
-    values = observations.copy()
-    if center:
-        values -= values.mean()
+    if max_tlag >= observations.shape[0]:
+        raise ValueError("max_tlag must be smaller than the number of time rows")
+    values = _center_globally(observations, center=center)
+    matrix, vector = _yule_walker_system(values, resolved, max_tlag)
+    output = np.empty((max_tlag, len(resolved)), dtype=float)
+    solvers_used: list[str] = []
+    for index in range(vector.size):
+        stop = index + 1
+        solution, solver_used = _solve_yule_walker(
+            matrix[:stop, :stop],
+            vector[:stop],
+            solver=solver,
+        )
+        output.flat[index] = solution[-1]
+        solvers_used.append(solver_used)
+    result = pd.DataFrame(
+        output,
+        index=pd.Index(range(1, max_tlag + 1), name="temporal_lag"),
+        columns=pd.Index(resolved.names, name="spatial_lag"),
+    )
+    result.attrs["method"] = "yule-walker"
+    result.attrs["centered"] = center
+    result.attrs["solvers_used"] = tuple(solvers_used)
+    return result
+
+
+def stpacf_regression(
+    data: Any,
+    weights: Any,
+    *,
+    max_tlag: int = 5,
+    center: bool = True,
+) -> pd.DataFrame:
+    """Estimate a finite-sample regression analogue of the STPACF.
+
+    This preserves the diagnostic used in pySTARMAx 0.0.1. It is useful as a
+    direct projection diagnostic but is not the classical Yule-Walker STPACF.
+    """
+    max_tlag = validate_nonnegative_int(max_tlag, name="max_tlag")
+    if max_tlag == 0:
+        raise ValueError("max_tlag must be positive")
+    observations = validate_time_space(data)
+    resolved = coerce_weights(weights, n_locations=observations.shape[1])
+    values = _center_globally(observations, center=center)
     if max_tlag >= values.shape[0]:
         raise ValueError("max_tlag must be smaller than the number of time rows")
     output = np.empty((max_tlag, len(resolved)), dtype=float)
@@ -131,11 +332,47 @@ def stpacf(
         target = np.concatenate(target_rows)
         coefficients, *_ = np.linalg.lstsq(design, target, rcond=None)
         output[order - 1] = coefficients[-len(resolved) :]
-    return pd.DataFrame(
+    result = pd.DataFrame(
         output,
         index=pd.Index(range(1, max_tlag + 1), name="temporal_lag"),
         columns=pd.Index(resolved.names, name="spatial_lag"),
     )
+    result.attrs["method"] = "regression"
+    result.attrs["centered"] = center
+    return result
+
+
+def stpacf(
+    data: Any,
+    weights: Any,
+    *,
+    max_tlag: int = 5,
+    center: bool = True,
+    method: STPACFMethod = "yule-walker",
+    solver: YuleWalkerSolver = "auto",
+) -> pd.DataFrame:
+    """Estimate a space-time partial autocorrelation function.
+
+    ``method='yule-walker'`` is the classical default. Use
+    ``method='regression'`` to reproduce the projection-based diagnostic from
+    pySTARMAx 0.0.1. The ``solver`` argument applies only to Yule-Walker mode.
+    """
+    if method == "yule-walker":
+        return stpacf_yule_walker(
+            data,
+            weights,
+            max_tlag=max_tlag,
+            center=center,
+            solver=solver,
+        )
+    if method == "regression":
+        return stpacf_regression(
+            data,
+            weights,
+            max_tlag=max_tlag,
+            center=center,
+        )
+    raise ValueError("method must be 'yule-walker' or 'regression'")
 
 
 @dataclass(frozen=True, slots=True)

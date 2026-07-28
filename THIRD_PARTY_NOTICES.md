@@ -39,3 +39,13 @@ Implementation comparisons and API reconnaissance also considered:
 
 Those projects remain governed by their own licences. No third-party code is
 bundled in pySTARMAx.
+
+
+## Diagnostic implementation independence
+
+The Yule–Walker implementation in pySTARMAx was written independently from the
+published covariance definition and verified against an exact-rational fixture.
+The R `starma` package was inspected only to confirm the documented ordering of
+nested temporal and spatial lag systems. No GPL-licensed source is copied,
+translated, linked, or bundled. The fixture generator imports no pySTARMAx or
+third-party numerical code.

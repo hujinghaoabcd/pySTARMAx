@@ -39,3 +39,12 @@ Implementation comparisons and API reconnaissance also considered:
 
 Those projects remain governed by their own licences. No third-party code is
 bundled in pySTARMAx.
+
+
+## Reference-fixture policy
+
+The 0.0.2 diagnostic fixture is not produced by R or by pySTARMAx itself. It
+uses exact rational arithmetic and an independent linear-system solver so that
+orientation, covariance blocks, and partial correlations can be audited without
+a circular NumPy comparison. R cross-language fixtures will be added separately
+for estimator validation.
