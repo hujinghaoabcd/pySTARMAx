@@ -198,14 +198,10 @@ def _yule_walker_system(
         _covariance_block(data, weights, temporal_lag)
         for temporal_lag in range(max_tlag)
     ]
-    matrix = np.empty(
-        (max_tlag * spatial_lags, max_tlag * spatial_lags), dtype=float
-    )
+    matrix = np.empty((max_tlag * spatial_lags, max_tlag * spatial_lags), dtype=float)
     for row_lag in range(max_tlag):
         for column_lag in range(max_tlag):
-            row_slice = slice(
-                row_lag * spatial_lags, (row_lag + 1) * spatial_lags
-            )
+            row_slice = slice(row_lag * spatial_lags, (row_lag + 1) * spatial_lags)
             column_slice = slice(
                 column_lag * spatial_lags, (column_lag + 1) * spatial_lags
             )
@@ -328,8 +324,7 @@ def stpacf_regression(
             columns: list[FloatArray] = []
             for temporal_lag in range(1, order + 1):
                 columns.extend(
-                    matrix @ values[time_index - temporal_lag]
-                    for matrix in resolved
+                    matrix @ values[time_index - temporal_lag] for matrix in resolved
                 )
             design_rows.append(np.column_stack(columns))
             target_rows.append(values[time_index])
