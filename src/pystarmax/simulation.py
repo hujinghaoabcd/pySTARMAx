@@ -179,9 +179,7 @@ def simulate_seasonal_starma(
     """Simulate a stationary multiplicative seasonal STARMA process."""
     n_steps = validate_nonnegative_int(n_steps, name="n_steps")
     burnin = validate_nonnegative_int(burnin, name="burnin")
-    seasonal_period = validate_nonnegative_int(
-        seasonal_period, name="seasonal_period"
-    )
+    seasonal_period = validate_nonnegative_int(seasonal_period, name="seasonal_period")
     if n_steps == 0:
         raise ValueError("n_steps must be positive")
     if seasonal_period == 0:
@@ -258,9 +256,7 @@ def simulate_seasonal_starima(
     seasonal_integration_order = validate_nonnegative_int(
         seasonal_integration_order, name="seasonal_integration_order"
     )
-    seasonal_period = validate_nonnegative_int(
-        seasonal_period, name="seasonal_period"
-    )
+    seasonal_period = validate_nonnegative_int(seasonal_period, name="seasonal_period")
     if seasonal_period == 0:
         raise ValueError("seasonal_period must be positive")
 
@@ -284,8 +280,7 @@ def simulate_seasonal_starima(
                 order=integration_order,
                 n_locations=n_locations,
                 anchors=tuple(
-                    np.zeros(n_locations, dtype=float)
-                    for _ in range(integration_order)
+                    np.zeros(n_locations, dtype=float) for _ in range(integration_order)
                 ),
             ),
             seasonal=SeasonalDifferencingState(
@@ -299,17 +294,13 @@ def simulate_seasonal_starima(
             ),
         )
     if initial_state.ordinary_order != integration_order:
-        raise ValueError(
-            "initial_state ordinary order must match integration_order"
-        )
+        raise ValueError("initial_state ordinary order must match integration_order")
     if initial_state.seasonal_order != seasonal_integration_order:
         raise ValueError(
             "initial_state seasonal order must match seasonal_integration_order"
         )
     if initial_state.seasonal_period != seasonal_period:
-        raise ValueError(
-            "initial_state seasonal period must match seasonal_period"
-        )
+        raise ValueError("initial_state seasonal period must match seasonal_period")
     if initial_state.n_locations != transformed.shape[1]:
         raise ValueError("initial_state locations must match the simulated process")
     return initial_state.inverse_forecast(transformed)

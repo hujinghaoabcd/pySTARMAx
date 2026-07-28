@@ -198,9 +198,7 @@ class SeasonalSTARIMA:
             cursor = 1
 
         ar_size = self.ar_order * n_spatial
-        ar = params[cursor : cursor + ar_size].reshape(
-            self.ar_order, n_spatial
-        )
+        ar = params[cursor : cursor + ar_size].reshape(self.ar_order, n_spatial)
         cursor += ar_size
 
         sar_size = self.seasonal_ar_order * n_spatial
@@ -210,9 +208,7 @@ class SeasonalSTARIMA:
         cursor += sar_size
 
         ma_size = self.ma_order * n_spatial
-        ma = params[cursor : cursor + ma_size].reshape(
-            self.ma_order, n_spatial
-        )
+        ma = params[cursor : cursor + ma_size].reshape(self.ma_order, n_spatial)
         cursor += ma_size
 
         sma_size = self.seasonal_ma_order * n_spatial
@@ -226,9 +222,7 @@ class SeasonalSTARIMA:
         params: FloatArray,
         weights: SpatialWeights,
     ) -> tuple[float, tuple[LagOperator, ...], tuple[LagOperator, ...]]:
-        intercept, ar, sar, ma, sma = self._split_params(
-            params, n_spatial=len(weights)
-        )
+        intercept, ar, sar, ma, sma = self._split_params(params, n_spatial=len(weights))
         ar_terms = expand_multiplicative_operators(
             ar,
             sar,
@@ -263,9 +257,7 @@ class SeasonalSTARIMA:
             for operator in ar_terms:
                 value += operator.matrix @ data[time_index - operator.lag]
             for operator in ma_terms:
-                value += operator.matrix @ residuals[
-                    time_index - operator.lag
-                ]
+                value += operator.matrix @ residuals[time_index - operator.lag]
             fitted[time_index] = value
             residuals[time_index] = data[time_index] - value
         return fitted, residuals
@@ -305,14 +297,12 @@ class SeasonalSTARIMA:
                 columns.append(np.ones(data.shape[1], dtype=float))
             for temporal_lag in range(1, self.ar_order + 1):
                 columns.extend(
-                    matrix @ data[time_index - temporal_lag]
-                    for matrix in weights
+                    matrix @ data[time_index - temporal_lag] for matrix in weights
                 )
             for seasonal_index in range(1, self.seasonal_ar_order + 1):
                 temporal_lag = seasonal_index * self.seasonal_period
                 columns.extend(
-                    matrix @ data[time_index - temporal_lag]
-                    for matrix in weights
+                    matrix @ data[time_index - temporal_lag] for matrix in weights
                 )
             if columns:
                 rows.append(np.column_stack(columns))
@@ -360,9 +350,7 @@ class SeasonalSTARIMA:
             seasonal_order=self.seasonal_integration_order,
             seasonal_period=self.seasonal_period,
         )
-        resolved_weights = coerce_weights(
-            weights, n_locations=transformed.shape[1]
-        )
+        resolved_weights = coerce_weights(weights, n_locations=transformed.shape[1])
         if transformed.shape[0] <= self.max_lag + 1:
             raise ValueError(
                 "data contain too few time observations after differencing "
@@ -387,9 +375,7 @@ class SeasonalSTARIMA:
                 x_scale="jac",
             )
             params = np.asarray(solution.x, dtype=float)
-            fitted, residuals = self._evaluate(
-                params, transformed, resolved_weights
-            )
+            fitted, residuals = self._evaluate(params, transformed, resolved_weights)
             residual_vector = residuals[self.max_lag :].reshape(-1)
             n_observations = int(residual_vector.size)
             n_params = int(params.size)
@@ -399,14 +385,10 @@ class SeasonalSTARIMA:
 
             jacobian = np.asarray(solution.jac, dtype=float)[:n_observations]
             covariance = sigma2 * np.linalg.pinv(jacobian.T @ jacobian)
-            standard_errors = np.sqrt(
-                np.clip(np.diag(covariance), 0.0, np.inf)
-            )
+            standard_errors = np.sqrt(np.clip(np.diag(covariance), 0.0, np.inf))
             with np.errstate(divide="ignore", invalid="ignore"):
                 t_values = params / standard_errors
-            p_values = 2.0 * stats.t.sf(
-                np.abs(t_values), df=degrees_of_freedom
-            )
+            p_values = 2.0 * stats.t.sf(np.abs(t_values), df=degrees_of_freedom)
 
             public_residuals = np.full_like(transformed, np.nan, dtype=float)
             public_residuals[self.max_lag :] = residuals[self.max_lag :]
@@ -414,11 +396,9 @@ class SeasonalSTARIMA:
             innovation_covariance = np.atleast_2d(
                 np.cov(residual_matrix, rowvar=False, ddof=1)
             ).astype(float)
-            sigma2_ml = max(
-                sum_squared / n_observations, np.finfo(float).tiny
-            )
-            log_likelihood = -0.5 * n_observations * (
-                np.log(2.0 * np.pi * sigma2_ml) + 1.0
+            sigma2_ml = max(sum_squared / n_observations, np.finfo(float).tiny)
+            log_likelihood = (
+                -0.5 * n_observations * (np.log(2.0 * np.pi * sigma2_ml) + 1.0)
             )
             aic = -2.0 * log_likelihood + 2.0 * n_params
             bic = -2.0 * log_likelihood + np.log(n_observations) * n_params

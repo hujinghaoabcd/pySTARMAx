@@ -2,13 +2,13 @@ import numpy as np
 import pytest
 
 from pystarmax import (
+    STARIMA,
+    STARMA,
     CombinedDifferencingState,
     DifferencingState,
     SeasonalDifferencingState,
     SeasonalSTARIMA,
     SpatialWeights,
-    STARIMA,
-    STARMA,
     combined_difference,
     expand_multiplicative_operators,
     seasonal_difference,
@@ -43,9 +43,7 @@ def test_second_order_seasonal_state_round_trip() -> None:
     time = np.arange(14.0)
     full = (0.3 * time**2 + np.sin(time)).reshape(-1, 1)
     train_length = 9
-    _, train_state = seasonal_difference(
-        full[:train_length], order=2, period=2
-    )
+    _, train_state = seasonal_difference(full[:train_length], order=2, period=2)
     full_differenced, _ = seasonal_difference(full, order=2, period=2)
     future_differences = full_differenced[train_length - 4 :]
     restored = train_state.inverse_forecast(future_differences)
@@ -140,12 +138,8 @@ def test_multiplicative_operator_uses_seasonal_left_matrix_order() -> None:
     ar_cross = next(term for term in ar_terms if ".cross." in term.label)
     ma_cross = next(term for term in ma_terms if ".cross." in term.label)
     assert ar_cross.lag == 5
-    np.testing.assert_allclose(
-        ar_cross.matrix, -(seasonal_matrix @ ordinary_matrix)
-    )
-    np.testing.assert_allclose(
-        ma_cross.matrix, seasonal_matrix @ ordinary_matrix
-    )
+    np.testing.assert_allclose(ar_cross.matrix, -(seasonal_matrix @ ordinary_matrix))
+    np.testing.assert_allclose(ma_cross.matrix, seasonal_matrix @ ordinary_matrix)
     assert not np.allclose(
         seasonal_matrix @ ordinary_matrix,
         ordinary_matrix @ seasonal_matrix,
@@ -201,7 +195,6 @@ def test_seasonal_starima_recovers_ar_factor_coefficients() -> None:
     np.testing.assert_allclose(result.params, [0.25, 0.35], atol=0.08)
     assert result.parameter_names == ("ar.t1.W0", "sar.t4.W0")
     assert model.predict(6).shape == (6, 2)
-
 
 
 def test_seasonal_starima_recovers_ma_factor_coefficients() -> None:

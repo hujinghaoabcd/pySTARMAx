@@ -59,9 +59,7 @@ class DifferencingState:
 
     def __post_init__(self) -> None:
         order = validate_nonnegative_int(self.order, name="order")
-        n_locations = _validate_positive_int(
-            self.n_locations, name="n_locations"
-        )
+        n_locations = _validate_positive_int(self.n_locations, name="n_locations")
         if len(self.anchors) != order:
             raise ValueError("anchors must contain one vector per difference level")
 
@@ -118,9 +116,7 @@ class SeasonalDifferencingState:
     def __post_init__(self) -> None:
         order = validate_nonnegative_int(self.order, name="order")
         period = _validate_positive_int(self.period, name="period")
-        n_locations = _validate_positive_int(
-            self.n_locations, name="n_locations"
-        )
+        n_locations = _validate_positive_int(self.n_locations, name="n_locations")
         if len(self.histories) != order:
             raise ValueError("histories must contain one matrix per seasonal level")
 
@@ -129,13 +125,9 @@ class SeasonalDifferencingState:
         for index, history in enumerate(self.histories):
             values = np.asarray(history, dtype=float)
             if values.shape != expected_shape:
-                raise ValueError(
-                    f"histories[{index}] must have shape {expected_shape}"
-                )
+                raise ValueError(f"histories[{index}] must have shape {expected_shape}")
             if not np.all(np.isfinite(values)):
-                raise ValueError(
-                    f"histories[{index}] must contain only finite values"
-                )
+                raise ValueError(f"histories[{index}] must contain only finite values")
             frozen = np.asarray(values, dtype=float).copy()
             frozen.setflags(write=False)
             checked.append(cast(FloatArray, frozen))
@@ -251,9 +243,7 @@ def seasonal_difference(
     levels: list[FloatArray] = [observations.copy()]
     for _ in range(order):
         previous = levels[-1]
-        levels.append(
-            cast(FloatArray, previous[period:] - previous[:-period])
-        )
+        levels.append(cast(FloatArray, previous[period:] - previous[:-period]))
     state = SeasonalDifferencingState(
         order=order,
         period=period,
@@ -278,9 +268,7 @@ def combined_difference(
     the component states in reverse order.
     """
     observations = validate_time_space(data)
-    ordinary, ordinary_state = ordinary_difference(
-        observations, order=ordinary_order
-    )
+    ordinary, ordinary_state = ordinary_difference(observations, order=ordinary_order)
     transformed, seasonal_state = seasonal_difference(
         ordinary,
         order=seasonal_order,

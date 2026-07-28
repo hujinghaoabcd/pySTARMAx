@@ -64,9 +64,7 @@ def factor_matrices(
     )
     matrices: list[FloatArray] = []
     for row in values:
-        matrix = np.zeros(
-            (weights.n_locations, weights.n_locations), dtype=float
-        )
+        matrix = np.zeros((weights.n_locations, weights.n_locations), dtype=float)
         for coefficient, spatial_weight in zip(row, weights, strict=True):
             matrix += float(coefficient) * spatial_weight
         matrices.append(cast(FloatArray, matrix))
