@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ def _as_time_space_allow_nan(data: Any, *, name: str) -> FloatArray:
         raise ValueError(f"{name} must contain at least two times and one location")
     if np.any(np.isinf(array)):
         raise ValueError(f"{name} must not contain infinite values")
-    return np.ascontiguousarray(array, dtype=float)
+    return cast(FloatArray, np.ascontiguousarray(array, dtype=float))
 
 
 def _drop_nan_rows(data: FloatArray) -> FloatArray:
@@ -120,7 +120,7 @@ def stpacf(
         design_rows: list[FloatArray] = []
         target_rows: list[FloatArray] = []
         for time_index in range(order, values.shape[0]):
-            columns = []
+            columns: list[FloatArray] = []
             for temporal_lag in range(1, order + 1):
                 columns.extend(
                     matrix @ values[time_index - temporal_lag] for matrix in resolved
