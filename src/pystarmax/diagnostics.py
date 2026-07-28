@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeAlias, cast
 
 import numpy as np
 import pandas as pd
@@ -19,8 +19,8 @@ from pystarmax._validation import (
 )
 from pystarmax.weights import SpatialWeights, coerce_weights
 
-STPACFMethod = Literal["yule-walker", "regression"]
-YuleWalkerSolver = Literal["auto", "solve", "lstsq"]
+STPACFMethod: TypeAlias = Literal["yule-walker", "regression"]
+YuleWalkerSolver: TypeAlias = Literal["auto", "solve", "lstsq"]
 
 
 def _as_time_space_allow_nan(data: Any, *, name: str) -> FloatArray:
