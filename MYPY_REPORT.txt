@@ -1,5 +1,1 @@
-src/pystarmax/diagnostics.py:80: error: Returning Any from function declared to
-return "float"  [no-any-return]
-        return total / (n_pairs * data.shape[1])
-        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Found 1 error in 1 file (checked 8 source files)
+Success: no issues found in 8 source files
