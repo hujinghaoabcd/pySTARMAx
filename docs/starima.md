@@ -10,7 +10,8 @@ w_t = (1-B)^d z_t,
 
 where `B` is the one-step temporal backshift operator. The transformed process
 `w_t` follows the same STARMA convention documented in
-[Model convention](model.md).
+[Model convention](model.md). Differencing is applied independently along the
+time axis for every location, without transforming the spatial weights.
 
 ## Fit and forecast
 
