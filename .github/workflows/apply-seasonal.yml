@@ -21,6 +21,7 @@ jobs:
           base64 -d .github/seasonal.patch.gz.b64 | gzip -d > /tmp/seasonal.patch
           git apply /tmp/seasonal.patch
           rm .github/seasonal.patch.gz.b64
+          rm -f .github/seasonal-trigger
           rm .github/workflows/apply-seasonal.yml
           rm .github/workflows/export-seasonal-source.yml
           git config user.name "github-actions[bot]"
