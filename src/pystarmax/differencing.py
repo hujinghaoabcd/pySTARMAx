@@ -278,3 +278,78 @@ def combined_difference(
         ordinary=ordinary_state,
         seasonal=seasonal_state,
     )
+
+
+def differencing_coefficients(
+    *,
+    ordinary_order: int = 0,
+    seasonal_order: int = 0,
+    seasonal_period: int = 1,
+) -> FloatArray:
+    """Return coefficients of ``(1-B)^d (1-B^s)^D`` in ascending lag order."""
+    ordinary_order = validate_nonnegative_int(ordinary_order, name="ordinary_order")
+    seasonal_order = validate_nonnegative_int(seasonal_order, name="seasonal_order")
+    seasonal_period = _validate_positive_int(seasonal_period, name="seasonal_period")
+    coefficients = np.array([1.0], dtype=float)
+    for _ in range(ordinary_order):
+        coefficients = np.convolve(coefficients, np.array([1.0, -1.0]))
+    seasonal_factor = np.zeros(seasonal_period + 1, dtype=float)
+    seasonal_factor[0] = 1.0
+    seasonal_factor[-1] = -1.0
+    for _ in range(seasonal_order):
+        coefficients = np.convolve(coefficients, seasonal_factor)
+    return cast(FloatArray, np.asarray(coefficients, dtype=float))
+
+
+def restore_fitted_values(
+    data: Any,
+    transformed_fitted: Any,
+    *,
+    ordinary_order: int = 0,
+    seasonal_order: int = 0,
+    seasonal_period: int = 1,
+) -> FloatArray:
+    """Restore one-step fitted values to the original observation scale.
+
+    The fitted transformed value at time ``t`` is inverted with the *observed*
+    values at all earlier lags in the combined differencing polynomial. This is
+    an aligned one-step conditional reconstruction, not a recursively integrated
+    pseudo-series. Leading rows without either differencing history or model
+    fitted values remain ``NaN``.
+    """
+    observations = validate_time_space(data)
+    fitted = np.asarray(transformed_fitted, dtype=float)
+    if fitted.ndim != 2:
+        raise ValueError("transformed_fitted must be a two-dimensional array")
+    if fitted.shape[1] != observations.shape[1]:
+        raise ValueError(
+            "transformed_fitted locations must match the original observations"
+        )
+    coefficients = differencing_coefficients(
+        ordinary_order=ordinary_order,
+        seasonal_order=seasonal_order,
+        seasonal_period=seasonal_period,
+    )
+    offset = int(coefficients.size - 1)
+    expected_rows = observations.shape[0] - offset
+    if fitted.shape[0] != expected_rows:
+        raise ValueError(
+            "transformed_fitted has an incompatible number of time rows; "
+            f"expected {expected_rows}"
+        )
+
+    output = np.full_like(observations, np.nan, dtype=float)
+    for transformed_index, row in enumerate(fitted):
+        finite = np.isfinite(row)
+        if not np.any(finite):
+            continue
+        if not np.all(finite):
+            raise ValueError(
+                "each transformed_fitted row must be entirely finite or entirely NaN"
+            )
+        time_index = transformed_index + offset
+        restored = np.asarray(row, dtype=float).copy()
+        for lag, coefficient in enumerate(coefficients[1:], start=1):
+            restored -= float(coefficient) * observations[time_index - lag]
+        output[time_index] = restored
+    return cast(FloatArray, np.ascontiguousarray(output, dtype=float))

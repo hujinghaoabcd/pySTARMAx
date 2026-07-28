@@ -2,7 +2,8 @@
 
 pySTARMAx provides transparent, typed building blocks for classical STARMA, ordinary STARIMA, and multiplicative seasonal STARIMA modelling in Python. The current workflow covers spatial-weight
 construction, simulation, model fitting, diagnostics, temporal differencing,
-original-scale forecast inversion, constrained seasonal matrix-polynomial
+original-scale forecast inversion, aligned one-step fitted values,
+conditional innovation intervals, constrained seasonal matrix-polynomial
 expansion, and reproducible numerical validation.
 
 ```python
@@ -18,6 +19,8 @@ model = SeasonalSTARIMA(
 result = model.fit(y, weights)
 print(result.summary())
 print(model.predict(steps=6))
+print(model.fitted_original())
+print(model.predict_interval(steps=6, random_state=42))
 ```
 
 See [Model convention](model.md) for the STARMA equation and data orientation,

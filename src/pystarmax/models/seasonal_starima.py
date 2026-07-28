@@ -19,6 +19,13 @@ from pystarmax._validation import (
 from pystarmax.differencing import (
     CombinedDifferencingState,
     combined_difference,
+    restore_fitted_values,
+)
+from pystarmax.forecasting import (
+    ForecastInterval,
+    draw_innovations,
+    interval_from_paths,
+    validate_interval_arguments,
 )
 from pystarmax.models.starma import STARMA
 from pystarmax.results import STARMAResult
@@ -198,7 +205,7 @@ class SeasonalSTARIMA:
             cursor = 1
 
         ar_size = self.ar_order * n_spatial
-        ar = params[cursor : cursor + ar_size].reshape(self.ar_order, n_spatial)
+        ar = params[cursor : cursor + ar_size].reshape(self.ar_order, nspatial)
         cursor += ar_size
 
         sar_size = self.seasonal_ar_order * n_spatial
@@ -249,7 +256,7 @@ class SeasonalSTARIMA:
         conditional_lag = max(
             maximum_operator_lag(ar_terms),
             maximum_operator_lag(ma_terms),
-        )
+       )
         fitted = np.full_like(data, np.nan, dtype=float)
         residuals = np.zeros_like(data, dtype=float)
         for time_index in range(conditional_lag, data.shape[0]):
@@ -270,79 +277,68 @@ class SeasonalSTARIMA:
     ) -> FloatArray:
         _, residuals = self._evaluate(params, data, weights)
         vector = residuals[self.max_lag :].reshape(-1)
-        if self.ridge == 0:
-            return np.asarray(vector, dtype=float)
-        penalty_params = params[1:] if self.include_intercept else params
-        penalty = np.sqrt(self.ridge) * penalty_params
-        return np.concatenate((vector, penalty))
+        if self.ridge:
+            start = 1 if self.include_intercept else 0
+            penalty = np.sqrt(self.ridge) * params[start:]
+            vector = np.concatenate((vector, penalty))
+        return np.asarray(vector, dtype=float)
 
     def _initial_params(
         self,
         data: FloatArray,
         weights: SpatialWeights,
     ) -> FloatArray:
-        n_spatial = len(weights)
-        n_params = (
-            int(self.include_intercept)
-            + (self.ar_order + self.seasonal_ar_order) * n_spatial
-            + (self.ma_order + self.seasonal_ma_order) * n_spatial
+        n_params = len(self._parameter_names(weights))
+        initial = np.zeros(n_params, dtype=float)
+        ordinary_core = STARMA(
+            self.ar_order,
+            self.ma_order,
+            include_intercept=self.include_intercept,
+            max_iter=self.max_iter,
+            tol=self.tol,
+            ridge=self.ridge,
         )
-        params = np.zeros(n_params, dtype=float)
+        try:
+            ordinary_result = ordinary_core.fit(data, weights)
+        except (ValueError, np.linalg.LinalgError):
+            return initial
 
-        rows: list[FloatArray] = []
-        targets: list[FloatArray] = []
-        for time_index in range(self.max_lag, data.shape[0]):
-            columns: list[FloatArray] = []
-            if self.include_intercept:
-                columns.append(np.ones(data.shape[1], dtype=float))
-            for temporal_lag in range(1, self.ar_order + 1):
-                columns.extend(
-                    matrix @ data[time_index - temporal_lag] for matrix in weights
-                )
-            for seasonal_index in range(1, self.seasonal_ar_order + 1):
-                temporal_lag = seasonal_index * self.seasonal_period
-                columns.extend(
-                    matrix @ data[time_index - temporal_lag] for matrix in weights
-                )
-            if columns:
-                rows.append(np.column_stack(columns))
-                targets.append(data[time_index])
-
-        direct_size = (
-            int(self.include_intercept)
-            + (self.ar_order + self.seasonal_ar_order) * n_spatial
-        )
-        if rows and direct_size:
-            design = np.vstack(rows)
-            target = np.concatenate(targets)
-            direct, *_ = np.linalg.lstsq(design, target, rcond=None)
-            params[:direct_size] = direct
-        return params
+        cursor = 0
+        if self.include_intercept:
+            initial[0] = ordinary_result.params[0]
+            cursor = 1
+        ar_size = self.ar_order * len(weights)
+        initial[cursor : cursor + ar_size] = ordinary_result.params[
+            cursor : cursor + ar_size
+        ]
+        cursor += ar_size + self.seasonal_ar_order * len(weights)
+        ma_size = self.ma_order * len(weights)
+        ordinary_ma_start = (1 if self.include_intercept else 0) + ar_size
+        initial[cursor : cursor + ma_size] = ordinary_result.params[
+            ordinary_ma_start : ordinary_ma_start + ma_size
+        ]
+        return initial
 
     def _fit_linear_core(
         self,
         data: FloatArray,
         weights: SpatialWeights,
     ) -> STARMAResult:
-        model = STARMA(
-            ar_order=self.ar_order,
-            ma_order=self.ma_order,
+        core = STARMA(
+            self.ar_order,
+            self.ma_order,
             include_intercept=self.include_intercept,
             max_iter=self.max_iter,
             tol=self.tol,
             ridge=self.ridge,
         )
-        result = model.fit(data, weights)
-        self.core_model_ = model
-        self._internal_residuals = (
-            None
-            if model._internal_residuals is None
-            else model._internal_residuals.copy()
-        )
+        result = core.fit(data, weights)
+        self.core_model_ = core
+        self._internal_residuals = core._internal_residuals.copy()
         return result
 
-    def fit(self, data: Any, weights: Any) -> STARMAResult:
-        """Fit the model and return inference on the transformed scale."""
+    def fit(self, data: Any, weights: SpatialWeights | Any) -> STARMAResult:
+        """Fit the model after ordinary and seasonal differencing."""
         observations = validate_time_space(data)
         transformed, state = combined_difference(
             observations,
@@ -467,3 +463,115 @@ class SeasonalSTARIMA:
             raise RuntimeError("fit must be called before predict")
         differenced = self.predict_differenced(steps=steps)
         return self.differencing_state_.inverse_forecast(differenced)
+
+    def fitted_original(self) -> FloatArray:
+        """Return aligned one-step fitted values on the original scale."""
+        if self.result_ is None or self.data_ is None:
+            raise RuntimeError("fit must be called before fitted_original")
+        return restore_fitted_values(
+            self.data_,
+            self.result_.fitted_values,
+            ordinary_order=self.integration_order,
+            seasonal_order=self.seasonal_integration_order,
+            seasonal_period=self.seasonal_period,
+        )
+
+    def _simulate_forecast_paths(
+        self,
+        *,
+        steps: int,
+        n_simulations: int,
+        random_state: int | np.random.Generator | None,
+    ) -> FloatArray:
+        """Simulate transformed-scale paths with fitted innovations."""
+        steps, _, n_simulations = validate_interval_arguments(
+            steps=steps, level=0.95, n_simulations=n_simulations
+        )
+        if self.result_ is None or self.transformed_data_ is None:
+            raise RuntimeError("fit must be called before predict")
+        if self.core_model_ is not None:
+            return self.core_model_._simulate_forecast_paths(
+                steps=steps,
+                n_simulations=n_simulations,
+                random_state=random_state,
+            )
+        if self.weights_ is None or self._internal_residuals is None:
+            raise RuntimeError("fit must be called before predict")
+
+        intercept, ar_terms, ma_terms = self._operators(
+            self.result_.params, self.weights_
+        )
+        future_innovations = draw_innovations(
+            self.result_.innovation_covariance,
+            n_simulations=n_simulations,
+            steps=steps,
+            random_state=random_state,
+        )
+        max_lag = self.max_lag
+        history = np.repeat(
+            self.transformed_data_[-max_lag:][None, :, :],
+            n_simulations,
+            axis=0,
+        )
+        innovation_history = np.repeat(
+            self._internal_residuals[-max_lag:][None, :, :],
+            n_simulations,
+            axis=0,
+        )
+        paths = np.empty((n_simulations, steps, self.weights_.n_locations), dtype=float)
+        for step_index in range(steps):
+            value = np.full(
+                (n_simulations, self.weights_.n_locations),
+                intercept,
+                dtype=float,
+            )
+            for operator in ar_terms:
+                value += history[:, -operator.lag, :] @ operator.matrix.T
+            for operator in ma_terms:
+                value += (innovation_history[:, -operator.lag, :] @ operator.matrix.T)
+            innovation = future_innovations[:, step_index, :]
+            value += innovation
+            paths[:, step_index, :] = value
+            if max_lag > 1:
+                history[:, :-1, :] = history[:, 1:, :]
+                innovation_history[:, :-1, :] = innovation_history[:, 1:, :]
+            history[:, -1, :] = value
+            innovation_history[:, -1, :] = innovation
+        return np.ascontiguousarray(paths, dtype=float)
+
+    def predict_interval(
+        self,
+        steps: int = 1,
+        *,
+        level: float = 0.95,
+        n_simulations: int = 1000,
+        random_state: int | np.random.Generator | None = None,
+    ) -> ForecastInterval:
+        """Return an original-scale conditional innovation interval.
+
+        Simulated transformed paths retain multiplicative seasonal AR/MA
+        dependence and are individually inverted through the stored seasonal
+        and ordinary differencing state before quantiles are computed.
+        """
+        if self.differencing_state_ is None:
+            raise RuntimeError("fit must be called before predict")
+        steps, level, n_simulations = validate_interval_arguments(
+            steps=steps, level=level, n_simulations=n_simulations
+        )
+        transformed_paths = self._simulate_forecast_paths(
+            steps=steps,
+            n_simulations=n_simulations,
+            random_state=random_state,
+        )
+        paths = np.stack(
+            [
+                self.differencing_state_.inverse_forecast(path)
+                for path in transformed_paths
+            ],
+            axis=0,
+        )
+        return interval_from_paths(
+            mean=self.predict(steps=steps),
+            paths=paths,
+            level=level,
+        )

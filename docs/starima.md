@@ -1,6 +1,6 @@
 # Ordinary STARIMA
 
-pySTARMAx 0.0.3 adds ordinary temporal integration while keeping the spatial
+pySTARMAx 0.0.5 supports ordinary temporal integration while keeping the spatial
 weight system and STARMA estimator unchanged. For integration order `d`, the
 model is fitted to
 
@@ -33,6 +33,12 @@ print(result.summary())
 # Public forecasts are restored to the original observation scale.
 forecast = model.predict(steps=6)
 
+# One-step fitted values are aligned to the original observation matrix.
+fitted = model.fitted_original()
+
+# Conditional innovation uncertainty is propagated through integration.
+interval = model.predict_interval(steps=6, random_state=42)
+
 # The stationary-scale forecast remains available explicitly.
 difference_forecast = model.predict_differenced(steps=6)
 ```
@@ -40,7 +46,9 @@ difference_forecast = model.predict_differenced(steps=6)
 `STARIMA.fit()` returns the existing `STARMAResult`. Its coefficients,
 fitted values, residuals, likelihood, AIC, and BIC describe the differenced
 process. `STARIMA.predict()` integrates future differences recursively and
-returns original-scale observations.
+returns original-scale observations. `fitted_original()` reconstructs aligned
+one-step fitted values with observed historical anchors. `predict_interval()`
+inverts complete simulated paths before empirical quantiles are computed.
 
 ## Differencing state
 
@@ -90,8 +98,6 @@ levels.
 
 ## Current limits
 
-- only ordinary, non-seasonal differencing is implemented;
-- fitted values and residuals are not reconstructed onto the original scale;
-- uncertainty intervals are not yet propagated through forecast integration;
-- state-space likelihood, missing observations, and seasonal operators remain
-  future work.
+- coefficient inference and the stored `STARMAResult` remain on the differenced scale;
+- forecast intervals condition on estimated parameters and do not include parameter uncertainty;
+- state-space likelihood and missing observations remain future work.

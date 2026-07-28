@@ -15,6 +15,12 @@ from pystarmax._validation import (
     validate_nonnegative_int,
     validate_time_space,
 )
+from pystarmax.forecasting import (
+    ForecastInterval,
+    draw_innovations,
+    interval_from_paths,
+    validate_interval_arguments,
+)
 from pystarmax.results import STARMAResult
 from pystarmax.weights import SpatialWeights, coerce_weights
 
@@ -266,15 +272,9 @@ class STARMA:
         self._internal_residuals = final_internal_residuals
         return result
 
-    def predict(self, steps: int = 1) -> FloatArray:
-        """Generate recursive forecasts after fitting.
-
-        Future innovations are set to zero while available historical fitted
-        innovations are retained for the first forecast steps.
-        """
-        steps = validate_nonnegative_int(steps, name="steps")
-        if steps == 0:
-            raise ValueError("steps must be positive")
+    def _fitted_components(
+        self,
+    ) -> tuple[SpatialWeights, FloatArray, FloatArray, float, FloatArray, FloatArray]:
         if (
             self.result_ is None
             or self.weights_ is None
@@ -282,8 +282,6 @@ class STARMA:
             or self._internal_residuals is None
         ):
             raise RuntimeError("fit must be called before predict")
-        history = [row.copy() for row in self.data_]
-        innovation_history = [row.copy() for row in self._internal_residuals]
         params = self.result_.params
         cursor = 0
         intercept = 0.0
@@ -292,18 +290,46 @@ class STARMA:
             cursor = 1
         ar_end = cursor + self.ar_order * len(self.weights_)
         ar_params = params[cursor:ar_end].reshape(self.ar_order, len(self.weights_))
-        cursor += self.ar_order * len(self.weights_)
+        cursor = ar_end
         ma_params = params[cursor:].reshape(self.ma_order, len(self.weights_))
+        return (
+            self.weights_,
+            self.data_,
+            self._internal_residuals,
+            intercept,
+            np.asarray(ar_params, dtype=float),
+            np.asarray(ma_params, dtype=float),
+        )
+
+    def predict(self, steps: int = 1) -> FloatArray:
+        """Generate recursive conditional-mean forecasts after fitting.
+
+        Future innovations are set to zero while available historical fitted
+        innovations are retained for the first forecast steps.
+        """
+        steps = validate_nonnegative_int(steps, name="steps")
+        if steps == 0:
+            raise ValueError("steps must be positive")
+        (
+            weights,
+            data,
+            internal_residuals,
+            intercept,
+            ar_params,
+            ma_params,
+        ) = self._fitted_components()
+        history = [row.copy() for row in data]
+        innovation_history = [row.copy() for row in internal_residuals]
         forecasts: list[FloatArray] = []
         for _ in range(steps):
-            value = np.full(self.weights_.n_locations, intercept, dtype=float)
+            value = np.full(weights.n_locations, intercept, dtype=float)
             for temporal_lag in range(1, self.ar_order + 1):
-                for spatial_lag, matrix in enumerate(self.weights_):
+                for spatial_lag, matrix in enumerate(weights):
                     value += ar_params[temporal_lag - 1, spatial_lag] * (
                         matrix @ history[-temporal_lag]
                     )
             for temporal_lag in range(1, self.ma_order + 1):
-                for spatial_lag, matrix in enumerate(self.weights_):
+                for spatial_lag, matrix in enumerate(weights):
                     value += ma_params[temporal_lag - 1, spatial_lag] * (
                         matrix @ innovation_history[-temporal_lag]
                     )
@@ -311,6 +337,92 @@ class STARMA:
             history.append(value)
             innovation_history.append(np.zeros_like(value))
         return np.vstack(forecasts)
+
+    def _simulate_forecast_paths(
+        self,
+        *,
+        steps: int,
+        n_simulations: int,
+        random_state: int | np.random.Generator | None,
+    ) -> FloatArray:
+        """Simulate conditional future paths with fitted innovations."""
+        steps, _, n_simulations = validate_interval_arguments(
+            steps=steps, level=0.95, n_simulations=n_simulations
+        )
+        (
+            weights,
+            data,
+            internal_residuals,
+            intercept,
+            ar_params,
+            ma_params,
+        ) = self._fitted_components()
+        if self.result_ is None:
+            raise RuntimeError("fit must be called before predict")
+        future_innovations = draw_innovations(
+            self.result_.innovation_covariance,
+            n_simulations=n_simulations,
+            steps=steps,
+            random_state=random_state,
+        )
+        max_lag = self.max_lag
+        history = np.repeat(data[-max_lag:][None, :, :], n_simulations, axis=0)
+        innovation_history = np.repeat(
+            internal_residuals[-max_lag:][None, :, :],
+            n_simulations,
+            axis=0,
+        )
+        paths = np.empty((n_simulations, steps, weights.n_locations), dtype=float)
+        for step_index in range(steps):
+            value = np.full(
+                (n_simulations, weights.n_locations), intercept, dtype=float
+            )
+            for temporal_lag in range(1, self.ar_order + 1):
+                for spatial_lag, matrix in enumerate(weights):
+                    value += ar_params[temporal_lag - 1, spatial_lag] * (
+                        history[:, -temporal_lag, :] @ matrix.T
+                    )
+            for temporal_lag in range(1, self.ma_order + 1):
+                for spatial_lag, matrix in enumerate(weights):
+                    value += ma_params[temporal_lag - 1, spatial_lag] * (
+                        innovation_history[:, -temporal_lag, :] @ matrix.T
+                    )
+            innovation = future_innovations[:, step_index, :]
+            value += innovation
+            paths[:, step_index, :] = value
+            if max_lag > 1:
+                history[:, :-1, :] = history[:, 1:, :]
+                innovation_history[:, :-1, :] = innovation_history[:, 1:, :]
+            history[:, -1, :] = value
+            innovation_history[:, -1, :] = innovation
+        return np.ascontiguousarray(paths, dtype=float)
+
+    def predict_interval(
+        self,
+        steps: int = 1,
+        *,
+        level: float = 0.95,
+        n_simulations: int = 1000,
+        random_state: int | np.random.Generator | None = None,
+    ) -> ForecastInterval:
+        """Return a conditional innovation forecast interval.
+
+        The interval propagates fitted innovation covariance through recursive
+        AR and MA dynamics. Estimated-parameter uncertainty is not included.
+        """
+        steps, level, n_simulations = validate_interval_arguments(
+            steps=steps, level=level, n_simulations=n_simulations
+        )
+        paths = self._simulate_forecast_paths(
+            steps=steps,
+            n_simulations=n_simulations,
+            random_state=random_state,
+        )
+        return interval_from_paths(
+            mean=self.predict(steps=steps),
+            paths=paths,
+            level=level,
+        )
 
 
 class STAR(STARMA):

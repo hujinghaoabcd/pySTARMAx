@@ -39,11 +39,21 @@
 - stationary and integrated seasonal simulation;
 - compatibility routes for zero seasonal AR/MA orders.
 
+## Implemented in 0.0.5
+
+- combined differencing-polynomial coefficients;
+- aligned original-scale one-step fitted values;
+- immutable `ForecastInterval` results;
+- conditional innovation simulation for STAR, STARMA, STARIMA, and seasonal STARIMA;
+- pathwise ordinary-seasonal inverse differencing before interval quantiles;
+- stable simulation from singular fitted innovation covariance matrices;
+- reproducible interval tests across linear and nonlinear seasonal cores.
+
 ## Next priorities
 
-1. Original-scale fitted-value reconstruction and forecast intervals.
+1. Parameter-uncertainty intervals and bootstrap calibration.
 2. Exact state-space/Kalman likelihood and missing observations.
-3. Diagonal and full contemporaneous innovation covariance models.
+3. Diagonal and full contemporaneous innovation covariance likelihoods.
 4. Sparse spatial matrices and large-network computation.
 5. Automatic order selection using STACF/STPACF and information criteria.
 6. Exogenous regressors, interventions, and generalized/location-varying STARMA.
