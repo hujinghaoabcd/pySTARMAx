@@ -32,9 +32,7 @@ class DifferencingState:
 
     def __post_init__(self) -> None:
         order = validate_nonnegative_int(self.order, name="order")
-        n_locations = validate_nonnegative_int(
-            self.n_locations, name="n_locations"
-        )
+        n_locations = validate_nonnegative_int(self.n_locations, name="n_locations")
         if n_locations == 0:
             raise ValueError("n_locations must be positive")
         if len(self.anchors) != order:
@@ -44,9 +42,7 @@ class DifferencingState:
         for index, anchor in enumerate(self.anchors):
             values = np.asarray(anchor, dtype=float)
             if values.ndim != 1 or values.shape[0] != n_locations:
-                raise ValueError(
-                    f"anchors[{index}] must have shape ({n_locations},)"
-                )
+                raise ValueError(f"anchors[{index}] must have shape ({n_locations},)")
             if not np.all(np.isfinite(values)):
                 raise ValueError(f"anchors[{index}] must contain only finite values")
             frozen = np.asarray(values, dtype=float).copy()
