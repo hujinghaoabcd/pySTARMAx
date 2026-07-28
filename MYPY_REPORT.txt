@@ -1,0 +1,166 @@
+src/pystarmax/results.py:21: error: Variable "pystarmax.results.FloatArray" is
+not valid as a type  [valid-type]
+        params: FloatArray
+                ^
+src/pystarmax/results.py:21: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/results.py:23: error: Variable "pystarmax.results.FloatArray" is
+not valid as a type  [valid-type]
+        standard_errors: FloatArray
+                         ^
+src/pystarmax/results.py:23: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/results.py:24: error: Variable "pystarmax.results.FloatArray" is
+not valid as a type  [valid-type]
+        t_values: FloatArray
+                  ^
+src/pystarmax/results.py:24: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/results.py:25: error: Variable "pystarmax.results.FloatArray" is
+not valid as a type  [valid-type]
+        p_values: FloatArray
+                  ^
+src/pystarmax/results.py:25: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/results.py:26: error: Variable "pystarmax.results.FloatArray" is
+not valid as a type  [valid-type]
+        fitted_values: FloatArray
+                       ^
+src/pystarmax/results.py:26: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/results.py:27: error: Variable "pystarmax.results.FloatArray" is
+not valid as a type  [valid-type]
+        residuals: FloatArray
+                   ^
+src/pystarmax/results.py:27: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/results.py:28: error: Variable "pystarmax.results.FloatArray" is
+not valid as a type  [valid-type]
+        innovation_covariance: FloatArray
+                               ^
+src/pystarmax/results.py:28: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/results.py:43: error: FloatArray? has no attribute "size" 
+[attr-defined]
+            return int(self.params.size)
+                       ^~~~~~~~~~~~~~~~
+src/pystarmax/_validation.py:16: error: Variable
+"pystarmax._validation.FloatArray" is not valid as a type  [valid-type]
+    def as_float_matrix(value: Any, *, name: str) -> FloatArray:
+                                                     ^
+src/pystarmax/_validation.py:16: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/_validation.py:23: error: Returning Any from function declared to
+return FloatArray?  [no-any-return]
+        return np.ascontiguousarray(array, dtype=float)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pystarmax/_validation.py:26: error: Variable
+"pystarmax._validation.FloatArray" is not valid as a type  [valid-type]
+    ... validate_time_space(value: Any, *, name: str = "data") -> FloatArray:
+                                                                  ^
+src/pystarmax/_validation.py:26: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+src/pystarmax/_validation.py:29: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+        if array.shape[0] < 2:
+           ^~~~~~~~~~~
+src/pystarmax/_validation.py:31: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+        if array.shape[1] < 1:
+           ^~~~~~~~~~~
+src/pystarmax/weights.py:28: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+        if values.shape[0] != values.shape[1]:
+           ^~~~~~~~~~~~
+src/pystarmax/weights.py:30: error: FloatArray? has no attribute "sum" 
+[attr-defined]
+        row_sums = values.sum(axis=1)
+                   ^~~~~~~~~~
+src/pystarmax/weights.py:38: error: Value of type FloatArray? is not indexable 
+[index]
+        output[nonzero] = values[nonzero] / row_sums[nonzero, None]
+                          ^~~~~~~~~~~~~~~
+src/pystarmax/weights.py:75: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+        if points.shape[1] < 1:
+           ^~~~~~~~~~~~
+src/pystarmax/weights.py:111: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+                if values.shape != (size, size):
+                   ^~~~~~~~~~~~
+src/pystarmax/weights.py:115: error: FloatArray? has no attribute "copy" 
+[attr-defined]
+                frozen = values.copy()
+                         ^~~~~~~~~~~
+src/pystarmax/weights.py:155: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+                values.insert(0, np.eye(values[0].shape[0], dtype=float))
+                                        ^~~~~~~~~~~~~~~
+src/pystarmax/weights.py:175: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+            if base.shape[0] != base.shape[1]:
+               ^~~~~~~~~~
+src/pystarmax/weights.py:179: error: "bool" has no attribute "shape" 
+[attr-defined]
+            n = binary.shape[0]
+                ^~~~~~~~~~~~
+src/pystarmax/weights.py:184: error: "bool" has no attribute "astype" 
+[attr-defined]
+                candidates = (frontier.astype(int) @ binary.astype(int)) >...
+                                                     ^~~~~~~~~~~~~
+src/pystarmax/simulation.py:18: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+        if array.shape[1] != n_spatial:
+           ^~~~~~~~~~~
+src/pystarmax/simulation.py:20: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+                f"{name} has {array.shape[1]} spatial columns; expected {n...
+                              ^~~~~~~~~~~
+src/pystarmax/simulation.py:70: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+            if covariance.shape != (resolved.n_locations, resolved.n_locat...
+               ^~~~~~~~~~~~~~~~
+src/pystarmax/diagnostics.py:112: error: FloatArray? has no attribute "shape" 
+[attr-defined]
+    ...  resolved = coerce_weights(weights, n_locations=observations.shape[1]...
+                                                        ^~~~~~~~~~~~~~~~~~
+src/pystarmax/diagnostics.py:113: error: FloatArray? has no attribute "copy" 
+[attr-defined]
+        values = observations.copy()
+                 ^~~~~~~~~~~~~~~~~
+src/pystarmax/diagnostics.py:123: error: Need type annotation for "columns"
+(hint: "columns: list[<type>] = ...")  [var-annotated]
+                columns = []
+                ^~~~~~~
+src/pystarmax/models/starma.py:164: error: FloatArray? has no attribute "shape"
+ [attr-defined]
+    ...ed_weights = coerce_weights(weights, n_locations=observations.shape[1]...
+                                                        ^~~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:165: error: FloatArray? has no attribute "shape"
+ [attr-defined]
+            if observations.shape[0] <= self.max_lag + 1:
+               ^~~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:183: error: FloatArray? has no attribute "shape"
+ [attr-defined]
+                    observations.shape[0] - self.max_lag, observations.sha...
+                    ^~~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:219: error: FloatArray? has no attribute "shape"
+ [attr-defined]
+                observations.shape[0] - self.max_lag, observations.shape[1...
+                ^~~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:223: error: FloatArray? has no attribute "shape"
+ [attr-defined]
+                observations.shape[0] - self.max_lag, observations.shape[1...
+                ^~~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:261: error: FloatArray? has no attribute "shape"
+ [attr-defined]
+                observations.shape[0] - self.max_lag, observations.shape[1...
+                ^~~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:265: error: FloatArray? has no attribute "copy" 
+[attr-defined]
+            self.data_ = observations.copy()
+                         ^~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:291: error: Value of type FloatArray? is not
+indexable  [index]
+                intercept = float(params[0])
+                                  ^~~~~~~~~
+src/pystarmax/models/starma.py:294: error: Value of type FloatArray? is not
+indexable  [index]
+            ar_params = params[cursor:ar_end].reshape(self.ar_order, len(s...
+                        ^~~~~~~~~~~~~~~~~~~~~
+src/pystarmax/models/starma.py:296: error: Value of type FloatArray? is not
+indexable  [index]
+            ma_params = params[cursor:].reshape(self.ma_order, len(self.we...
+                        ^~~~~~~~~~~~~~~
+Found 39 errors in 6 files (checked 8 source files)
