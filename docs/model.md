@@ -73,3 +73,18 @@ highest-difference scale. `STARIMA.predict_differenced()` retains that scale,
 whereas `STARIMA.predict()` returns the recursively reconstructed original
 scale. When an intercept is included and `d=1`, it is a drift term after
 inversion.
+
+
+## Multiplicative seasonal integration
+
+For `(p,d,q)x(P,D,Q)_s`, the transformed process is
+
+\[
+w_t=(1-B)^d(1-B^s)^D z_t.
+\]
+
+The seasonal matrix polynomial multiplies the ordinary polynomial on the left.
+Consequently, autoregressive cross terms use `-S_j A_i` and moving-average
+cross terms use `+N_j M_i`. Matrix multiplication order is retained exactly;
+no closure of the spatial-weight basis is assumed. Factor parameters are fitted
+by nonlinear conditional least squares when `P>0` or `Q>0`.
