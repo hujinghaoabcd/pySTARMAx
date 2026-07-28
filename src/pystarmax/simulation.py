@@ -82,16 +82,14 @@ def simulate_starma(
         value = np.full(resolved.n_locations, float(intercept), dtype=float)
         for temporal_lag in range(1, ar.shape[0] + 1):
             for spatial_lag, matrix in enumerate(resolved):
-                value += (
-                    ar[temporal_lag - 1, spatial_lag]
-                    * (matrix @ series[time_index - temporal_lag])
+                value += ar[temporal_lag - 1, spatial_lag] * (
+                    matrix @ series[time_index - temporal_lag]
                 )
         value += innovations[time_index]
         for temporal_lag in range(1, ma.shape[0] + 1):
             for spatial_lag, matrix in enumerate(resolved):
-                value += (
-                    ma[temporal_lag - 1, spatial_lag]
-                    * (matrix @ innovations[time_index - temporal_lag])
+                value += ma[temporal_lag - 1, spatial_lag] * (
+                    matrix @ innovations[time_index - temporal_lag]
                 )
         series[time_index] = value
     start = max_lag + burnin

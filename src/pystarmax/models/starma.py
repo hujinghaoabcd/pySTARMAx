@@ -136,9 +136,9 @@ class STARMA:
         design, target = self._design_ar_only(data, weights)
         params = self._solve(design, target)
         fitted = design @ params
-        residuals[self.max_lag :] = (
-            target - fitted
-        ).reshape(data.shape[0] - self.max_lag, data.shape[1])
+        residuals[self.max_lag :] = (target - fitted).reshape(
+            data.shape[0] - self.max_lag, data.shape[1]
+        )
         if self.max_lag:
             residuals[: self.max_lag] = data[: self.max_lag] - data.mean(axis=0)
         return residuals
@@ -179,9 +179,9 @@ class STARMA:
             fitted_vector = design @ params
             updated = np.zeros_like(observations)
             updated[: self.max_lag] = residuals[: self.max_lag]
-            updated[self.max_lag :] = (
-                target - fitted_vector
-            ).reshape(observations.shape[0] - self.max_lag, observations.shape[1])
+            updated[self.max_lag :] = (target - fitted_vector).reshape(
+                observations.shape[0] - self.max_lag, observations.shape[1]
+            )
             iterations = iteration
             if previous is not None:
                 denominator = max(1.0, float(np.linalg.norm(previous)))
@@ -227,9 +227,7 @@ class STARMA:
             np.cov(residual_matrix, rowvar=False, ddof=1)
         ).astype(float)
         sigma2_ml = max(sum_squared / n_observations, np.finfo(float).tiny)
-        log_likelihood = -0.5 * n_observations * (
-            np.log(2.0 * np.pi * sigma2_ml) + 1.0
-        )
+        log_likelihood = -0.5 * n_observations * (np.log(2.0 * np.pi * sigma2_ml) + 1.0)
         aic = -2.0 * log_likelihood + 2.0 * n_params
         bic = -2.0 * log_likelihood + np.log(n_observations) * n_params
         method = (
@@ -293,9 +291,7 @@ class STARMA:
             intercept = float(params[0])
             cursor = 1
         ar_end = cursor + self.ar_order * len(self.weights_)
-        ar_params = params[cursor:ar_end].reshape(
-            self.ar_order, len(self.weights_)
-        )
+        ar_params = params[cursor:ar_end].reshape(self.ar_order, len(self.weights_))
         cursor += self.ar_order * len(self.weights_)
         ma_params = params[cursor:].reshape(self.ma_order, len(self.weights_))
         forecasts: list[FloatArray] = []
@@ -303,15 +299,13 @@ class STARMA:
             value = np.full(self.weights_.n_locations, intercept, dtype=float)
             for temporal_lag in range(1, self.ar_order + 1):
                 for spatial_lag, matrix in enumerate(self.weights_):
-                    value += (
-                        ar_params[temporal_lag - 1, spatial_lag]
-                        * (matrix @ history[-temporal_lag])
+                    value += ar_params[temporal_lag - 1, spatial_lag] * (
+                        matrix @ history[-temporal_lag]
                     )
             for temporal_lag in range(1, self.ma_order + 1):
                 for spatial_lag, matrix in enumerate(self.weights_):
-                    value += (
-                        ma_params[temporal_lag - 1, spatial_lag]
-                        * (matrix @ innovation_history[-temporal_lag])
+                    value += ma_params[temporal_lag - 1, spatial_lag] * (
+                        matrix @ innovation_history[-temporal_lag]
                     )
             forecasts.append(value)
             history.append(value)

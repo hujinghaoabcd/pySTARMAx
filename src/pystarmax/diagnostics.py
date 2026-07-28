@@ -123,8 +123,7 @@ def stpacf(
             columns = []
             for temporal_lag in range(1, order + 1):
                 columns.extend(
-                    matrix @ values[time_index - temporal_lag]
-                    for matrix in resolved
+                    matrix @ values[time_index - temporal_lag] for matrix in resolved
                 )
             design_rows.append(np.column_stack(columns))
             target_rows.append(values[time_index])
