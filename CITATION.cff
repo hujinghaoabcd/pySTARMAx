@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use pySTARMAx in research, please cite this software."
+title: "pySTARMAx"
+type: software
+authors:
+  - family-names: Hu
+    given-names: Jinghao
+    email: hujinghao20@mails.ucas.ac.cn
+repository-code: "https://github.com/hujinghaoabcd/pySTARMAx"
+license: MIT
+version: 0.0.1
+date-released: 2026-07-28

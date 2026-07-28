@@ -1,0 +1,21 @@
+site_name: pySTARMAx
+site_description: Modern space-time autoregressive moving-average modelling in Python
+repo_url: https://github.com/hujinghaoabcd/pySTARMAx
+repo_name: hujinghaoabcd/pySTARMAx
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Model convention: model.md
+  - Roadmap: roadmap.md
+  - References: references.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
