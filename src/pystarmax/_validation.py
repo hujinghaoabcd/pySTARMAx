@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeAlias, cast
 
 import numpy as np
 import numpy.typing as npt
 
-FloatArray = npt.NDArray[np.float64]
+FloatArray: TypeAlias = npt.NDArray[np.float64]
 
 
 def as_float_matrix(value: Any, *, name: str) -> FloatArray:
@@ -20,7 +20,7 @@ def as_float_matrix(value: Any, *, name: str) -> FloatArray:
         raise ValueError(f"{name} must be a two-dimensional array")
     if not np.all(np.isfinite(array)):
         raise ValueError(f"{name} must contain only finite values")
-    return np.ascontiguousarray(array, dtype=float)
+    return cast(FloatArray, np.ascontiguousarray(array, dtype=float))
 
 
 def validate_time_space(value: Any, *, name: str = "data") -> FloatArray:
