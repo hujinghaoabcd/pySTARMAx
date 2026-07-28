@@ -11,8 +11,10 @@ engineering conventions established in pyGWRx and pyKDEX.
 ## Repository state
 
 - PR #1 was squash-merged into `main` as commit `795c7e45`.
-- Current development branch: `agent/classic-stpacf-reference`.
-- Package version under development: `0.0.2`.
+- PR #2 was squash-merged into `main` as commit `689f9927`.
+- Current development branch: `agent/starima-differencing`.
+- Current draft pull request: PR #3.
+- Package version under development: `0.0.3`.
 
 ## Completed baseline
 
@@ -25,55 +27,58 @@ engineering conventions established in pyGWRx and pyKDEX.
 - STARMA iterative conditional least-squares estimator;
 - coefficient uncertainty, residual covariance, log likelihood, AIC, and BIC;
 - recursive multi-step forecast;
-- residual portmanteau test;
+- classical STACF, nested Yule–Walker STPACF, and residual portmanteau test;
+- exact-rational diagnostic reference fixture;
 - unit tests, examples, MkDocs pages, packaging, and multi-platform CI.
 
 ## Completed in the current step
 
-- added public `stcov` with explicit past/future spatial-lag orientation;
-- corrected STACF orientation for non-symmetric row-standardized weights;
-- implemented the classical nested Yule–Walker STPACF;
-- retained the former regression diagnostic as `stpacf_regression` and
-  `stpacf(..., method="regression")`;
-- added `auto`, `solve`, and `lstsq` policies for singular Yule–Walker systems;
-- added an exact-rational fixture generated without importing pySTARMAx;
-- added a deliberately non-symmetric reference weight to expose transpose errors;
-- increased local tests from 15 to 22 and local branch coverage to about 90%.
+- added `ordinary_difference()` for `(1-B)^d` temporal differencing;
+- added immutable `DifferencingState` end-of-sample anchors;
+- implemented recursive forecast inversion for arbitrary ordinary order `d`;
+- added compositional `STARIMA(p, d, q)` over the existing STARMA estimator;
+- kept `STARMAResult` explicitly on the differenced scale;
+- added `predict_differenced()` and original-scale `predict()`;
+- added `simulate_starima()` with zero or user-supplied integration anchors;
+- verified `d=0` produces the same parameters and forecasts as STARMA;
+- increased the local suite from 22 to 32 passing tests;
+- reached about 91.7% local branch coverage.
 
 ## Design principles
 
 1. Preserve one explicit `(time, location)` convention.
 2. Keep numerical methods independent and auditable.
-3. Separate data/weights, estimation, diagnostics, simulation, and results.
+3. Separate data transforms, weights, estimation, diagnostics, simulation, and results.
 4. Validate dimensions and assumptions before numerical work.
 5. Treat current conditional estimation as a baseline, not exact likelihood.
 6. Add reference fixtures before claiming cross-language equivalence.
 7. Make matrix orientation explicit whenever non-symmetric weights matter.
-8. Keep future sparse/state-space acceleration behind stable interfaces.
+8. Keep differenced-scale inference distinct from original-scale reconstruction.
+9. Keep future sparse/state-space acceleration behind stable interfaces.
 
 ## Immediate next tasks
 
-1. Implement a reversible differencing operator for ordinary STARIMA.
-2. Add forecast inversion with stored initial conditions.
-3. Extend simulation and tests to integrated processes.
-4. Add seasonal differencing and multiplicative seasonal lag specifications.
-5. Implement state-space/Kalman maximum likelihood.
-6. Support missing observations.
-7. Add diagonal/full innovation covariance estimation and tests.
-8. Add sparse matrices and NetworkX/libpysal adapters.
-9. Add automatic order selection and rolling-origin evaluation.
-10. Prepare the first PyPI pre-release after the STARIMA layer is validated.
+1. Add seasonal differencing and multiplicative seasonal lag specifications.
+2. Reconstruct in-sample fitted values on the original scale.
+3. Add forecast intervals and propagate uncertainty through integration.
+4. Implement state-space/Kalman maximum likelihood.
+5. Support missing observations.
+6. Add diagonal/full innovation covariance estimation and tests.
+7. Add sparse matrices and NetworkX/libpysal adapters.
+8. Add automatic order selection and rolling-origin evaluation.
+9. Add exogenous regressors and interventions.
+10. Prepare the first PyPI pre-release after seasonal STARIMA is validated.
 
 ## Known limitations
 
 - MA estimation is conditional and uses estimated innovations.
 - Standard errors for MA models are approximate conditional OLS values.
 - The likelihood currently uses a scalar innovation variance for information criteria.
+- STARIMA fitted values, residuals, likelihood, AIC, and BIC are on the differenced scale.
+- Forecast uncertainty is not yet propagated through inverse differencing.
 - Dense matrices are used throughout.
-- No missing-value handling, differencing, seasonal operators, exogenous regressors,
-  or interventions yet.
-- The exact-rational fixture validates diagnostics; estimator cross-language
-  fixtures remain a later task.
+- No missing-value handling, seasonal operators, exogenous regressors, or interventions yet.
+- The exact-rational fixture validates diagnostics; estimator cross-language fixtures remain later work.
 
 ## Handoff instruction
 
