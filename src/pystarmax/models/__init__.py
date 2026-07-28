@@ -3,6 +3,7 @@
 
 """Model classes."""
 
+from pystarmax.models.starima import STARIMA
 from pystarmax.models.starma import STAR, STARMA
 
-__all__ = ["STAR", "STARMA"]
+__all__ = ["STAR", "STARMA", "STARIMA"]
