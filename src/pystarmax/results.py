@@ -7,11 +7,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import numpy as np
-import numpy.typing as npt
 import pandas as pd
 
-FloatArray = npt.NDArray[np.float64]
+from pystarmax._validation import FloatArray
 
 
 @dataclass(frozen=True, slots=True)
