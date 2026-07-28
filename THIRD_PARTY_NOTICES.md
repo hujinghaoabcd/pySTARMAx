@@ -49,3 +49,11 @@ The R `starma` package was inspected only to confirm the documented ordering of
 nested temporal and spatial lag systems. No GPL-licensed source is copied,
 translated, linked, or bundled. The fixture generator imports no pySTARMAx or
 third-party numerical code.
+
+
+## Seasonal implementation independence
+
+The multiplicative seasonal implementation was written independently from the
+published matrix-polynomial definition. It uses SciPy nonlinear least squares
+to retain factor-product constraints. No source from a third-party STARIMA
+implementation is copied, translated, linked, or bundled.
