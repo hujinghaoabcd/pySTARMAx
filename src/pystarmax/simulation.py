@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 
 from pystarmax._validation import FloatArray, as_float_matrix, validate_nonnegative_int
+from pystarmax.differencing import DifferencingState
 from pystarmax.weights import SpatialWeights, coerce_weights
 
 
@@ -94,3 +95,52 @@ def simulate_starma(
         series[time_index] = value
     start = max_lag + burnin
     return series[start : start + n_steps]
+
+
+def simulate_starima(
+    *,
+    phi: Any,
+    theta: Any,
+    weights: Any,
+    n_steps: int,
+    integration_order: int = 1,
+    burnin: int = 200,
+    intercept: float = 0.0,
+    innovation_covariance: float | Any = 1.0,
+    random_state: int | np.random.Generator | None = None,
+    initial_state: DifferencingState | None = None,
+) -> FloatArray:
+    """Simulate an ordinary integrated STARMA process.
+
+    A stationary STARMA process is generated on the highest-difference scale and
+    then integrated through ``integration_order`` levels. By default every
+    lower-order level is anchored at zero immediately before the returned sample.
+    A user-supplied :class:`DifferencingState` can provide alternative anchors.
+    """
+    integration_order = validate_nonnegative_int(
+        integration_order, name="integration_order"
+    )
+    differenced = simulate_starma(
+        phi=phi,
+        theta=theta,
+        weights=weights,
+        n_steps=n_steps,
+        burnin=burnin,
+        intercept=intercept,
+        innovation_covariance=innovation_covariance,
+        random_state=random_state,
+    )
+    if initial_state is None:
+        initial_state = DifferencingState(
+            order=integration_order,
+            n_locations=differenced.shape[1],
+            anchors=tuple(
+                np.zeros(differenced.shape[1], dtype=float)
+                for _ in range(integration_order)
+            ),
+        )
+    elif initial_state.order != integration_order:
+        raise ValueError("initial_state order must match integration_order")
+    elif initial_state.n_locations != differenced.shape[1]:
+        raise ValueError("initial_state locations must match the simulated process")
+    return initial_state.inverse_forecast(differenced)

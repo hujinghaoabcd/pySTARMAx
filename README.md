@@ -8,11 +8,12 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: version 0.0.2 implements spatial-weight handling, STAR and iterative
-> conditional STARMA estimation, recursive forecasting, simulation, the classical
-> Pfeifer–Deutsch STACF and nested Yule–Walker STPACF, the earlier regression
-> diagnostic as an explicit alternative, and a residual portmanteau test. STARIMA
-> differencing, seasonal operators, missing-data state-space estimation,
+> Status: version 0.0.3 implements spatial-weight handling, STAR and iterative
+> conditional STARMA estimation, ordinary `STARIMA(p, d, q)` differencing,
+> original-scale forecast inversion, stationary and integrated simulation, the
+> classical Pfeifer–Deutsch STACF and nested Yule–Walker STPACF, the earlier
+> regression diagnostic as an explicit alternative, and a residual portmanteau
+> test. Seasonal operators, missing-data state-space estimation,
 > correlated-innovation likelihoods, and time-varying extensions are planned.
 
 ## Installation
@@ -50,6 +51,26 @@ print(model.predict(steps=6))
 The observation matrix uses the convention `(time, location)`. Spatial lag zero
 is the identity matrix; higher spatial lags are stored in `SpatialWeights`.
 
+
+## Ordinary STARIMA
+
+```python
+from pystarmax import STARIMA
+
+model = STARIMA(ar_order=1, integration_order=1, ma_order=1)
+result = model.fit(integrated_series, weights)
+
+# Inference remains on the differenced scale.
+print(result.summary())
+
+# Forecasts are reconstructed on the original scale.
+print(model.predict(steps=6))
+```
+
+`ordinary_difference()` exposes the same reversible transformation independently,
+and `predict_differenced()` returns forecasts before inverse differencing. See
+[`docs/starima.md`](docs/starima.md) for state and scale conventions.
+
 ## Diagnostics
 
 ```python
@@ -84,7 +105,8 @@ print(test)
 - identity, adjacency, distance, and higher-order spatial-weight construction;
 - structured fit results with coefficients, uncertainty, residual covariance,
   log likelihood, AIC, BIC, convergence state, and readable summaries;
-- deterministic simulation and static numerical tests;
+- deterministic stationary and integrated simulation with static numerical tests;
+- ordinary differencing with immutable forecast-inversion state;
 - exact-rational reference fixtures generated without importing pySTARMAx;
 - explicit covariance orientation for non-symmetric row-standardized weights;
 - one public numerical route first, with sparse and compiled acceleration hidden
