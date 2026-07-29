@@ -1,16 +1,20 @@
 # Original-scale fitted values and forecast intervals
 
-pySTARMAx 0.0.5 adds two outputs that remain separate from transformed-scale
+pySTARMAx 0.0.5 added two outputs that remain separate from transformed-scale
 parameter inference:
 
 - aligned one-step fitted values on the original observation scale;
 - simulation-based conditional innovation forecast intervals.
 
+Version 0.0.6 adds a separate direct-bootstrap interval API that refits
+same-length pseudo-samples and therefore propagates parameter-estimation
+variation.
+
 ## Original-scale one-step fitted values
 
 `STARIMA.fit()` and `SeasonalSTARIMA.fit()` still return `STARMAResult` on the
-highest differenced scale. The new `fitted_original()` method reconstructs an
-array with the same shape as the original observations.
+highest differenced scale. The `fitted_original()` method reconstructs an array
+with the same shape as the original observations.
 
 For the combined differencing polynomial
 
@@ -78,19 +82,23 @@ eigenvalues attributable to floating-point error are clipped to zero, allowing
 singular covariance estimates while preserving estimated cross-location
 dependence. Materially indefinite covariance matrices are rejected.
 
-## Interpretation
+## Uncertainty scope
 
-The current interval is conditional on:
+`predict_interval()` is conditional on:
 
 - the fitted model coefficients;
 - the observed history;
 - the estimated innovation covariance;
 - the package's zero pre-sample innovation convention.
 
-It includes future innovation uncertainty but does **not** yet include parameter
-estimation uncertainty, model-order uncertainty, or uncertainty in the spatial
-weights. It is therefore a conditional predictive interval, not a full Bayesian
-or bootstrap parameter-uncertainty interval.
+It includes future innovation uncertainty but excludes parameter-estimation,
+model-order, and spatial-weight uncertainty.
+
+`predict_bootstrap_interval()` is the parameter-aware alternative. It generates
+same-length pseudo-samples, refits the original specification, and optionally
+adds a new future innovation path after every refit. See
+[Bootstrap forecast intervals](bootstrap.md) for methods, convergence controls,
+and limitations.
 
 ## Reproducibility
 
