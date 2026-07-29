@@ -22,6 +22,8 @@ engineering conventions established in pyGWRx and pyKDEX.
 - The corrected seasonal implementation has been formatted with the project-pinned
   Black release before the final cross-platform validation run.
 - Forecasting-test imports have been normalized with the project-pinned isort release.
+- Forecast interval shapes and retained seasonal residuals now use explicit type
+  narrowing accepted by the project mypy configuration.
 
 ## Completed baseline
 
@@ -51,7 +53,8 @@ engineering conventions established in pyGWRx and pyKDEX.
 - documented that intervals condition on estimated parameters;
 - increased the local suite from 45 to 52 passing tests;
 - retained approximately 91.3% local branch coverage;
-- fixed seasonal AR parameter reshaping to consistently use `n_spatial`.
+- fixed seasonal AR parameter reshaping to consistently use `n_spatial`;
+- added explicit shape and optional-residual type guards for strict mypy validation.
 
 ## Design principles
 
