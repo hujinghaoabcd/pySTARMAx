@@ -21,6 +21,7 @@ engineering conventions established in pyGWRx and pyKDEX.
   fixed a one-token `nspatial`/`n_spatial` typo in seasonal parameter splitting.
 - The corrected seasonal implementation has been formatted with the project-pinned
   Black release before the final cross-platform validation run.
+- Forecasting-test imports have been normalized with the project-pinned isort release.
 
 ## Completed baseline
 
