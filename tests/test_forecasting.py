@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 from pystarmax import (
-    ForecastInterval,
     STARIMA,
     STARMA,
+    ForecastInterval,
     SeasonalSTARIMA,
     SpatialWeights,
     combined_difference,
