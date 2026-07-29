@@ -1,6 +1,6 @@
 # pySTARMAx project status
 
-Updated: 2026-07-28
+Updated: 2026-07-29
 
 ## Purpose
 
@@ -17,6 +17,8 @@ engineering conventions established in pyGWRx and pyKDEX.
 - Current development target: version `0.0.5`.
 - Current stage: original-scale fitted values and conditional forecast intervals.
 - Formal implementation surface: 19 changed files with no temporary workflow or payload files.
+- GitHub-hosted runners are available again; the first real matrix run exposed and
+  fixed a one-token `nspatial`/`n_spatial` typo in seasonal parameter splitting.
 
 ## Completed baseline
 
@@ -45,7 +47,8 @@ engineering conventions established in pyGWRx and pyKDEX.
 - stabilized fitted covariance simulation by symmetric eigenvalue clipping;
 - documented that intervals condition on estimated parameters;
 - increased the local suite from 45 to 52 passing tests;
-- retained approximately 91.3% local branch coverage.
+- retained approximately 91.3% local branch coverage;
+- fixed seasonal AR parameter reshaping to consistently use `n_spatial`.
 
 ## Design principles
 
