@@ -106,23 +106,29 @@ core.
   conditions; later values are recursively generated from pseudo-history.
 - the method raises rather than silently returning fewer successful paths.
 
-## Validation completed before final CI
+## Final validation
 
-- project-pinned Black and isort applied;
-- Ruff passed;
-- mypy passed;
-- nine focused bootstrap tests passed;
-- first PR matrix job passed on macOS/Python 3.11;
-- source and wheel distributions built and passed Twine checks.
+GitHub Actions CI run #137 completed successfully:
 
-## Remaining work in this stage
+- 61 tests passed;
+- branch coverage was 89.57%, above the configured 80% threshold;
+- Black, isort, Ruff, and mypy passed;
+- exact diagnostic fixture regeneration produced a clean diff;
+- strict MkDocs build passed;
+- source and wheel distributions built and passed Twine checks;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-1. trigger a user-authored final CI run after documentation changes;
-2. verify Black, isort, Ruff, mypy, exact fixture regeneration, and strict MkDocs;
-3. verify all 61 tests with branch coverage;
-4. verify Ubuntu, Windows, and macOS on Python 3.11–3.14;
-5. update `PROJECT_STATUS.md` and PR #6 with exact final results;
-6. leave PR #6 as draft unless the user explicitly requests merge.
+A final documentation-only CI run is triggered by this handoff update. It should
+be treated as the branch-head confirmation; no numerical code changed after run
+#137.
+
+## Stage disposition
+
+- implementation is complete;
+- public documentation and research references are complete;
+- PR #6 remains a draft;
+- do not merge unless the user explicitly asks;
+- after merge, start the rolling-origin coverage and interval-scoring stage.
 
 ## Next scientific extensions
 
