@@ -1,6 +1,6 @@
 # Seasonal STARIMA
 
-pySTARMAx 0.0.4 adds ordinary-seasonal differencing and a constrained
+pySTARMAx 0.0.5 supports ordinary-seasonal differencing and a constrained
 multiplicative seasonal model. The public order convention is
 
 \[
@@ -89,6 +89,8 @@ result = model.fit(observations, weights)
 print(result.summary())          # highest-difference scale
 print(model.predict_differenced(steps=24))
 print(model.predict(steps=24))   # original scale
+print(model.fitted_original())       # aligned one-step fits
+print(model.predict_interval(steps=24, random_state=42))
 ```
 
 When `P=Q=0`, estimation delegates to the existing linear STARMA core after
@@ -146,5 +148,7 @@ using zero initial histories by default or a supplied `CombinedDifferencingState
 - standard errors use the local nonlinear least-squares Jacobian;
 - likelihood, AIC, and BIC use the same scalar-innovation approximation as the
   existing conditional estimator;
-- fitted values and residuals remain on the transformed scale;
-- forecast intervals and exact state-space likelihood are not yet implemented.
+- the stored result, fitted values, and residuals remain on the transformed scale;
+- `fitted_original()` is a separate aligned one-step reconstruction;
+- forecast intervals condition on fitted factor parameters;
+- exact state-space likelihood is not yet implemented.

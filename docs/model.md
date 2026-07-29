@@ -88,3 +88,20 @@ Consequently, autoregressive cross terms use `-S_j A_i` and moving-average
 cross terms use `+N_j M_i`. Matrix multiplication order is retained exactly;
 no closure of the spatial-weight basis is assumed. Factor parameters are fitted
 by nonlinear conditional least squares when `P>0` or `Q>0`.
+
+
+## Original-scale fitted-value convention
+
+For integrated models, `STARMAResult.fitted_values` remains on the highest
+difference scale. `fitted_original()` applies the combined differencing
+polynomial at each aligned time using observed lagged values. It therefore
+represents a one-step conditional fit, not a recursively integrated fitted
+trajectory.
+
+## Forecast-interval convention
+
+`predict_interval()` draws future innovations from the fitted contemporaneous
+location covariance and recursively propagates them through AR and MA dynamics.
+For STARIMA models, each complete simulated path is inverse-differenced before
+quantiles are computed. The interval conditions on estimated coefficients and
+does not yet include parameter uncertainty.

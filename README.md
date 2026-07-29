@@ -8,14 +8,15 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: version 0.0.4 implements spatial-weight handling, STAR and iterative
+> Status: version 0.0.5 implements spatial-weight handling, STAR and iterative
 > conditional STARMA estimation, ordinary `STARIMA(p, d, q)` and multiplicative seasonal
 > `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal differencing,
 > original-scale forecast inversion, stationary and integrated simulation, the
 > classical Pfeifer–Deutsch STACF and nested Yule–Walker STPACF, the earlier
 > regression diagnostic as an explicit alternative, and a residual portmanteau
 > test. Missing-data state-space estimation, correlated-innovation likelihoods,
-> forecast intervals, and time-varying extensions are planned.
+> parameter-uncertainty intervals, missing-data state-space estimation, and
+time-varying extensions are planned.
 
 ## Installation
 
@@ -93,6 +94,32 @@ Seasonal AR and MA factors are estimated under true multiplicative constraints.
 Cross-lag matrices are generated as ordered matrix products rather than fitted as
 independent coefficients. See [`docs/seasonal.md`](docs/seasonal.md).
 
+
+## Fitted values and forecast intervals
+
+```python
+# One-step fitted values aligned to the original observation matrix.
+fitted = model.fitted_original()
+
+interval = model.predict_interval(
+    steps=24,
+    level=0.95,
+    n_simulations=2000,
+    random_state=42,
+)
+print(interval.mean)
+print(interval.lower)
+print(interval.upper)
+```
+
+`fitted_original()` uses observed historical values when reversing differencing,
+so it represents aligned one-step conditional fits rather than a recursively
+integrated pseudo-series. `predict_interval()` simulates future innovations from
+the fitted location covariance, propagates them through AR and MA dynamics, and
+then inverts each ordinary-seasonal path before computing quantiles. These
+intervals condition on estimated parameters. See
+[`docs/forecasting.md`](docs/forecasting.md).
+
 ## Diagnostics
 
 ```python
@@ -129,6 +156,8 @@ print(test)
   log likelihood, AIC, BIC, convergence state, and readable summaries;
 - deterministic stationary and integrated simulation with static numerical tests;
 - ordinary and seasonal differencing with immutable forecast-inversion state;
+- aligned original-scale one-step fitted values;
+- conditional innovation intervals with full pathwise inverse differencing;
 - factorized multiplicative seasonal operators with explicit matrix order;
 - exact-rational reference fixtures generated without importing pySTARMAx;
 - explicit covariance orientation for non-symmetric row-standardized weights;

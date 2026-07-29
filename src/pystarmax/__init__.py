@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 from pystarmax.diagnostics import (
     PortmanteauResult,
@@ -23,9 +23,12 @@ from pystarmax.differencing import (
     DifferencingState,
     SeasonalDifferencingState,
     combined_difference,
+    differencing_coefficients,
     ordinary_difference,
+    restore_fitted_values,
     seasonal_difference,
 )
+from pystarmax.forecasting import ForecastInterval
 from pystarmax.models import STAR, STARIMA, STARMA, SeasonalSTARIMA
 from pystarmax.results import STARMAResult
 from pystarmax.seasonal import LagOperator, expand_multiplicative_operators
@@ -48,6 +51,7 @@ __all__ = [
     "STARIMA",
     "SeasonalSTARIMA",
     "STARMAResult",
+    "ForecastInterval",
     "DifferencingState",
     "SeasonalDifferencingState",
     "CombinedDifferencingState",
@@ -60,6 +64,8 @@ __all__ = [
     "ordinary_difference",
     "seasonal_difference",
     "combined_difference",
+    "differencing_coefficients",
+    "restore_fitted_values",
     "LagOperator",
     "expand_multiplicative_operators",
     "stcov",

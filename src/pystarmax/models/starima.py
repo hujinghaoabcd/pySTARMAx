@@ -7,12 +7,23 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from pystarmax._validation import (
     FloatArray,
     validate_nonnegative_int,
     validate_time_space,
 )
-from pystarmax.differencing import DifferencingState, ordinary_difference
+from pystarmax.differencing import (
+    DifferencingState,
+    ordinary_difference,
+    restore_fitted_values,
+)
+from pystarmax.forecasting import (
+    ForecastInterval,
+    interval_from_paths,
+    validate_interval_arguments,
+)
 from pystarmax.models.starma import STARMA
 from pystarmax.results import STARMAResult
 
@@ -116,3 +127,50 @@ class STARIMA:
             raise RuntimeError("fit must be called before predict")
         differenced = self.predict_differenced(steps=steps)
         return self.differencing_state_.inverse_forecast(differenced)
+
+    def fitted_original(self) -> FloatArray:
+        """Return aligned one-step fitted values on the original scale."""
+        if self.result_ is None or self.data_ is None:
+            raise RuntimeError("fit must be called before fitted_original")
+        return restore_fitted_values(
+            self.data_,
+            self.result_.fitted_values,
+            ordinary_order=self.integration_order,
+        )
+
+    def predict_interval(
+        self,
+        steps: int = 1,
+        *,
+        level: float = 0.95,
+        n_simulations: int = 1000,
+        random_state: int | np.random.Generator | None = None,
+    ) -> ForecastInterval:
+        """Return an original-scale conditional innovation interval.
+
+        Each simulated differenced path is recursively integrated with the
+        immutable end-of-sample state before empirical quantiles are computed.
+        Estimated-parameter uncertainty is not included.
+        """
+        if self.differencing_state_ is None:
+            raise RuntimeError("fit must be called before predict")
+        steps, level, n_simulations = validate_interval_arguments(
+            steps=steps, level=level, n_simulations=n_simulations
+        )
+        differenced_paths = self.core_model._simulate_forecast_paths(
+            steps=steps,
+            n_simulations=n_simulations,
+            random_state=random_state,
+        )
+        paths = np.stack(
+            [
+                self.differencing_state_.inverse_forecast(path)
+                for path in differenced_paths
+            ],
+            axis=0,
+        )
+        return interval_from_paths(
+            mean=self.predict(steps=steps),
+            paths=paths,
+            level=level,
+        )

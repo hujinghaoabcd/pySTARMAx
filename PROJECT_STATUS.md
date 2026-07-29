@@ -1,6 +1,6 @@
 # pySTARMAx project status
 
-Updated: 2026-07-28
+Updated: 2026-07-29
 
 ## Purpose
 
@@ -13,86 +13,93 @@ engineering conventions established in pyGWRx and pyKDEX.
 - PR #1 was squash-merged into `main` as commit `795c7e45`.
 - PR #2 was squash-merged into `main` as commit `689f9927`.
 - PR #3 was squash-merged into `main` as commit `d89fa7ce`.
-- Current development branch: `agent/seasonal-starima`.
-- Current draft pull request: PR #4.
-- Package version under development: `0.0.4`.
-- Formal implementation surface: 17 changed files with no temporary workflow files.
+- PR #4 was squash-merged into `main` as commit `6bd29a63`.
+- Current development target: version `0.0.5`.
+- Current stage: original-scale fitted values and conditional forecast intervals.
+- Formal implementation surface: 19 changed files with no temporary workflow or payload files.
+- GitHub-hosted runners are available again; the first real matrix run exposed and
+  fixed a one-token `nspatial`/`n_spatial` typo in seasonal parameter splitting.
+- The corrected seasonal implementation has been formatted with the project-pinned
+  Black release before the final cross-platform validation run.
+- Forecasting-test imports have been normalized with the project-pinned isort release.
+- Forecast interval shapes and retained seasonal residuals now use explicit type
+  narrowing accepted by the project mypy configuration.
 
 ## Completed baseline
 
 - repository metadata, MIT licence, citation file, contribution and security policies;
 - `src/` package layout and typed public API;
-- immutable spatial-weight collection;
-- lattice, distance, row-standardized, and higher-order weights;
-- deterministic STARMA simulation;
-- STAR ordinary least-squares estimator;
-- STARMA iterative conditional least-squares estimator;
-- coefficient uncertainty, residual covariance, log likelihood, AIC, and BIC;
-- recursive multi-step forecast;
-- classical STACF, nested Yule–Walker STPACF, and residual portmanteau test;
+- immutable spatial-weight collections and constructors;
+- STAR ordinary least squares and STARMA conditional least squares;
+- coefficient uncertainty, innovation covariance, likelihood, AIC, and BIC;
+- recursive point forecasts and deterministic simulation;
+- classical STACF, nested Yule–Walker STPACF, and residual portmanteau tests;
 - exact-rational diagnostic reference fixture;
-- ordinary STARIMA differencing, simulation, and original-scale forecasting;
-- unit tests, examples, MkDocs pages, packaging, and multi-platform CI.
+- ordinary STARIMA differencing and forecast inversion;
+- multiplicative seasonal STARIMA with constrained matrix-polynomial factors;
+- ordinary-seasonal simulation, documentation, packaging, and multi-platform CI.
 
 ## Completed in the current step
 
-- added `seasonal_difference()` for `(1-B^s)^D` temporal differencing;
-- added immutable `SeasonalDifferencingState` rolling seasonal histories;
-- added `combined_difference()` and `CombinedDifferencingState` for `(d,D,s)`;
-- added public `LagOperator` and `expand_multiplicative_operators()` auditing;
-- fixed the matrix-polynomial convention as seasonal factor left of ordinary factor;
-- retained non-commuting cross terms as ordered matrix products without basis projection;
-- added `SeasonalSTARIMA(p,d,q)x(P,D,Q)_s`;
-- used nonlinear conditional least squares so cross-lag coefficients remain factor products;
-- delegated `P=Q=0` models to the existing STARMA core for numerical compatibility;
-- added stationary and integrated seasonal simulation;
-- added separate AR-factor and MA-factor recovery tests;
-- increased the suite from 32 to 45 passing tests;
-- retained about 90.8% local branch coverage.
+- added `differencing_coefficients()` for `(1-B)^d(1-B^s)^D`;
+- added `restore_fitted_values()` for aligned one-step original-scale fits;
+- added `STARIMA.fitted_original()` and `SeasonalSTARIMA.fitted_original()`;
+- added immutable `ForecastInterval` with mean, bounds, level, and simulation count;
+- added conditional innovation simulation to STAR/STARMA;
+- added original-scale interval propagation to ordinary STARIMA;
+- added pathwise ordinary-seasonal inverse differencing to seasonal STARIMA;
+- retained cross-horizon dependence before empirical quantiles are computed;
+- stabilized fitted covariance simulation by symmetric eigenvalue clipping;
+- documented that intervals condition on estimated parameters;
+- increased the local suite from 45 to 52 passing tests;
+- retained approximately 91.3% local branch coverage;
+- fixed seasonal AR parameter reshaping to consistently use `n_spatial`;
+- added explicit shape and optional-residual type guards for strict mypy validation.
 
 ## Design principles
 
 1. Preserve one explicit `(time, location)` convention.
 2. Keep numerical methods independent and auditable.
-3. Separate data transforms, weights, estimation, diagnostics, simulation, and results.
+3. Separate data transforms, weights, estimation, diagnostics, forecasting, simulation, and results.
 4. Validate dimensions and assumptions before numerical work.
-5. Treat current conditional estimation as a baseline, not exact likelihood.
+5. Treat conditional estimation as a baseline, not exact likelihood.
 6. Add reference fixtures before claiming cross-language equivalence.
 7. Make matrix orientation explicit whenever non-symmetric weights matter.
 8. Keep transformed-scale inference distinct from original-scale reconstruction.
-9. Do not label freely estimated cross lags as a multiplicative seasonal model.
-10. Do not assume the spatial-weight basis is closed under matrix multiplication.
-11. Keep future sparse/state-space acceleration behind stable interfaces.
+9. Use observed history for one-step fitted-value inversion.
+10. Propagate full simulated paths before inverse-differencing interval quantiles.
+11. Do not label innovation-only intervals as parameter-uncertainty intervals.
+12. Keep future sparse/state-space acceleration behind stable interfaces.
 
 ## Immediate next tasks
 
-1. Reconstruct in-sample fitted values on the original scale.
-2. Add forecast intervals and propagate uncertainty through ordinary-seasonal integration.
-3. Implement state-space/Kalman maximum likelihood.
-4. Support missing observations.
-5. Add diagonal/full innovation covariance estimation and tests.
+1. Add parameter-uncertainty intervals by bootstrap or asymptotic draws.
+2. Implement exact state-space/Kalman maximum likelihood.
+3. Support missing observations.
+4. Add diagonal and full innovation covariance likelihoods.
+5. Add stationarity and invertibility checks with optional constrained parameterization.
 6. Add sparse matrices and NetworkX/libpysal adapters.
 7. Add automatic order selection and rolling-origin evaluation.
 8. Add exogenous regressors and interventions.
-9. Add stationarity/invertibility diagnostics and optional constrained parameterization.
-10. Prepare the first PyPI pre-release after seasonal STARIMA is merged.
+9. Add cross-language estimator fixtures.
+10. Prepare the first PyPI pre-release after validation.
 
 ## Known limitations
 
 - MA estimation is conditional and uses recursively estimated innovations.
 - Seasonal nonlinear estimation uses zero pre-sample innovations.
 - Stationarity and invertibility constraints are not imposed during optimization.
-- Standard errors use a local nonlinear least-squares Jacobian.
-- The likelihood currently uses a scalar innovation variance for information criteria.
-- STARIMA fitted values, residuals, likelihood, AIC, and BIC remain on the transformed scale.
-- Forecast uncertainty is not yet propagated through inverse differencing.
-- Dense matrices are used throughout.
-- No missing-value handling, exogenous regressors, or interventions yet.
-- The exact-rational fixture validates diagnostics; seasonal estimator fixtures remain later work.
+- Seasonal standard errors use a local nonlinear least-squares Jacobian.
+- Information criteria use a scalar innovation-variance approximation.
+- `STARMAResult` for integrated models remains on the transformed scale.
+- `fitted_original()` is a one-step reconstruction, not a recursively integrated trajectory.
+- forecast intervals include future innovation uncertainty but not parameter or model-order uncertainty.
+- dense matrices are used throughout.
+- no missing-value handling, exogenous regressors, or interventions yet.
 
 ## Handoff instruction
 
-Before every substantial development step, read this file and the model
-convention in `docs/model.md`. After completing a step, update the completed,
-next-task, and limitation sections so another conversation can continue without
-reconstructing the project history.
+Before every substantial development step, read this file, `docs/model.md`, and
+`docs/forecasting.md`. After completing a step, update the completed, next-task,
+and limitation sections so another conversation can continue without rebuilding
+the project history.
