@@ -8,15 +8,13 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: version 0.0.5 implements spatial-weight handling, STAR and iterative
-> conditional STARMA estimation, ordinary `STARIMA(p, d, q)` and multiplicative seasonal
-> `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal differencing,
-> original-scale forecast inversion, stationary and integrated simulation, the
-> classical Pfeifer–Deutsch STACF and nested Yule–Walker STPACF, the earlier
-> regression diagnostic as an explicit alternative, and a residual portmanteau
-> test. Missing-data state-space estimation, correlated-innovation likelihoods,
-> parameter-uncertainty intervals, missing-data state-space estimation, and
-time-varying extensions are planned.
+> Status: version 0.0.6 implements spatial-weight handling, STAR and iterative
+> conditional STARMA estimation, ordinary `STARIMA(p, d, q)` and multiplicative
+> seasonal `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal
+> differencing, original-scale fitted values and forecasts, conditional
+> innovation intervals, and residual or parametric direct-bootstrap intervals
+> with model refitting. State-space likelihoods, missing observations, sparse
+> computation, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -52,7 +50,6 @@ print(model.predict(steps=6))
 
 The observation matrix uses the convention `(time, location)`. Spatial lag zero
 is the identity matrix; higher spatial lags are stored in `SpatialWeights`.
-
 
 ## Ordinary STARIMA
 
@@ -94,8 +91,7 @@ Seasonal AR and MA factors are estimated under true multiplicative constraints.
 Cross-lag matrices are generated as ordered matrix products rather than fitted as
 independent coefficients. See [`docs/seasonal.md`](docs/seasonal.md).
 
-
-## Fitted values and forecast intervals
+## Fitted values and conditional intervals
 
 ```python
 # One-step fitted values aligned to the original observation matrix.
@@ -119,6 +115,30 @@ the fitted location covariance, propagates them through AR and MA dynamics, and
 then inverts each ordinary-seasonal path before computing quantiles. These
 intervals condition on estimated parameters. See
 [`docs/forecasting.md`](docs/forecasting.md).
+
+## Bootstrap parameter uncertainty
+
+```python
+bootstrap = model.predict_bootstrap_interval(
+    steps=24,
+    level=0.95,
+    n_bootstrap=500,
+    bootstrap_method="residual",
+    include_future_innovations=True,
+    random_state=42,
+)
+```
+
+Each accepted replication generates a same-length pseudo-series, refits the same
+model specification, and contributes either a refitted conditional mean or one
+future path. Residual bootstrap samples complete innovation vectors, preserving
+contemporaneous location dependence. Parametric bootstrap draws from the fitted
+innovation covariance.
+
+Set `include_future_innovations=False` for a parameter-only interval. The default
+combines parameter-estimation and future-innovation uncertainty. Failed refits
+are retried up to `max_attempts`; the method never silently returns fewer paths
+than requested. See [`docs/bootstrap.md`](docs/bootstrap.md).
 
 ## Diagnostics
 
@@ -158,6 +178,8 @@ print(test)
 - ordinary and seasonal differencing with immutable forecast-inversion state;
 - aligned original-scale one-step fitted values;
 - conditional innovation intervals with full pathwise inverse differencing;
+- residual and parametric direct-bootstrap intervals with model refitting;
+- complete innovation-vector resampling to retain contemporaneous dependence;
 - factorized multiplicative seasonal operators with explicit matrix order;
 - exact-rational reference fixtures generated without importing pySTARMAx;
 - explicit covariance orientation for non-symmetric row-standardized weights;
@@ -166,25 +188,26 @@ print(test)
 - research references and implementation limitations documented in the repository.
 
 The classical STPACF is computed from nested leading-principal Yule–Walker
-systems in temporal-major, spatial-minor order. ``stpacf(..., method="regression")``
+systems in temporal-major, spatial-minor order. `stpacf(..., method="regression")`
 retains the projection-based diagnostic shipped in 0.0.1 for reproducibility.
 
 ## Scope of the conditional estimator
 
 The current estimator uses ordinary least squares for pure STAR models and an
 iterative conditional least-squares procedure for STARMA models. Seasonal factor
-models use nonlinear conditional least squares so multiplicative cross terms remain
-parameter products rather than independent coefficients. The package is intended
-as a transparent, testable baseline. It is not yet a replacement for a fully
-specified state-space maximum-likelihood implementation when innovations are
-contemporaneously correlated, observations are missing, or uncertainty from
-estimated innovations must be propagated exactly.
+models use nonlinear conditional least squares so multiplicative cross terms
+remain parameter products rather than independent coefficients. Bootstrap
+intervals propagate uncertainty through repeated use of these estimators; they
+do not change the underlying likelihood assumptions. The package remains a
+transparent, testable baseline rather than a replacement for a fully specified
+state-space maximum-likelihood implementation when observations are missing or
+innovation structure must be modelled exactly.
 
 ## References
 
-The initial architecture is grounded in the classical STARMA identification,
-estimation, seasonal modelling, and residual-diagnostic literature. See
-[`docs/references.md`](docs/references.md) and
+The architecture is grounded in the classical STARMA identification, estimation,
+seasonal modelling, residual-diagnostic, and bootstrap predictive-inference
+literature. See [`docs/references.md`](docs/references.md) and
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Licence
