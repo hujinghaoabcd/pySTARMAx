@@ -256,7 +256,7 @@ class SeasonalSTARIMA:
         conditional_lag = max(
             maximum_operator_lag(ar_terms),
             maximum_operator_lag(ma_terms),
-       )
+        )
         fitted = np.full_like(data, np.nan, dtype=float)
         residuals = np.zeros_like(data, dtype=float)
         for time_index in range(conditional_lag, data.shape[0]):
@@ -528,7 +528,7 @@ class SeasonalSTARIMA:
             for operator in ar_terms:
                 value += history[:, -operator.lag, :] @ operator.matrix.T
             for operator in ma_terms:
-                value += (innovation_history[:, -operator.lag, :] @ operator.matrix.T)
+                value += innovation_history[:, -operator.lag, :] @ operator.matrix.T
             innovation = future_innovations[:, step_index, :]
             value += innovation
             paths[:, step_index, :] = value
