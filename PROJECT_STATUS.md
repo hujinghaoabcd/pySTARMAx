@@ -19,6 +19,8 @@ engineering conventions established in pyGWRx and pyKDEX.
 - Formal implementation surface: 19 changed files with no temporary workflow or payload files.
 - GitHub-hosted runners are available again; the first real matrix run exposed and
   fixed a one-token `nspatial`/`n_spatial` typo in seasonal parameter splitting.
+- The corrected seasonal implementation has been formatted with the project-pinned
+  Black release before the final cross-platform validation run.
 
 ## Completed baseline
 
