@@ -205,7 +205,7 @@ class SeasonalSTARIMA:
             cursor = 1
 
         ar_size = self.ar_order * n_spatial
-        ar = params[cursor : cursor + ar_size].reshape(self.ar_order, nspatial)
+        ar = params[cursor : cursor + ar_size].reshape(self.ar_order, n_spatial)
         cursor += ar_size
 
         sar_size = self.seasonal_ar_order * n_spatial
