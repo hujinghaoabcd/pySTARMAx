@@ -24,9 +24,7 @@ def validate_bootstrap_method(method: str) -> BootstrapMethod:
     """Normalize and validate a bootstrap innovation method."""
     normalized = str(method).strip().lower()
     if normalized not in {"residual", "parametric"}:
-        raise ValueError(
-            "bootstrap_method must be 'residual' or 'parametric'"
-        )
+        raise ValueError("bootstrap_method must be 'residual' or 'parametric'")
     return cast(BootstrapMethod, normalized)
 
 
@@ -37,9 +35,7 @@ def validate_bootstrap_arguments(
     bootstrap_method: str,
 ) -> tuple[int, int, BootstrapMethod]:
     """Validate replication controls and return normalized values."""
-    resolved_bootstrap = validate_nonnegative_int(
-        n_bootstrap, name="n_bootstrap"
-    )
+    resolved_bootstrap = validate_nonnegative_int(n_bootstrap, name="n_bootstrap")
     if resolved_bootstrap < 2:
         raise ValueError("n_bootstrap must be at least two")
 
@@ -49,13 +45,9 @@ def validate_bootstrap_arguments(
             3 * resolved_bootstrap,
         )
     else:
-        resolved_attempts = validate_nonnegative_int(
-            max_attempts, name="max_attempts"
-        )
+        resolved_attempts = validate_nonnegative_int(max_attempts, name="max_attempts")
         if resolved_attempts < resolved_bootstrap:
-            raise ValueError(
-                "max_attempts must be at least n_bootstrap"
-            )
+            raise ValueError("max_attempts must be at least n_bootstrap")
     return (
         resolved_bootstrap,
         resolved_attempts,
@@ -67,14 +59,10 @@ def finite_centered_residuals(residuals: Any) -> FloatArray:
     """Return complete finite residual rows centered by location."""
     values = np.asarray(residuals, dtype=float)
     if values.ndim != 2 or values.shape[1] < 1:
-        raise ValueError(
-            "residuals must have shape (time, locations)"
-        )
+        raise ValueError("residuals must have shape (time, locations)")
     complete = values[np.all(np.isfinite(values), axis=1)]
     if complete.shape[0] < 2:
-        raise ValueError(
-            "residuals must contain at least two fully finite rows"
-        )
+        raise ValueError("residuals must contain at least two fully finite rows")
     centered = complete - complete.mean(axis=0, keepdims=True)
     return cast(
         FloatArray,
@@ -93,14 +81,10 @@ def draw_bootstrap_innovations(
 ) -> FloatArray:
     """Draw joint residual or Gaussian parametric innovation paths."""
     method = validate_bootstrap_method(bootstrap_method)
-    simulations = validate_nonnegative_int(
-        n_simulations, name="n_simulations"
-    )
+    simulations = validate_nonnegative_int(n_simulations, name="n_simulations")
     horizon = validate_nonnegative_int(steps, name="steps")
     if simulations == 0 or horizon == 0:
-        raise ValueError(
-            "n_simulations and steps must be positive"
-        )
+        raise ValueError("n_simulations and steps must be positive")
 
     if method == "parametric":
         return draw_innovations(
@@ -141,9 +125,7 @@ def restore_bootstrap_series(
     observations = validate_time_space(observed)
     values = np.asarray(transformed, dtype=float)
     if values.ndim != 2 or values.shape[1] != observations.shape[1]:
-        raise ValueError(
-            "transformed must have shape (time, observed locations)"
-        )
+        raise ValueError("transformed must have shape (time, observed locations)")
     if not np.all(np.isfinite(values)):
         raise ValueError("transformed must contain only finite values")
 
@@ -154,9 +136,7 @@ def restore_bootstrap_series(
     )
     offset = int(coefficients.size - 1)
     if values.shape[0] != observations.shape[0] - offset:
-        raise ValueError(
-            "transformed has an incompatible number of time rows"
-        )
+        raise ValueError("transformed has an incompatible number of time rows")
     if offset == 0:
         return cast(
             FloatArray,
@@ -168,12 +148,8 @@ def restore_bootstrap_series(
     for transformed_index, row in enumerate(values):
         time_index = transformed_index + offset
         current = np.asarray(row, dtype=float).copy()
-        for lag, coefficient in enumerate(
-            coefficients[1:], start=1
-        ):
-            current -= (
-                float(coefficient) * restored[time_index - lag]
-            )
+        for lag, coefficient in enumerate(coefficients[1:], start=1):
+            current -= float(coefficient) * restored[time_index - lag]
         restored[time_index] = current
     return cast(
         FloatArray,

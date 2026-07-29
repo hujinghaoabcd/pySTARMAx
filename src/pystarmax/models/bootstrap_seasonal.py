@@ -22,9 +22,7 @@ from pystarmax.models.seasonal_bootstrap import (
     seasonal_bootstrap_sample,
     simulate_seasonal_bootstrap_paths,
 )
-from pystarmax.models.seasonal_starima import (
-    SeasonalSTARIMA as _SeasonalSTARIMA,
-)
+from pystarmax.models.seasonal_starima import SeasonalSTARIMA as _SeasonalSTARIMA
 
 
 class SeasonalSTARIMA(_SeasonalSTARIMA):
@@ -36,9 +34,7 @@ class SeasonalSTARIMA(_SeasonalSTARIMA):
             integration_order=self.integration_order,
             ma_order=self.ma_order,
             seasonal_ar_order=self.seasonal_ar_order,
-            seasonal_integration_order=(
-                self.seasonal_integration_order
-            ),
+            seasonal_integration_order=(self.seasonal_integration_order),
             seasonal_ma_order=self.seasonal_ma_order,
             seasonal_period=self.seasonal_period,
             include_intercept=self.include_intercept,
@@ -65,12 +61,10 @@ class SeasonalSTARIMA(_SeasonalSTARIMA):
             level=level,
             n_simulations=max(2, n_bootstrap),
         )
-        n_bootstrap, max_attempts, method = (
-            validate_bootstrap_arguments(
-                n_bootstrap=n_bootstrap,
-                max_attempts=max_attempts,
-                bootstrap_method=bootstrap_method,
-            )
+        n_bootstrap, max_attempts, method = validate_bootstrap_arguments(
+            n_bootstrap=n_bootstrap,
+            max_attempts=max_attempts,
+            bootstrap_method=bootstrap_method,
         )
         if self.data_ is None or self.weights_ is None:
             raise RuntimeError("fit must be called before bootstrap")
@@ -90,9 +84,7 @@ class SeasonalSTARIMA(_SeasonalSTARIMA):
                     pseudo_transformed,
                     self.data_,
                     ordinary_order=self.integration_order,
-                    seasonal_order=(
-                        self.seasonal_integration_order
-                    ),
+                    seasonal_order=(self.seasonal_integration_order),
                     seasonal_period=self.seasonal_period,
                 )
                 fitted = self._new_unfitted()
@@ -102,18 +94,14 @@ class SeasonalSTARIMA(_SeasonalSTARIMA):
                 if include_future_innovations:
                     if fitted.differencing_state_ is None:
                         continue
-                    transformed_path = (
-                        simulate_seasonal_bootstrap_paths(
-                            fitted,
-                            steps=steps,
-                            n_simulations=1,
-                            bootstrap_method=method,
-                            random_state=generator,
-                        )[0]
-                    )
-                    path = fitted.differencing_state_.inverse_forecast(
-                        transformed_path
-                    )
+                    transformed_path = simulate_seasonal_bootstrap_paths(
+                        fitted,
+                        steps=steps,
+                        n_simulations=1,
+                        bootstrap_method=method,
+                        random_state=generator,
+                    )[0]
+                    path = fitted.differencing_state_.inverse_forecast(transformed_path)
                 else:
                     path = fitted.predict(steps=steps)
                 if np.all(np.isfinite(path)):
@@ -141,7 +129,5 @@ class SeasonalSTARIMA(_SeasonalSTARIMA):
             mean=self.predict(steps=steps),
             paths=np.stack(paths, axis=0),
             level=level,
-            method=(
-                f"{method} bootstrap with refitting ({scope})"
-            ),
+            method=(f"{method} bootstrap with refitting ({scope})"),
         )

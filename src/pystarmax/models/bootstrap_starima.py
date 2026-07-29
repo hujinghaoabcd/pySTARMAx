@@ -57,12 +57,10 @@ class STARIMA(_STARIMA):
             level=level,
             n_simulations=max(2, n_bootstrap),
         )
-        n_bootstrap, max_attempts, method = (
-            validate_bootstrap_arguments(
-                n_bootstrap=n_bootstrap,
-                max_attempts=max_attempts,
-                bootstrap_method=bootstrap_method,
-            )
+        n_bootstrap, max_attempts, method = validate_bootstrap_arguments(
+            n_bootstrap=n_bootstrap,
+            max_attempts=max_attempts,
+            bootstrap_method=bootstrap_method,
         )
         if self.data_ is None or self.core_model.weights_ is None:
             raise RuntimeError("fit must be called before bootstrap")
@@ -100,9 +98,7 @@ class STARIMA(_STARIMA):
                         bootstrap_method=method,
                         random_state=generator,
                     )[0]
-                    path = fitted.differencing_state_.inverse_forecast(
-                        differenced_path
-                    )
+                    path = fitted.differencing_state_.inverse_forecast(differenced_path)
                 else:
                     path = fitted.predict(steps=steps)
                 if np.all(np.isfinite(path)):
@@ -130,7 +126,5 @@ class STARIMA(_STARIMA):
             mean=self.predict(steps=steps),
             paths=np.stack(paths, axis=0),
             level=level,
-            method=(
-                f"{method} bootstrap with refitting ({scope})"
-            ),
+            method=(f"{method} bootstrap with refitting ({scope})"),
         )

@@ -94,15 +94,9 @@ def seasonal_bootstrap_sample(
     for time_index in range(max_lag, data.shape[0]):
         value = np.full(weights.n_locations, intercept, dtype=float)
         for operator in ar_terms:
-            value += (
-                operator.matrix
-                @ pseudo[time_index - operator.lag]
-            )
+            value += operator.matrix @ pseudo[time_index - operator.lag]
         for operator in ma_terms:
-            value += (
-                operator.matrix
-                @ innovations[time_index - operator.lag]
-            )
+            value += operator.matrix @ innovations[time_index - operator.lag]
         innovation = draws[time_index - max_lag]
         pseudo[time_index] = value + innovation
         innovations[time_index] = innovation
@@ -168,23 +162,15 @@ def simulate_seasonal_bootstrap_paths(
             dtype=float,
         )
         for operator in ar_terms:
-            value += (
-                history[:, -operator.lag, :]
-                @ operator.matrix.T
-            )
+            value += history[:, -operator.lag, :] @ operator.matrix.T
         for operator in ma_terms:
-            value += (
-                innovation_history[:, -operator.lag, :]
-                @ operator.matrix.T
-            )
+            value += innovation_history[:, -operator.lag, :] @ operator.matrix.T
         innovation = future_innovations[:, step_index, :]
         value += innovation
         paths[:, step_index, :] = value
         if max_lag > 1:
             history[:, :-1, :] = history[:, 1:, :]
-            innovation_history[:, :-1, :] = (
-                innovation_history[:, 1:, :]
-            )
+            innovation_history[:, :-1, :] = innovation_history[:, 1:, :]
         history[:, -1, :] = value
         innovation_history[:, -1, :] = innovation
     return np.ascontiguousarray(paths, dtype=float)

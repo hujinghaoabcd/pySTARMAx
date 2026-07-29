@@ -59,16 +59,13 @@ def bootstrap_sample(
         value = np.full(weights.n_locations, intercept, dtype=float)
         for temporal_lag in range(1, model.ar_order + 1):
             for spatial_lag, matrix in enumerate(weights):
-                value += ar_params[
-                    temporal_lag - 1, spatial_lag
-                ] * (matrix @ pseudo[time_index - temporal_lag])
+                value += ar_params[temporal_lag - 1, spatial_lag] * (
+                    matrix @ pseudo[time_index - temporal_lag]
+                )
         for temporal_lag in range(1, model.ma_order + 1):
             for spatial_lag, matrix in enumerate(weights):
-                value += ma_params[
-                    temporal_lag - 1, spatial_lag
-                ] * (
-                    matrix
-                    @ innovations[time_index - temporal_lag]
+                value += ma_params[temporal_lag - 1, spatial_lag] * (
+                    matrix @ innovations[time_index - temporal_lag]
                 )
         innovation = draws[time_index - max_lag]
         pseudo[time_index] = value + innovation
@@ -127,27 +124,20 @@ def simulate_bootstrap_paths(
         )
         for temporal_lag in range(1, model.ar_order + 1):
             for spatial_lag, matrix in enumerate(weights):
-                value += ar_params[
-                    temporal_lag - 1, spatial_lag
-                ] * (
+                value += ar_params[temporal_lag - 1, spatial_lag] * (
                     history[:, -temporal_lag, :] @ matrix.T
                 )
         for temporal_lag in range(1, model.ma_order + 1):
             for spatial_lag, matrix in enumerate(weights):
-                value += ma_params[
-                    temporal_lag - 1, spatial_lag
-                ] * (
-                    innovation_history[:, -temporal_lag, :]
-                    @ matrix.T
+                value += ma_params[temporal_lag - 1, spatial_lag] * (
+                    innovation_history[:, -temporal_lag, :] @ matrix.T
                 )
         innovation = future_innovations[:, step_index, :]
         value += innovation
         paths[:, step_index, :] = value
         if max_lag > 1:
             history[:, :-1, :] = history[:, 1:, :]
-            innovation_history[:, :-1, :] = (
-                innovation_history[:, 1:, :]
-            )
+            innovation_history[:, :-1, :] = innovation_history[:, 1:, :]
         history[:, -1, :] = value
         innovation_history[:, -1, :] = innovation
     return np.ascontiguousarray(paths, dtype=float)
@@ -184,12 +174,10 @@ class STARMA(_STARMA):
             level=level,
             n_simulations=max(2, n_bootstrap),
         )
-        n_bootstrap, max_attempts, method = (
-            validate_bootstrap_arguments(
-                n_bootstrap=n_bootstrap,
-                max_attempts=max_attempts,
-                bootstrap_method=bootstrap_method,
-            )
+        n_bootstrap, max_attempts, method = validate_bootstrap_arguments(
+            n_bootstrap=n_bootstrap,
+            max_attempts=max_attempts,
+            bootstrap_method=bootstrap_method,
         )
         if self.weights_ is None:
             raise RuntimeError("fit must be called before bootstrap")
@@ -244,9 +232,7 @@ class STARMA(_STARMA):
             mean=self.predict(steps=steps),
             paths=np.stack(paths, axis=0),
             level=level,
-            method=(
-                f"{method} bootstrap with refitting ({scope})"
-            ),
+            method=(f"{method} bootstrap with refitting ({scope})"),
         )
 
 
