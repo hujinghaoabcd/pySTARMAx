@@ -78,7 +78,7 @@ class ForecastInterval:
     @property
     def shape(self) -> tuple[int, int]:
         """Forecast array shape ``(steps, locations)``."""
-        return self.mean.shape
+        return int(self.mean.shape[0]), int(self.mean.shape[1])
 
 
 def validate_interval_arguments(

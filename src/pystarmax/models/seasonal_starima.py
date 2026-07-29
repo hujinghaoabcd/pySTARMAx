@@ -334,6 +334,8 @@ class SeasonalSTARIMA:
         )
         result = core.fit(data, weights)
         self.core_model_ = core
+        if core._internal_residuals is None:
+            raise RuntimeError("STARMA fit did not retain internal residuals")
         self._internal_residuals = core._internal_residuals.copy()
         return result
 
