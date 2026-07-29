@@ -21,6 +21,7 @@ engineering conventions established in pyGWRx and pyKDEX.
 - Current draft pull request: PR #6, `Add parameter-aware bootstrap forecast intervals`.
 - Current development target: version `0.0.6`.
 - Current stage: residual and parametric direct-bootstrap forecast intervals.
+- Authoritative validation: GitHub Actions CI run #137 completed successfully.
 
 ## Completed baseline through 0.0.5
 
@@ -96,28 +97,34 @@ uncertainty.
 13. Never silently return fewer successful bootstrap replications than requested.
 14. Keep future sparse, parallel, and state-space acceleration behind stable interfaces.
 
-## Current validation state
+## Final validation for 0.0.6
 
-- the formatting workflow applied project-pinned Black and isort;
-- Ruff and mypy passed before the normalized bootstrap source was committed;
-- all nine focused bootstrap tests passed in that workflow;
-- the first PR #6 matrix run completed successfully on macOS/Python 3.11 and built
-  valid source and wheel distributions before formatting normalization;
-- a final user-authored CI run remains required after documentation is complete.
+GitHub Actions CI run #137 completed successfully on the documented branch head:
+
+- 61 tests passed;
+- branch coverage: 89.57%, above the configured 80% threshold;
+- Black passed;
+- isort passed;
+- Ruff passed;
+- mypy passed;
+- exact diagnostic fixture regeneration produced a clean diff;
+- strict MkDocs build passed;
+- source distribution and wheel built successfully;
+- Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
 ## Immediate next tasks
 
-1. Run the final PR #6 quality, coverage, distribution, and 12-environment test matrix.
-2. Fix only issues reported by that authoritative run.
-3. Update this file with the final coverage and CI run number.
-4. Update the PR body with the exact statistical scope and validation results.
-5. Keep PR #6 as draft unless explicitly asked to merge.
-6. Add rolling-origin interval scoring and empirical coverage examples next.
-7. Add optional parallel bootstrap execution behind the existing API.
-8. Investigate block, wild, predictive-residual, studentized, and bias-corrected methods.
-9. Implement exact state-space/Kalman maximum likelihood and missing observations.
-10. Add full innovation likelihoods, stationarity checks, sparse matrices, adapters,
-    order selection, exogenous regressors, and cross-language estimator fixtures.
+1. Keep PR #6 as draft unless the user explicitly requests review or merge.
+2. After merge, begin rolling-origin interval scoring and empirical coverage examples.
+3. Add optional parallel bootstrap execution behind the existing API.
+4. Investigate block, wild, predictive-residual, studentized, and bias-corrected methods.
+5. Implement exact state-space/Kalman maximum likelihood and missing observations.
+6. Add full innovation likelihoods and stationarity/invertibility checks.
+7. Add sparse matrices and NetworkX/libpysal/GeoPandas/OSMnx adapters.
+8. Add automatic order selection and exogenous regressors/interventions.
+9. Add cross-language estimator fixtures.
+10. Prepare the first PyPI pre-release after the next release review.
 
 ## Known limitations
 
