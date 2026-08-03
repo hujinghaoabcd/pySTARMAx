@@ -9,6 +9,7 @@ nav:
   - Model convention: model.md
   - Stationarity and invertibility: admissibility.md
   - Ordinary STARIMA: starima.md
+  - Conditional Kalman STARIMA: integrated_maximum_likelihood.md
   - Seasonal STARIMA: seasonal.md
   - State-space filtering: state_space.md
   - Fixed-interval smoothing: smoothing.md

@@ -170,30 +170,72 @@
 - immutable result arrays, one-time-point behavior, documentation, example, and
   Step 14 handoff.
 
+## Implemented in 0.0.15
+
+- public `KalmanSTARIMA(p,d,q)` wrapper around the stationary Gaussian
+  `KalmanSTARMA` core;
+- ordinary finite differencing before likelihood evaluation;
+- explicit conditional likelihood scope
+  `L(Delta^d y_(d+1:T) | y_(1:d))`;
+- explicit statement that the wrapper is not an exact diffuse integrated
+  level-state likelihood;
+- `KalmanSTARIMAResult` metadata for original and transformed sample lengths,
+  missing-cell counts, order, convergence, likelihood, AIC, and BIC;
+- separate `predict_differenced()` and recursively inverse-differenced
+  original-scale `predict()`;
+- arbitrary non-negative integration order through reusable terminal
+  `DifferencingState` anchors;
+- original-scale forecast refusal when terminal level or lower-difference
+  anchors are non-finite;
+- aligned `fitted_differenced()` and `fitted_original()` outputs;
+- missing-value propagation through the finite-difference stencil without
+  imputation;
+- inherited partial-location filtering, RTS smoothing, innovation smoothing,
+  admissibility diagnostics, state-space access, and observed-information
+  inference on the transformed scale;
+- exact `d=0` equivalence with `KalmanSTARMA` under identical starts;
+- random-walk drift, second-order inverse differencing, missing propagation,
+  terminal-anchor, new-data, fitted-alignment, and validation tests;
+- method guide, example, navigation, README, roadmap, status, and Step 15
+  handoff.
+
 ## Next priorities
 
-1. Integrated and multiplicative seasonal state-space and Kalman MLE wrappers.
-2. Cross-time innovation-disturbance covariance and a conditional simulation
+1. Multiplicative seasonal Kalman STARIMA with ordinary and seasonal
+   differencing, constrained factor expansion, filtering, smoothing, and
+   original-scale reconstruction.
+2. Exact diffuse integrated level-state likelihood and smoothing, clearly
+   separated from the conditional differenced likelihood.
+3. Original-scale conditional Gaussian forecast intervals for
+   `KalmanSTARIMA`, including pathwise inverse differencing.
+4. Cross-time innovation-disturbance covariance and a conditional simulation
    smoother.
-3. Smooth stationarity/invertibility parameterization for optimization and
+5. Smooth stationarity/invertibility parameterization for optimization and
    inference.
-4. Sparse spatial weights and sparse state matrices for large networks.
-5. Automatic order selection using STACF, STPACF, and information criteria.
-6. Exogenous regressors and intervention variables.
-7. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-8. Cross-language estimator fixtures and the first PyPI pre-release.
-9. Optional parallel bootstrap and rolling-origin execution.
-10. Advanced bootstrap, profile-likelihood, sandwich, and conformal methods.
-11. Generalized, location-varying, and time-varying STARMA extensions.
+6. Sparse spatial weights and sparse state matrices for large networks.
+7. Automatic order selection using STACF, STPACF, and information criteria.
+8. Exogenous regressors and intervention variables.
+9. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+10. Cross-language estimator fixtures and the first PyPI pre-release.
+11. Optional parallel bootstrap and rolling-origin execution.
+12. Advanced bootstrap, profile-likelihood, sandwich, conformal, generalized,
+    location-varying, and time-varying extensions.
 
 ## Research safeguards for future work
 
+- Distinguish a conditional differenced likelihood from an exact diffuse
+  integrated likelihood.
+- Keep transformed-scale filtering, smoothing, inference, and innovation
+  results explicitly labelled.
+- Never construct original-scale forecasts without finite terminal
+  differencing anchors.
+- Let missing observations propagate through the finite-difference stencil;
+  do not silently impute levels before likelihood evaluation.
 - Distinguish state-equation disturbances from original location innovations.
 - Preserve `Var(eta_t | R eta_t)` when the selection map is non-injective.
 - Do not replace covariance-weighted innovation conditioning with a naive
   pseudoinverse of the selection matrix.
 - Do not treat feasibility penalties as a smooth parameterization.
 - Do not report singular observed-information inverses without explicit status.
-- Do not silently clip variance interval endpoints or impute missing likelihood
-  observations.
+- Do not silently clip variance interval endpoints.
 - Preserve non-symmetric spatial-matrix orientation in every extension.

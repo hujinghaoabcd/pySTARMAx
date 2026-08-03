@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.14"
+__version__ = "0.0.15"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -57,6 +57,10 @@ from pystarmax.innovation_smoothing import (
     InnovationDisturbanceResult,
     innovation_disturbance_smoother,
 )
+from pystarmax.integrated_maximum_likelihood import (
+    KalmanSTARIMA,
+    KalmanSTARIMAResult,
+)
 from pystarmax.likelihood_inference import (
     FiniteDifferenceCurvature,
     LikelihoodInferenceResult,
@@ -101,8 +105,10 @@ __all__ = [
     "STARIMA",
     "SeasonalSTARIMA",
     "KalmanSTARMA",
+    "KalmanSTARIMA",
     "STARMAResult",
     "KalmanSTARMAResult",
+    "KalmanSTARIMAResult",
     "KalmanSmootherResult",
     "InnovationDisturbanceResult",
     "LikelihoodInferenceResult",

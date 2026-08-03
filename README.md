@@ -9,16 +9,15 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.14:** conditional and Gaussian Kalman maximum-likelihood
-> STARMA estimation, AR stationarity and MA invertibility diagnostics,
-> observed-information inference, natural-scale innovation covariance
-> delta-method inference, missing-observation filtering, Rauch--Tung--Striebel
-> fixed-interval state smoothing, conditional-Gaussian original innovation
-> disturbance smoothing, ordinary and multiplicative seasonal STARIMA,
-> conditional and bootstrap forecast intervals, and rolling-origin evaluation.
-> Smooth admissibility parameterization, sparse computation,
-> integrated/seasonal Kalman MLE, exogenous regressors, and time-varying
-> extensions remain planned.
+> **Status — 0.0.15:** conditional and Gaussian Kalman maximum-likelihood
+> STARMA estimation, conditional ordinary-integrated Kalman STARIMA, AR
+> stationarity and MA invertibility diagnostics, observed-information inference,
+> natural-scale innovation covariance inference, missing-observation filtering,
+> Rauch--Tung--Striebel fixed-interval state smoothing, original innovation
+> disturbance smoothing, conditional ordinary and multiplicative seasonal
+> STARIMA, forecast intervals, bootstrap refitting, and rolling-origin
+> evaluation. Exact diffuse integrated likelihood, seasonal Kalman MLE, sparse
+> computation, exogenous regressors, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -32,7 +31,7 @@ Development and documentation dependencies:
 python -m pip install -e ".[dev,docs]"
 ```
 
-## Conditional STARMA quick start
+## Spatial weights and conditional STARMA
 
 ```python
 import numpy as np
@@ -62,8 +61,6 @@ print(model.predict(steps=6))
 identity matrix. A parameter row therefore contains one coefficient per stored
 spatial lag.
 
-## Model convention
-
 For a stationary STARMA model,
 
 \[
@@ -82,8 +79,8 @@ A_i=\sum_k\phi_{ik}W_k,
 B_j=\sum_k\theta_{jk}W_k.
 \]
 
-The package uses a **positive moving-average sign**. Consequently the inverse
-innovation recursion is
+The package uses a positive moving-average sign. The inverse innovation
+recursion is therefore
 
 \[
 \varepsilon_t=r_t-\sum_jB_j\varepsilon_{t-j},
@@ -111,14 +108,14 @@ print(ma.eigenvalues)
 print(joint.summary())
 ```
 
-The immutable diagnostic results retain composed lag operators, block companion
-matrices, complex eigenvalues, spectral radii, configured limits, signed
-boundary distances, and admissibility decisions. Zero-order AR or MA
-polynomials have spectral radius zero.
+The immutable results retain lag operators, block companion matrices, complex
+eigenvalues, spectral radii, configured limits, signed boundary distances, and
+admissibility decisions. Zero-order AR or MA polynomials have spectral radius
+zero.
 
 See [`docs/admissibility.md`](docs/admissibility.md).
 
-## Gaussian Kalman maximum likelihood
+## Stationary Gaussian Kalman maximum likelihood
 
 ```python
 from pystarmax import KalmanSTARMA
@@ -133,9 +130,7 @@ mle = KalmanSTARMA(
     covariance_type="full",
     include_intercept=False,
     enforce_stationarity=True,
-    stability_margin=1e-6,
     enforce_invertibility=True,
-    invertibility_margin=1e-6,
 )
 fit = mle.fit(incomplete, weights)
 
@@ -145,9 +140,8 @@ print(mle.predict(steps=6))
 ```
 
 `KalmanSTARMA` maximizes the Gaussian likelihood evaluated by the state-space
-filter. Missing locations are removed from that time step's measurement update;
-a fully missing row performs prediction only and contributes zero to the
-likelihood.
+filter. Missing locations are removed from the measurement update; a fully
+missing row performs prediction only and contributes zero to the likelihood.
 
 Innovation covariance options are:
 
@@ -155,13 +149,70 @@ Innovation covariance options are:
 - `"diagonal"`: one variance per location;
 - `"full"`: positive-definite Cholesky covariance.
 
-Automatic conditional-estimator starts are independently shrunk into the
-configured AR and inverse-MA regions. Candidates outside an enabled region
-receive a feasibility penalty, and the final optimizer candidate is checked
-again. These are explicit feasibility controls, not a smooth bijective
-parameterization.
+Automatic starts are independently shrunk into the configured AR and inverse-MA
+regions. Candidates outside an enabled region receive a feasibility penalty,
+and the final optimizer candidate is checked again. These are explicit
+feasibility controls, not a smooth bijective parameterization.
 
 See [`docs/maximum_likelihood.md`](docs/maximum_likelihood.md).
+
+## Conditional integrated Kalman STARIMA
+
+Version 0.0.15 adds ordinary-integrated Gaussian estimation without duplicating
+the stationary optimizer:
+
+```python
+from pystarmax import KalmanSTARIMA
+
+integrated_mle = KalmanSTARIMA(
+    ar_order=1,
+    integration_order=1,
+    ma_order=1,
+    covariance_type="full",
+    include_intercept=True,
+)
+integrated_result = integrated_mle.fit(level_series, weights)
+
+print(integrated_result.summary())
+print(integrated_mle.predict_differenced(steps=6))
+print(integrated_mle.predict(steps=6))
+```
+
+For
+
+\[
+x_t=(1-B)^d y_t,
+\]
+
+`KalmanSTARIMA` fits stationary `KalmanSTARMA` to the `T-d` transformed rows.
+The reported likelihood is
+
+\[
+\ell_c(\vartheta;y_{1:T})
+=
+\ell(\vartheta;\Delta^d y_{d+1:T}\mid y_{1:d}).
+\]
+
+It is conditional on the first `d` level rows and is **not** an exact diffuse
+integrated level-state likelihood.
+
+Scale boundaries are explicit:
+
+- `filter()`, `smooth()`, `smooth_innovation_disturbances()`, `infer()`,
+  `to_state_space()`, and `predict_differenced()` use the highest difference
+  scale;
+- `predict()` recursively restores the original scale from finite terminal
+  differencing anchors;
+- `fitted_original()` aligns transformed one-step predictions to the level
+  sample and leaves unavailable rows as `NaN`.
+
+Missing values are not imputed before differencing. They propagate through the
+finite-difference stencil and are then handled by the existing partial-location
+Kalman update. If trailing missing values destroy a required terminal level or
+lower-difference anchor, differenced-scale methods remain available but
+`predict()` raises rather than inventing a level continuation.
+
+See [`docs/integrated_maximum_likelihood.md`](docs/integrated_maximum_likelihood.md).
 
 ## Observed-information inference
 
@@ -177,18 +228,20 @@ print(inference.optimizer_table)
 print(inference.confidence_intervals(level=0.95))
 print(inference.eigenvalues)
 print(inference.condition_number)
-print(inference.minimum_admissibility_distance)
 ```
 
-The score and Hessian are evaluated with central finite differences of the
-negative Gaussian Kalman log likelihood. The inverse observed-information
-matrix supplies covariance, standard errors, normal tests, coefficient
-intervals, correlations, Hessian rank, eigenvalues, condition number, and score
+The score and Hessian use central finite differences of the negative Gaussian
+Kalman log likelihood. The inverse observed-information matrix supplies
+covariance, standard errors, normal tests, intervals, correlations, Hessian
+rank, eigenvalues, condition number, score, and admissibility-boundary
 diagnostics.
 
 A non-positive-definite or rank-deficient Hessian raises by default.
-`allow_singular=True` explicitly retains only the positive-curvature eigenspace
-and marks the result as a diagnostic pseudoinverse.
+`allow_singular=True` explicitly uses the positive-curvature eigenspace and
+marks the result as a diagnostic pseudoinverse.
+
+`KalmanSTARIMA.infer()` applies the same procedure to the conditional
+differenced likelihood.
 
 See [`docs/likelihood_inference.md`](docs/likelihood_inference.md).
 
@@ -196,7 +249,7 @@ See [`docs/likelihood_inference.md`](docs/likelihood_inference.md).
 
 The optimizer covariance parameters are not covariance elements. Scalar and
 diagonal models use log standard deviations; full covariance uses a Cholesky
-factor. Version 0.0.12 provides an analytic delta-method transformation:
+factor.
 
 ```python
 natural = inference.innovation_covariance_inference()
@@ -208,15 +261,11 @@ print(natural.confidence_intervals(level=0.95))
 print(natural.dynamic_cross_covariance)
 ```
 
-For \(\Sigma=LL^\top\), the full-covariance Jacobian uses
+For \(\Sigma=LL^\top\), the full-covariance Jacobian follows
 
 \[
 d\Sigma=dL\,L^\top+L\,dL^\top.
 \]
-
-The natural result reports one shared scalar variance, location variances for a
-diagonal model, or unique lower-triangle covariance elements for a full model.
-It preserves cross covariance with the dynamic coefficients.
 
 Intervals are first-order unbounded normal approximations. Negative lower
 endpoints are not silently clipped, and an ordinary `variance = 0` Wald test is
@@ -224,21 +273,25 @@ not reported because zero is a boundary null.
 
 See [`docs/covariance_inference.md`](docs/covariance_inference.md).
 
-## State-space filtering
+## State-space filtering and smoothing
 
 ```python
 state_space = mle.to_state_space()
 filtered = mle.filter(incomplete)
+smoothed = mle.smooth(incomplete)
 
 print(filtered.log_likelihood)
 print(filtered.n_observations)
-print(filtered.filtered_observations[-1])
+print(smoothed.smoothed_observations)
+print(smoothed.lag_one_covariance)
+print(smoothed.state_disturbance_mean)
+print(smoothed.prediction_rank)
 ```
 
 The fixed-parameter API also supports direct construction:
 
 ```python
-from pystarmax import build_starma_state_space, kalman_filter
+from pystarmax import build_starma_state_space, kalman_filter, kalman_smoother
 
 state_space = build_starma_state_space(
     ar_parameters=phi,
@@ -247,56 +300,23 @@ state_space = build_starma_state_space(
     innovation_covariance=np.eye(weights.n_locations),
 )
 filtered = kalman_filter(incomplete, state_space)
+smoothed = kalman_smoother(filtered)
 ```
 
 Initialization options are stationary, user-supplied known moments, and an
 explicit approximate diffuse initialization. The diffuse option is a
 large-variance approximation, not an exact diffuse likelihood.
 
-See [`docs/state_space.md`](docs/state_space.md).
+The RTS smoother retains state means and covariances, smoothing gains, lag-one
+cross covariance, state-equation disturbance moments, prediction ranks, and
+pseudoinverse use.
 
-## Fixed-interval state smoothing
-
-```python
-smoothed = mle.smooth(incomplete)
-
-print(smoothed.smoothed_observations)
-print(smoothed.smoothed_observation_covariance)
-print(smoothed.smoothing_gain)
-print(smoothed.lag_one_covariance)
-print(smoothed.state_disturbance_mean)
-print(smoothed.prediction_rank)
-print(smoothed.used_pseudoinverse)
-```
-
-`KalmanSTARMA.smooth()` runs a Rauch--Tung--Striebel backward pass over the
-filter output. Future observations can therefore refine earlier latent states
-and missing blocks. A rank-deficient predicted covariance uses a documented
-positive-eigenspace pseudoinverse, with rank and usage recorded per transition.
-
-The returned disturbance arrays describe
-
-```text
-alpha_(t+1) - state_intercept - transition @ alpha_t
-```
-
-They are **state-equation disturbances**. Version 0.0.14 provides a separate
-conditional-Gaussian transformation to the original location-level
-innovations.
-
-Low-level use:
-
-```python
-from pystarmax import kalman_smoother
-
-smoothed = kalman_smoother(filtered, rcond=1e-10)
-```
-
-See [`docs/smoothing.md`](docs/smoothing.md).
+See [`docs/state_space.md`](docs/state_space.md) and
+[`docs/smoothing.md`](docs/smoothing.md).
 
 ## Original innovation disturbance smoothing
 
-For the state disturbance \(w_t=R\eta_t\), with
+For state disturbance \(w_t=R\eta_t\), with
 \(\eta_t\sim\mathcal N(0,Q)\), define
 
 \[
@@ -305,49 +325,35 @@ S=RQR^\top,
 A=QR^\top S^+.
 \]
 
-Given RTS posterior state-disturbance moments \((\mu_w,V_w)\), pySTARMAx uses
+The original innovation posterior is
 
 \[
-E(\eta_t\mid y)=A\mu_w,
+E(\eta_t\mid y)=A E(w_t\mid y),
 \]
 
 \[
 \operatorname{Var}(\eta_t\mid y)
-=Q-AS A^\top+A V_wA^\top.
+=Q-AS A^\top+A\operatorname{Var}(w_t\mid y)A^\top.
 \]
 
-This retains innovation uncertainty that cannot be identified from the state
-disturbance. It is not a naive pseudoinverse of the selection matrix.
-
 ```python
-innovation_result = mle.smooth_innovation_disturbances(
-    incomplete,
-    rcond=1e-10,
-)
+innovation_result = mle.smooth_innovation_disturbances(incomplete)
 
 print(innovation_result.innovation_mean)
 print(innovation_result.innovation_covariance)
 print(innovation_result.unresolved_covariance)
 print(innovation_result.process_rank)
-print(innovation_result.used_pseudoinverse)
 print(innovation_result.mean_support_residual)
 ```
 
-Transition index `t` represents the innovation entering state `t + 1`. The
-result therefore contains `T - 1` disturbances for `T` stored state times. The
-initialization disturbance before the first stored state is not reconstructed.
-
-Low-level use:
-
-```python
-from pystarmax import innovation_disturbance_smoother
-
-innovation_result = innovation_disturbance_smoother(smoothed)
-```
+This retains innovation uncertainty that cannot be identified from the state
+disturbance. It is not a naive pseudoinverse of the selection matrix.
 
 See [`docs/innovation_smoothing.md`](docs/innovation_smoothing.md).
 
-## Ordinary STARIMA
+## Conditional ordinary and seasonal STARIMA
+
+The original conditional wrapper remains available:
 
 ```python
 from pystarmax import STARIMA
@@ -357,18 +363,12 @@ integrated = STARIMA(
     integration_order=1,
     ma_order=1,
 )
-integrated.fit(integrated_series, weights)
-
+integrated.fit(level_series, weights)
 print(integrated.predict_differenced(steps=6))
 print(integrated.predict(steps=6))
 ```
 
-Ordinary differencing is reversible. Forecasts can be returned on the highest
-difference scale or reconstructed on the original scale.
-
-See [`docs/starima.md`](docs/starima.md).
-
-## Multiplicative seasonal STARIMA
+Multiplicative seasonal estimation is also available:
 
 ```python
 from pystarmax import SeasonalSTARIMA
@@ -385,14 +385,13 @@ seasonal.fit(seasonal_series, weights)
 print(seasonal.predict(steps=24))
 ```
 
-Seasonal AR and MA factors are estimated under multiplicative constraints.
-Cross-lag matrices are ordered products rather than independent coefficients.
-The current direct Kalman maximum-likelihood estimator remains stationary and
-non-seasonal.
+Seasonal cross-lag matrices are ordered products rather than independent
+coefficients. Seasonal Kalman maximum likelihood is not yet implemented.
 
-See [`docs/seasonal.md`](docs/seasonal.md).
+See [`docs/starima.md`](docs/starima.md) and
+[`docs/seasonal.md`](docs/seasonal.md).
 
-## Forecast intervals
+## Forecast intervals and rolling evaluation
 
 Conditional future-innovation intervals:
 
@@ -418,15 +417,7 @@ bootstrap = model.predict_bootstrap_interval(
 )
 ```
 
-Each accepted bootstrap replication generates a same-length pseudo-series,
-refits the same model specification, and contributes a refitted conditional
-mean or a future path. Residual bootstrap samples complete innovation vectors;
-parametric bootstrap draws from the fitted contemporaneous covariance.
-
-See [`docs/forecasting.md`](docs/forecasting.md) and
-[`docs/bootstrap.md`](docs/bootstrap.md).
-
-## Rolling-origin interval evaluation
+Rolling-origin evaluation:
 
 ```python
 from pystarmax import rolling_origin_evaluate
@@ -449,7 +440,9 @@ print(rolling.metrics_by_horizon())
 Metrics include empirical coverage, signed and absolute coverage error, mean
 width, Winkler interval score, MAE, and RMSE.
 
-See [`docs/evaluation.md`](docs/evaluation.md).
+See [`docs/forecasting.md`](docs/forecasting.md),
+[`docs/bootstrap.md`](docs/bootstrap.md), and
+[`docs/evaluation.md`](docs/evaluation.md).
 
 ## Diagnostics
 
@@ -465,11 +458,7 @@ covariance = stcov(
 )
 acf = stacf(result.residuals, weights, max_tlag=8)
 pacf = stpacf(series, weights, max_tlag=8)
-portmanteau = space_time_portmanteau(
-    result.residuals,
-    weights,
-    max_tlag=8,
-)
+portmanteau = space_time_portmanteau(result.residuals, weights, max_tlag=8)
 ```
 
 The default STPACF follows the classical nested Yule--Walker construction. A
@@ -482,28 +471,28 @@ See [`docs/diagnostics.md`](docs/diagnostics.md).
 The CI workflow checks:
 
 - Black, isort, Ruff, and mypy;
-- independent diagnostic reference regeneration;
+- independent diagnostic-reference regeneration;
 - strict MkDocs construction;
 - source distribution, wheel, and Twine metadata;
 - Ubuntu, Windows, and macOS;
 - Python 3.11, 3.12, 3.13, and 3.14;
 - branch coverage with an 80% minimum.
 
-See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the current authoritative test
-count, coverage, pull request, and next-stage handoff.
+See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the authoritative test count,
+coverage, pull request, and next-stage handoff.
 
 ## Current limitations
 
-- Kalman MLE is stationary and non-seasonal;
-- exact diffuse likelihood and smoothing are unavailable;
-- smoothing is fixed-parameter and does not propagate parameter uncertainty;
-- innovation smoothing currently exposes marginal covariance by transition,
-  not cross-time innovation covariance;
-- the initialization disturbance before the first stored state is unavailable;
-- AR/MA admissibility uses explicit feasibility penalties rather than a smooth
-  parameterization;
+- `KalmanSTARIMA` uses a conditional differenced likelihood rather than exact
+  diffuse integration on the level process;
+- seasonal Kalman MLE is unavailable;
+- original-scale Kalman STARIMA forecast intervals are not yet exposed;
+- exact diffuse filtering and smoothing are unavailable;
+- state and innovation smoothing treat parameters as fixed;
+- innovation smoothing returns marginal covariance by transition, not
+  cross-time innovation covariance;
+- AR/MA feasibility uses penalties rather than a smooth parameterization;
 - state and spatial matrices are dense;
-- natural covariance intervals are first-order normal approximations;
 - robust, profile-likelihood, likelihood-ratio, and Kalman-MLE bootstrap
   inference remain future work;
 - exogenous regressors and interventions are unsupported;
