@@ -39,6 +39,11 @@ class KalmanSTARMAResult:
     optimizer_method: str
     optimizer_message: str
     spectral_radius: float
+    ma_inverse_spectral_radius: float
+    stability_limit: float
+    invertibility_limit: float
+    stationarity_enforced: bool
+    invertibility_enforced: bool
     filter_result: KalmanFilterResult
 
     def __post_init__(self) -> None:
@@ -78,9 +83,22 @@ class KalmanSTARMAResult:
             ("aic", self.aic),
             ("bic", self.bic),
             ("spectral_radius", self.spectral_radius),
+            ("ma_inverse_spectral_radius", self.ma_inverse_spectral_radius),
+            ("stability_limit", self.stability_limit),
+            ("invertibility_limit", self.invertibility_limit),
         ):
             if not np.isfinite(float(value)):
                 raise ValueError(f"{name} must be finite")
+        spectral_radius = float(self.spectral_radius)
+        ma_radius = float(self.ma_inverse_spectral_radius)
+        stability_limit = float(self.stability_limit)
+        invertibility_limit = float(self.invertibility_limit)
+        if spectral_radius < 0.0 or ma_radius < 0.0:
+            raise ValueError("spectral radii must be non-negative")
+        if not 0.0 < stability_limit < 1.0:
+            raise ValueError("stability_limit must be between zero and one")
+        if not 0.0 < invertibility_limit < 1.0:
+            raise ValueError("invertibility_limit must be between zero and one")
         object.__setattr__(self, "params", params)
         object.__setattr__(self, "raw_optimizer_params", raw)
         object.__setattr__(self, "ar_parameters", ar_parameters)
@@ -99,7 +117,45 @@ class KalmanSTARMAResult:
             "n_function_evaluations",
             int(self.n_function_evaluations),
         )
-        object.__setattr__(self, "spectral_radius", float(self.spectral_radius))
+        object.__setattr__(self, "spectral_radius", spectral_radius)
+        object.__setattr__(self, "ma_inverse_spectral_radius", ma_radius)
+        object.__setattr__(self, "stability_limit", stability_limit)
+        object.__setattr__(self, "invertibility_limit", invertibility_limit)
+        object.__setattr__(
+            self,
+            "stationarity_enforced",
+            bool(self.stationarity_enforced),
+        )
+        object.__setattr__(
+            self,
+            "invertibility_enforced",
+            bool(self.invertibility_enforced),
+        )
+
+    @property
+    def stationary(self) -> bool:
+        """Whether the fitted AR companion is below the configured limit."""
+        return self.spectral_radius < self.stability_limit
+
+    @property
+    def invertible(self) -> bool:
+        """Whether the fitted inverse-MA companion is below its limit."""
+        return self.ma_inverse_spectral_radius < self.invertibility_limit
+
+    @property
+    def admissible(self) -> bool:
+        """Whether both fitted dynamic polynomials are admissible."""
+        return self.stationary and self.invertible
+
+    @property
+    def stability_boundary_distance(self) -> float:
+        """Signed distance from the AR spectral radius to its limit."""
+        return float(self.stability_limit - self.spectral_radius)
+
+    @property
+    def invertibility_boundary_distance(self) -> float:
+        """Signed distance from the inverse-MA radius to its limit."""
+        return float(self.invertibility_limit - self.ma_inverse_spectral_radius)
 
     @property
     def coefficients(self) -> pd.DataFrame:
@@ -133,7 +189,13 @@ class KalmanSTARMAResult:
             f"Estimated parameters: {self.n_params}",
             f"Converged: {self.converged} ({self.n_iterations} iteration(s))",
             f"Function evaluations: {self.n_function_evaluations}",
-            f"Transition spectral radius: {self.spectral_radius:.6f}",
+            f"AR spectral radius: {self.spectral_radius:.6f}",
+            f"AR limit: {self.stability_limit:.6f}",
+            f"Stationary: {self.stationary} (enforced={self.stationarity_enforced})",
+            f"Inverse-MA spectral radius: {self.ma_inverse_spectral_radius:.6f}",
+            f"MA limit: {self.invertibility_limit:.6f}",
+            f"Invertible: {self.invertible} (enforced={self.invertibility_enforced})",
+            f"Jointly admissible: {self.admissible}",
             f"Log likelihood: {self.log_likelihood:.6f}",
             f"AIC: {self.aic:.6f}",
             f"BIC: {self.bic:.6f}",
