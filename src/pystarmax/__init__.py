@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 
 from pystarmax.diagnostics import (
     PortmanteauResult,
@@ -35,6 +35,11 @@ from pystarmax.evaluation import (
     rolling_origin_evaluate,
 )
 from pystarmax.forecasting import ForecastInterval
+from pystarmax.maximum_likelihood import (
+    CovarianceType,
+    KalmanSTARMA,
+    KalmanSTARMAResult,
+)
 from pystarmax.models import STAR, STARIMA, STARMA, SeasonalSTARIMA
 from pystarmax.results import STARMAResult
 from pystarmax.seasonal import LagOperator, expand_multiplicative_operators
@@ -65,13 +70,16 @@ __all__ = [
     "STARMA",
     "STARIMA",
     "SeasonalSTARIMA",
+    "KalmanSTARMA",
     "STARMAResult",
+    "KalmanSTARMAResult",
     "ForecastInterval",
     "IntervalMetrics",
     "RollingOriginResult",
     "StateSpaceModel",
     "KalmanFilterResult",
     "Initialization",
+    "CovarianceType",
     "DifferencingState",
     "SeasonalDifferencingState",
     "CombinedDifferencingState",

@@ -10,6 +10,7 @@ nav:
   - Ordinary STARIMA: starima.md
   - Seasonal STARIMA: seasonal.md
   - State-space filtering: state_space.md
+  - Maximum likelihood: maximum_likelihood.md
   - Forecasting: forecasting.md
   - Bootstrap intervals: bootstrap.md
   - Rolling evaluation: evaluation.md
