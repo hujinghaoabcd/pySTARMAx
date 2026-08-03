@@ -535,7 +535,7 @@ def infer_kalman_starma(
         steps=curvature.steps,
         n_dynamic_params=model.result_.params.size,
         covariance_type=model.covariance_type,
-        n_locations=observations.shape[1],
+        n_locations=model.result_.innovation_covariance.shape[0],
         rank=rank,
         condition_number=condition_number,
         positive_definite=positive_definite,

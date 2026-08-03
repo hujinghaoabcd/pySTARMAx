@@ -253,13 +253,9 @@ def kalman_smoother(
         smoothing_gain[time_index] = gain
         prediction_rank[time_index] = rank
         used_pseudoinverse[time_index] = used_pinv
-        smoothed_state[time_index] = (
-            filter_result.filtered_state[time_index]
-            + gain
-            @ (
-                smoothed_state[time_index + 1]
-                - filter_result.predicted_state[time_index + 1]
-            )
+        smoothed_state[time_index] = filter_result.filtered_state[time_index] + gain @ (
+            smoothed_state[time_index + 1]
+            - filter_result.predicted_state[time_index + 1]
         )
         covariance = (
             filter_result.filtered_covariance[time_index]
@@ -274,9 +270,7 @@ def kalman_smoother(
             cast(FloatArray, covariance),
             name="smoothed covariance",
         )
-        lag_one_covariance[time_index] = (
-            gain @ smoothed_covariance[time_index + 1]
-        )
+        lag_one_covariance[time_index] = gain @ smoothed_covariance[time_index + 1]
 
     state_disturbance_mean = np.empty(
         (n_transitions, state_dim),
@@ -295,17 +289,13 @@ def kalman_smoother(
         lag_covariance = lag_one_covariance[time_index]
         covariance = (
             smoothed_covariance[time_index + 1]
-            + model.transition
-            @ smoothed_covariance[time_index]
-            @ model.transition.T
+            + model.transition @ smoothed_covariance[time_index] @ model.transition.T
             - lag_covariance.T @ model.transition.T
             - model.transition @ lag_covariance
         )
-        state_disturbance_covariance[time_index] = (
-            _project_positive_semidefinite(
-                cast(FloatArray, covariance),
-                name="state disturbance covariance",
-            )
+        state_disturbance_covariance[time_index] = _project_positive_semidefinite(
+            cast(FloatArray, covariance),
+            name="state disturbance covariance",
         )
 
     return KalmanSmootherResult(

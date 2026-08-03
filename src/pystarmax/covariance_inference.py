@@ -59,9 +59,7 @@ def _full_cholesky_and_jacobian(
     lower_rows, lower_columns = np.tril_indices(n_locations)
     cholesky = np.zeros((n_locations, n_locations), dtype=float)
     derivatives = np.empty(raw_parameters.size, dtype=float)
-    for index, (row, column) in enumerate(
-        zip(lower_rows, lower_columns, strict=True)
-    ):
+    for index, (row, column) in enumerate(zip(lower_rows, lower_columns, strict=True)):
         raw_value = raw_parameters[index]
         if row == column:
             cholesky[row, column] = np.exp(raw_value)

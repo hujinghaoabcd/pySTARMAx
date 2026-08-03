@@ -37,9 +37,7 @@ def test_scalar_ar1_missing_bridge_matches_closed_form() -> None:
 
     smoothed = kalman_smoother(filtered)
 
-    expected_mean = phi * first + phi / (1.0 + phi**2) * (
-        last - phi**2 * first
-    )
+    expected_mean = phi * first + phi / (1.0 + phi**2) * (last - phi**2 * first)
     expected_variance = variance / (1.0 + phi**2)
     assert smoothed.smoothed_observations[1, 0] == pytest.approx(expected_mean)
     assert smoothed.smoothed_observation_covariance[1, 0, 0] == pytest.approx(
@@ -60,7 +58,9 @@ def test_contiguous_missing_block_matches_joint_gaussian_conditioning() -> None:
     variance = 1.4
     n_time = 5
     observed_values = np.array([0.7, -0.2], dtype=float)
-    data = np.array([[observed_values[0]], [np.nan], [np.nan], [np.nan], [observed_values[1]]])
+    data = np.array(
+        [[observed_values[0]], [np.nan], [np.nan], [np.nan], [observed_values[1]]]
+    )
     model = build_starma_state_space(
         [[phi]],
         np.empty((0, 1)),
