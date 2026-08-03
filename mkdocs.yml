@@ -11,6 +11,7 @@ nav:
   - Seasonal STARIMA: seasonal.md
   - Forecasting: forecasting.md
   - Bootstrap intervals: bootstrap.md
+  - Rolling evaluation: evaluation.md
   - Diagnostics: diagnostics.md
   - Roadmap: roadmap.md
   - References: references.md
