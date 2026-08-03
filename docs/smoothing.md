@@ -104,9 +104,12 @@ These arrays are named `state_disturbance_mean` and
 
 !!! warning
     A state-equation disturbance is not automatically identical to the original
-    location-level innovation. The state disturbance is `R @ eta_t`. Recovering
-    `eta_t` requires a separate, explicitly identified disturbance-smoothing
-    step when the selection matrix is not one-to-one.
+    location-level innovation. The state disturbance is `R @ eta_t`. Version
+    0.0.14 adds a separate covariance-weighted conditional-Gaussian map to the
+    original innovation. It does not apply a naive inverse of `R`.
+
+See [Original innovation smoothing](innovation_smoothing.md) for that map,
+selection-matrix null-space uncertainty, and support diagnostics.
 
 ## Usage with a fitted model
 
@@ -138,6 +141,14 @@ print(smoothed.used_pseudoinverse)
 Calling it without data smooths the training sample. Supplying a new matrix uses
 the fitted parameters and supports the same partial-location and fully missing
 rows as filtering.
+
+Original innovations can then be obtained through the integrated route:
+
+```python
+innovation_result = model.smooth_innovation_disturbances(incomplete)
+print(innovation_result.innovation_mean)
+print(innovation_result.unresolved_covariance)
+```
 
 ## Low-level usage
 
@@ -187,12 +198,19 @@ Included in 0.0.13:
 - state-equation disturbance moments;
 - explicit rank-deficiency diagnostics.
 
+Added separately in 0.0.14:
+
+- original location-level innovation posterior means and marginal covariances;
+- covariance-weighted conditioning through `Q R.T (R Q R.T)+`;
+- retained unresolved innovation covariance for non-injective selection maps;
+- process-rank, pseudoinverse, and support-residual diagnostics.
+
 Not yet included:
 
-- direct location-level innovation disturbance smoothing when `R` is not
-  invertible;
+- cross-time original innovation covariance;
+- the disturbance entering the first stored state from initialization;
 - exact diffuse smoothing;
 - simulation smoothing;
-- parameter-uncertainty propagation into smoothed states;
+- parameter-uncertainty propagation into smoothed states or innovations;
 - integrated or multiplicative seasonal MLE wrappers;
 - sparse state matrices for large spatial systems.
