@@ -15,29 +15,14 @@ from pystarmax import (
 )
 
 
-weights = SpatialWeights.from_adjacency(
-    lattice_weights(2, 2),
-    max_order=1,
-)
+weights = SpatialWeights.from_adjacency(lattice_weights(2, 2), max_order=1)
 
 ar_parameters = np.array([[0.42, 0.12]], dtype=float)
 ma_parameters = np.array([[0.28, 0.08]], dtype=float)
 
-ar_diagnostic = autoregressive_diagnostics(
-    ar_parameters,
-    weights,
-    margin=1e-6,
-)
-ma_diagnostic = moving_average_diagnostics(
-    ma_parameters,
-    weights,
-    margin=1e-6,
-)
-joint = starma_admissibility(
-    ar_parameters,
-    ma_parameters,
-    weights,
-)
+ar_diagnostic = autoregressive_diagnostics(ar_parameters, weights, margin=1e-6)
+ma_diagnostic = moving_average_diagnostics(ma_parameters, weights, margin=1e-6)
+joint = starma_admissibility(ar_parameters, ma_parameters, weights)
 
 print(ar_diagnostic.summary())
 print()
