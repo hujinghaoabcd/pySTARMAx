@@ -121,18 +121,38 @@
 - analytic quadratic, Gaussian white-noise, missing-data AR(1), and singular-Hessian tests;
 - full documentation, example, citation metadata, and MkDocs navigation.
 
+## Implemented in 0.0.11
+
+- reusable temporal-lag matrix composition from ordered spatial weights;
+- immutable AR and inverse-MA companion diagnostics;
+- preserved non-symmetric spatial-matrix orientation;
+- complex companion eigenvalues, spectral radii, limits, and signed distances;
+- scalar AR(1), MA(1), and higher-order polynomial-root reference tests;
+- explicit positive-MA-sign inverse recursion with `[-B1, ..., -Bq]` top row;
+- zero-order AR and MA polynomials with radius zero;
+- joint `STARMAAdmissibility` results and minimum boundary distance;
+- public low-level radius helpers and complete eigensystem diagnostics;
+- automatic AR and MA starting-value shrinkage for Kalman MLE;
+- dual stationarity and invertibility feasibility penalties;
+- independent enforcement flags and margins;
+- final hard validation of both fitted polynomial blocks;
+- fitted result reporting for both radii, limits, distances, and enforcement flags;
+- explicit return of non-admissible diagnostics when a constraint is disabled;
+- likelihood-Hessian rejection of stencils crossing either enabled boundary;
+- dual-boundary and minimum-distance inference diagnostics;
+- method documentation, example, README coverage, citation metadata, and Step 11 handoff.
+
 ## Next priorities
 
-1. Explicit stationarity and MA invertibility checks and constrained fitting.
-2. Smooth stability/invertibility parameterization for optimization and inference.
-3. Delta-method transforms for innovation covariance elements.
-4. Integrated and multiplicative seasonal state-space/MLE wrappers.
-5. State and disturbance smoothing.
-6. Sparse spatial matrices and large-network computation.
-7. Automatic order selection using STACF/STPACF and information criteria.
-8. Exogenous regressors and intervention variables.
-9. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-10. Cross-language estimator fixtures and a first PyPI pre-release.
-11. Optional parallel bootstrap and rolling-origin execution behind stable APIs.
-12. Advanced bootstrap, profile-likelihood, sandwich, and conformal calibration.
-13. Generalized, location-varying, and time-varying STARMA extensions.
+1. Smooth stability/invertibility parameterization for optimization and inference.
+2. Delta-method transforms for innovation covariance elements.
+3. Integrated and multiplicative seasonal state-space/MLE wrappers.
+4. State and disturbance smoothing.
+5. Sparse spatial matrices and large-network computation.
+6. Automatic order selection using STACF/STPACF and information criteria.
+7. Exogenous regressors and intervention variables.
+8. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+9. Cross-language estimator fixtures and a first PyPI pre-release.
+10. Optional parallel bootstrap and rolling-origin execution behind stable APIs.
+11. Advanced bootstrap, profile-likelihood, sandwich, and conformal calibration.
+12. Generalized, location-varying, and time-varying STARMA extensions.
