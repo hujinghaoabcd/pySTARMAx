@@ -14,7 +14,11 @@ from scipy import stats
 
 from pystarmax._maximum_likelihood_utils import _CovarianceCodec
 from pystarmax._validation import FloatArray
-from pystarmax.state_space import Initialization, build_starma_state_space, kalman_filter
+from pystarmax.state_space import (
+    Initialization,
+    build_starma_state_space,
+    kalman_filter,
+)
 
 ScalarFunction = Callable[[FloatArray], float]
 
@@ -428,17 +432,24 @@ def infer_kalman_starma(
     covariance = 0.5 * (covariance + covariance.T)
     variances = np.clip(np.diag(covariance), 0.0, np.inf)
     standard_errors = np.sqrt(variances)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        z_values = estimates / standard_errors
+    z_values = np.divide(
+        estimates,
+        standard_errors,
+        out=np.zeros_like(estimates),
+        where=standard_errors > 0.0,
+    )
     p_values = 2.0 * stats.norm.sf(np.abs(z_values))
     denominator = np.outer(standard_errors, standard_errors)
     correlation = np.divide(
         covariance,
         denominator,
-        out=np.full_like(covariance, np.nan),
+        out=np.zeros_like(covariance),
         where=denominator > 0.0,
     )
-    np.fill_diagonal(correlation, np.where(standard_errors > 0.0, 1.0, np.nan))
+    np.fill_diagonal(
+        correlation,
+        np.where(standard_errors > 0.0, 1.0, 0.0),
+    )
     retained = np.abs(eigenvalues) > threshold
     if np.any(retained):
         condition_number = float(
