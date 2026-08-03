@@ -20,4 +20,19 @@ jobs:
         with:
           python-version: "3.13"
       - run: python -m pip install -q -e ".[test]"
-      - run: python -m pytest tests/test_covariance_inference.py -q -x
+      - name: Capture focused pytest output
+        shell: bash
+        run: |
+          set +e
+          python -m pytest tests/test_covariance_inference.py -q -x > covariance-diagnostic.txt 2>&1
+          status=$?
+          cat covariance-diagnostic.txt
+          echo "pytest_status=$status" >> "$GITHUB_ENV"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: covariance-diagnostic
+          path: covariance-diagnostic.txt
+      - name: Fail after artifact upload
+        shell: bash
+        run: exit "$pytest_status"
