@@ -4,10 +4,10 @@ pySTARMAx provides transparent, typed building blocks for classical STARMA,
 ordinary STARIMA, and multiplicative seasonal STARIMA modelling in Python. The
 current workflow covers spatial-weight construction, simulation, conditional and
 Gaussian Kalman maximum-likelihood estimation, AR stationarity and MA
-invertibility diagnostics, observed-likelihood Hessian inference, diagnostics,
-temporal differencing, original-scale forecast inversion, conditional and
-bootstrap intervals, rolling-origin calibration diagnostics, and
-missing-observation state-space filtering.
+invertibility diagnostics, observed-likelihood Hessian inference, natural-scale
+innovation covariance inference, missing-observation filtering, fixed-interval
+state smoothing, differencing, original-scale forecast inversion, conditional
+and bootstrap intervals, and rolling-origin calibration diagnostics.
 
 ```python
 import numpy as np
@@ -19,7 +19,7 @@ conditional_result = conditional.fit(y, weights)
 print(conditional_result.summary())
 
 incomplete = y.copy()
-incomplete[20, 1] = np.nan
+incomplete[20:24, 1] = np.nan
 incomplete[80, :] = np.nan
 
 mle = KalmanSTARMA(
@@ -31,13 +31,18 @@ mle = KalmanSTARMA(
 )
 mle_result = mle.fit(incomplete, weights)
 admissibility = mle.admissibility()
-inference = mle.infer(relative_step=1e-4)
+likelihood_inference = mle.infer(relative_step=1e-4)
+covariance_inference = (
+    likelihood_inference.innovation_covariance_inference()
+)
+smoothed = mle.smooth(incomplete)
 
 print(mle_result.summary())
 print(admissibility.summary())
-print(inference.coefficient_table)
-print(inference.confidence_intervals())
-print(inference.minimum_admissibility_distance)
+print(likelihood_inference.coefficient_table)
+print(covariance_inference.element_table)
+print(smoothed.smoothed_observations[20:24, 1])
+print(smoothed.state_disturbance_mean)
 print(mle.predict(steps=6))
 
 evaluation = rolling_origin_evaluate(
@@ -55,15 +60,18 @@ print(evaluation.metrics())
 
 See [Model convention](model.md) for the STARMA equation and data orientation,
 [Stationarity and invertibility](admissibility.md) for AR and inverse-MA
-companion matrices, eigensystems, signed boundary distances, and fitting
-constraints, [Ordinary STARIMA](starima.md) plus
-[Seasonal STARIMA](seasonal.md) for differencing and multiplicative factors,
-[State-space filtering](state_space.md) for fixed-parameter filtering,
-[Maximum likelihood](maximum_likelihood.md) for direct Gaussian Kalman
-estimation, and [Likelihood inference](likelihood_inference.md) for
-observed-information standard errors, confidence intervals, Hessian rank,
-eigenvalue, condition-number, score, and dual-boundary diagnostics.
+companion diagnostics, [State-space filtering](state_space.md) for missing-data
+filtering, and [Fixed-interval smoothing](smoothing.md) for RTS state and
+state-disturbance moments.
 
+[Maximum likelihood](maximum_likelihood.md),
+[Likelihood inference](likelihood_inference.md), and
+[Innovation covariance inference](covariance_inference.md) document direct
+Gaussian estimation, observed-information curvature, and analytic delta-method
+transformation to natural variance and covariance elements.
+
+[Ordinary STARIMA](starima.md), [Seasonal STARIMA](seasonal.md),
 [Forecasting](forecasting.md), [Bootstrap intervals](bootstrap.md), and
-[Rolling evaluation](evaluation.md) cover predictive uncertainty, parameter
-refitting, calibration, sharpness, and point-error assessment.
+[Rolling evaluation](evaluation.md) cover integration, multiplicative seasonal
+factors, predictive uncertainty, parameter refitting, calibration, sharpness,
+and point-error assessment.
