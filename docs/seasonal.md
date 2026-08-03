@@ -1,21 +1,29 @@
 # Seasonal STARIMA
 
-pySTARMAx 0.0.5 supports ordinary-seasonal differencing and a constrained
-multiplicative seasonal model. The public order convention is
+pySTARMAx provides two multiplicative seasonal routes with the shared order
+convention
 
 \[
-(p,d,q)\times(P,D,Q)_s,
+(p,d,q)\times(P,D,Q)_s.
 \]
 
-where `s` is the seasonal period. The transformed process is
+1. `SeasonalSTARIMA` uses nonlinear conditional least squares and supports
+   conditional and bootstrap forecast intervals.
+2. `SeasonalKalmanSTARIMA` uses a Gaussian Kalman likelihood for the combined
+   ordinary-seasonally transformed process, supports missing observations,
+   filtering, RTS smoothing, original innovation smoothing, expanded
+   admissibility checks, and full scalar/diagonal/Cholesky innovation
+   covariance.
+
+Both transform the original process through
 
 \[
 w_t=(1-B)^d(1-B^s)^D z_t.
 \]
 
-`SeasonalSTARIMA.fit()` returns inference for `w_t`. As with ordinary STARIMA,
-`predict_differenced()` stays on the transformed scale and `predict()` restores
-the original observation scale.
+`predict_differenced()` remains on this transformed scale and `predict()`
+restores the original scale from ordinary terminal anchors and seasonal cycle
+histories.
 
 ## Multiplicative matrix-polynomial convention
 
@@ -24,57 +32,66 @@ Let
 \[
 A_i=\sum_{\ell}\phi_{i\ell}W_\ell,
 \qquad
-S_j=\sum_{\ell}\Phi_{j\ell}W_\ell,
+S_r=\sum_{\ell}\Phi_{r\ell}W_\ell,
 \]
 
-and define moving-average factor matrices `M_i` and `N_j` analogously. pySTARMAx
-uses
+and define ordinary and seasonal moving-average factors `M_j` and `N_u`
+analogously. pySTARMAx uses
 
 \[
-\left(I-\sum_j S_jB^{js}\right)
+\left(I-\sum_r S_rB^{rs}\right)
 \left(I-\sum_i A_iB^i\right)w_t
 =
-\left(I+\sum_j N_jB^{js}\right)
-\left(I+\sum_i M_iB^i\right)\varepsilon_t.
+\left(I+\sum_u N_uB^{us}\right)
+\left(I+\sum_j M_jB^j\right)\varepsilon_t.
 \]
 
-The seasonal factor is on the **left**. Expanding the autoregressive side gives
-ordinary terms `+A_i`, seasonal terms `+S_j`, and cross terms
+The seasonal factor is on the left. Expanding the autoregressive side gives
+ordinary terms `+A_i`, seasonal terms `+S_r`, and cross terms
 
 \[
--S_jA_i B^{js+i}.
+-S_rA_iB^{rs+i}.
 \]
 
-The moving-average cross term is `+N_jM_i`. This matrix order matters when the
-spatial operators do not commute.
+The positive-sign moving-average product gives cross terms
+
+\[
++N_uM_jB^{us+j}.
+\]
+
+Matrix order is preserved. With non-commuting spatial operators, `S_r @ A_i`
+is not interchangeable with `A_i @ S_r`.
 
 Cross-lag matrices are applied directly. They are not projected back onto the
-supplied `SpatialWeights` basis, because a set of spatial-weight matrices need
-not be closed under matrix multiplication.
+supplied `SpatialWeights` basis because that basis need not be closed under
+matrix multiplication.
 
-## Why estimation is nonlinear
+## Factor parameters and parameter counting
 
-In a freely expanded model, the coefficient at lag `js+i` could be estimated as
-an independent parameter. That would not be a multiplicative seasonal model.
-Here the cross coefficient is constrained to the product of the ordinary and
-seasonal factor parameters. pySTARMAx therefore estimates models with `P>0` or
-`Q>0` by nonlinear conditional least squares.
-
-The returned parameter vector contains only factor coefficients:
+A freely expanded recursion could estimate each cross-lag matrix independently,
+but that would no longer be a multiplicative seasonal model. Both seasonal
+estimators optimize only the factor coefficients:
 
 - `ar.t1.W0`, `ar.t1.W1`, ... for ordinary AR factors;
-- `sar.t12.W0`, ... for seasonal AR factors;
+- `sar.t24.W0`, ... for seasonal AR factors;
 - `ma.t1.W0`, ... for ordinary MA factors;
-- `sma.t12.W0`, ... for seasonal MA factors.
+- `sma.t24.W0`, ... for seasonal MA factors.
 
-There are no independently fitted `cross` parameters.
+For `K` spatial weights, the dynamic factor count is
 
-## Example
+\[
+\mathbf 1_c+K(p+P+q+Q).
+\]
+
+Induced cross-lag matrices are deterministic functions of these factors and are
+not counted as independent parameters in AIC or BIC.
+
+## Conditional least-squares route
 
 ```python
 from pystarmax import SeasonalSTARIMA
 
-model = SeasonalSTARIMA(
+conditional = SeasonalSTARIMA(
     ar_order=1,
     integration_order=1,
     ma_order=1,
@@ -84,40 +101,109 @@ model = SeasonalSTARIMA(
     seasonal_period=24,
     include_intercept=False,
 )
-result = model.fit(observations, weights)
+conditional_result = conditional.fit(observations, weights)
 
-print(result.summary())          # highest-difference scale
-print(model.predict_differenced(steps=24))
-print(model.predict(steps=24))   # original scale
-print(model.fitted_original())       # aligned one-step fits
-print(model.predict_interval(steps=24, random_state=42))
+print(conditional_result.summary())
+print(conditional.predict_differenced(steps=24))
+print(conditional.predict(steps=24))
+print(conditional.fitted_original())
+print(conditional.predict_interval(steps=24, random_state=42))
 ```
 
-When `P=Q=0`, estimation delegates to the existing linear STARMA core after
-ordinary-seasonal differencing. With `D=0` as well, this route is numerically
-compatible with ordinary `STARIMA(p,d,q)`.
+This route estimates factor parameters by nonlinear conditional least squares
+with zero pre-sample innovations. It also supports residual and parametric
+bootstrap intervals through the package bootstrap API.
 
-## Seasonal differencing state
+## Gaussian Kalman route
+
+```python
+from pystarmax import SeasonalKalmanSTARIMA
+
+kalman = SeasonalKalmanSTARIMA(
+    ar_order=1,
+    integration_order=1,
+    ma_order=1,
+    seasonal_ar_order=1,
+    seasonal_integration_order=1,
+    seasonal_ma_order=1,
+    seasonal_period=24,
+    covariance_type="full",
+    include_intercept=False,
+    enforce_stationarity=True,
+    enforce_invertibility=True,
+)
+kalman_result = kalman.fit(incomplete_observations, weights)
+
+print(kalman_result.summary())
+print(kalman.admissibility().summary())
+print(kalman.predict_differenced(steps=24))
+print(kalman.predict(steps=24))
+print(kalman.smooth().smoothed_observations)
+```
+
+`SeasonalKalmanSTARIMA` constructs arbitrary-lag companion matrices from the
+complete multiplicative expansion. Gaps between lags are represented by zero
+matrix blocks. Stationarity and invertibility are checked on the complete
+expanded AR recursion and the inverse of the complete positive-sign MA
+recursion.
+
+The likelihood is conditional on the history removed by ordinary and seasonal
+differencing:
+
+\[
+\ell_c(\vartheta;z_{1:T})
+=
+\ell\left(
+\vartheta;(1-B)^d(1-B^s)^D z_{d+Ds+1:T}
+\mid\mathcal H_{d+Ds}
+\right).
+\]
+
+It is not an exact diffuse integrated seasonal level-state likelihood.
+
+See [Multiplicative seasonal Kalman STARIMA](seasonal_maximum_likelihood.md) for
+state-space construction, covariance options, constraints, missing-data rules,
+and result fields.
+
+## Combined differencing state
 
 `seasonal_difference()` stores the final complete seasonal cycle at each lower
 seasonal-difference level. For one seasonal difference,
 
 \[
-z_t = \Delta_s z_t + z_{t-s}.
+z_t=\Delta_s z_t+z_{t-s}.
 \]
 
-Forecast inversion therefore uses a private rolling history of the last `s`
-values. Higher seasonal orders apply the same recursion from the highest level
-to the original level.
+Forecast inversion uses a rolling queue containing the final `s` values. Higher
+seasonal orders apply the same recursion from the highest seasonal-difference
+level downward.
 
 `combined_difference()` applies ordinary differencing first and seasonal
-differencing second. Its immutable `CombinedDifferencingState` reverses those
-operations in the opposite order.
+differencing second. `CombinedDifferencingState.inverse_forecast()` reverses
+those operations in the opposite order: seasonal histories are restored first,
+then ordinary terminal levels.
+
+The Kalman estimator follows the same convention. Original-scale forecasting is
+refused when any required ordinary anchor or seasonal history contains a missing
+value, while transformed-scale forecasting remains available.
+
+## Missing observations
+
+Neither route imputes level observations before differencing. In the Kalman
+route, `NaN` values propagate through the complete ordinary-seasonal stencil and
+are then handled by the transformed measurement update:
+
+- finite locations participate in the update;
+- missing locations are omitted;
+- a fully missing transformed row performs prediction only;
+- only finite transformed cells contribute to the likelihood.
+
+The Kalman result reports original and transformed missing-cell counts.
 
 ## Auditing the expansion
 
-`expand_multiplicative_operators()` exposes the actual lag matrices generated by
-factor coefficients:
+`expand_multiplicative_operators()` exposes the actual factor-induced lag
+matrices:
 
 ```python
 from pystarmax import expand_multiplicative_operators
@@ -133,22 +219,31 @@ for term in terms:
     print(term.lag, term.label, term.matrix)
 ```
 
-This is especially useful with non-symmetric or non-commuting spatial weights.
+The Kalman result additionally stores aggregated `ar_lags`, `ar_matrices`,
+`ma_lags`, and `ma_matrices` after terms at equal temporal lags are combined.
 
 ## Simulation
 
 `simulate_seasonal_starma()` generates the stationary transformed process.
 `simulate_seasonal_starima()` then applies ordinary and seasonal integration,
-using zero initial histories by default or a supplied `CombinedDifferencingState`.
+using zero initial histories by default or a supplied
+`CombinedDifferencingState`.
 
 ## Current limits
 
-- nonlinear estimation is conditional and uses zero pre-sample innovations;
-- stationarity and invertibility constraints are not yet imposed during fitting;
-- standard errors use the local nonlinear least-squares Jacobian;
-- likelihood, AIC, and BIC use the same scalar-innovation approximation as the
-  existing conditional estimator;
-- the stored result, fitted values, and residuals remain on the transformed scale;
-- `fitted_original()` is a separate aligned one-step reconstruction;
-- forecast intervals condition on fitted factor parameters;
-- exact state-space likelihood is not yet implemented.
+Conditional route:
+
+- nonlinear estimation uses zero pre-sample innovations;
+- likelihood, AIC, and BIC use the conditional scalar-innovation approximation;
+- local Jacobian standard errors do not include all nonlinear uncertainty;
+- intervals condition on fitted factors unless bootstrap refitting is used.
+
+Kalman route:
+
+- likelihood is conditional on the differencing history, not exact diffuse;
+- observed-information Hessian and natural covariance inference are not yet
+  exposed for seasonal factor parameters;
+- original-scale forecast intervals are unavailable;
+- original-scale filtered and smoothed level-state distributions are not
+  returned;
+- dense companion states can grow rapidly with seasonal period and order.
