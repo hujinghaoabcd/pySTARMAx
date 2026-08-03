@@ -6,10 +6,12 @@
 - branch: `agent/integrated-kalman-starima`;
 - pull request: PR #15, `Add conditional integrated Kalman STARIMA`;
 - base: version 0.0.14 on `main`;
-- core validation: GitHub Actions CI #330, run ID `30856284894`;
-- core result: 134 tests passed and 86.96% total branch coverage;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #339, run ID `30856825182`;
+- validation result: 134 tests passed and 86.96% total branch coverage;
 - `src/pystarmax/integrated_maximum_likelihood.py` coverage: 84.3%;
-- a complete final documentation-head CI is required before merge.
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+  macOS Python 3.11--3.14 all passed.
 
 ## Delivered API
 
@@ -174,13 +176,18 @@ Tests include:
    transformed-sample validation;
 9. the full inherited package suite on all supported Python versions.
 
-Core CI #330 reported:
+Authoritative CI #339 reported:
 
-- 134 tests passed in 31.96 seconds;
+- 134 tests passed in 50.04 seconds;
 - total branch coverage: 86.96%;
 - integrated module coverage: 84.3%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
-  regeneration passed.
+  regeneration passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives a final merge-gate CI before PR #15 is marked
+ready and merged.
 
 ## Files introduced or changed
 
