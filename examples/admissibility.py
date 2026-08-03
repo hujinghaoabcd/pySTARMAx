@@ -14,7 +14,6 @@ from pystarmax import (
     starma_admissibility,
 )
 
-
 weights = SpatialWeights.from_adjacency(lattice_weights(2, 2), max_order=1)
 
 ar_parameters = np.array([[0.42, 0.12]], dtype=float)
