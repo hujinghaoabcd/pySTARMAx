@@ -2,29 +2,33 @@
 
 pySTARMAx provides transparent, typed building blocks for classical STARMA,
 ordinary STARIMA, and multiplicative seasonal STARIMA modelling in Python. The
-current workflow covers spatial-weight construction, simulation, conditional
-model fitting, diagnostics, temporal differencing, original-scale forecast
-inversion, aligned one-step fitted values, conditional and bootstrap intervals,
-rolling-origin calibration diagnostics, and fixed-parameter Gaussian Kalman
-filtering with partial missing observations.
+current workflow covers spatial-weight construction, simulation, conditional and
+Gaussian Kalman maximum-likelihood estimation, diagnostics, temporal
+differencing, original-scale forecast inversion, conditional and bootstrap
+intervals, rolling-origin calibration diagnostics, and missing-observation
+state-space filtering.
 
 ```python
 import numpy as np
 
-from pystarmax import STARMA, rolling_origin_evaluate
+from pystarmax import KalmanSTARMA, STARMA, rolling_origin_evaluate
 
-model = STARMA(ar_order=1, ma_order=1)
-result = model.fit(y, weights)
-print(result.summary())
-print(model.predict(steps=6))
-print(model.predict_interval(steps=6, random_state=42))
+conditional = STARMA(ar_order=1, ma_order=1)
+conditional_result = conditional.fit(y, weights)
+print(conditional_result.summary())
 
 incomplete = y.copy()
 incomplete[20, 1] = np.nan
 incomplete[80, :] = np.nan
-filtered = model.filter_state_space(incomplete)
-print(filtered.log_likelihood)
-print(filtered.filtered_observations[-1])
+
+mle = KalmanSTARMA(
+    ar_order=1,
+    ma_order=1,
+    covariance_type="full",
+)
+mle_result = mle.fit(incomplete, weights)
+print(mle_result.summary())
+print(mle.predict(steps=6))
 
 evaluation = rolling_origin_evaluate(
     lambda: STARMA(ar_order=1, ma_order=1),
@@ -42,7 +46,7 @@ print(evaluation.metrics())
 See [Model convention](model.md) for the STARMA equation and data orientation,
 [Ordinary STARIMA](starima.md) plus [Seasonal STARIMA](seasonal.md) for
 differencing and multiplicative factors, [State-space filtering](state_space.md)
-for Kalman likelihood and missing observations, [Forecasting](forecasting.md) for
-conditional innovation intervals, [Bootstrap intervals](bootstrap.md) for
-parameter-aware predictive inference, and [Rolling evaluation](evaluation.md)
-for coverage, width, interval scores, MAE, and RMSE.
+for fixed-parameter filtering, [Maximum likelihood](maximum_likelihood.md) for
+direct Gaussian Kalman estimation, [Forecasting](forecasting.md) and
+[Bootstrap intervals](bootstrap.md) for predictive uncertainty, and
+[Rolling evaluation](evaluation.md) for calibration and sharpness diagnostics.
