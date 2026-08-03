@@ -237,7 +237,7 @@ def test_validation_and_not_fitted_errors() -> None:
         model.predict_differenced()
     with pytest.raises(RuntimeError, match="fit must be called"):
         model.filter()
-    with pytest.raises(ValueError, match="smaller than"):
+    with pytest.raises(ValueError, match="at least three"):
         model.fit(np.ones((2, 1)), identity_weights())
     with pytest.raises(ValueError, match="two-dimensional"):
         model.fit(np.ones(10), identity_weights())
