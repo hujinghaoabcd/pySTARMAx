@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.13"
+__version__ = "0.0.14"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -53,6 +53,10 @@ from pystarmax.evaluation import (
     rolling_origin_evaluate,
 )
 from pystarmax.forecasting import ForecastInterval
+from pystarmax.innovation_smoothing import (
+    InnovationDisturbanceResult,
+    innovation_disturbance_smoother,
+)
 from pystarmax.likelihood_inference import (
     FiniteDifferenceCurvature,
     LikelihoodInferenceResult,
@@ -100,6 +104,7 @@ __all__ = [
     "STARMAResult",
     "KalmanSTARMAResult",
     "KalmanSmootherResult",
+    "InnovationDisturbanceResult",
     "LikelihoodInferenceResult",
     "FiniteDifferenceCurvature",
     "InnovationCovarianceInference",
@@ -147,6 +152,7 @@ __all__ = [
     "kalman_filter",
     "kalman_loglikelihood",
     "kalman_smoother",
+    "innovation_disturbance_smoother",
     "LagOperator",
     "expand_multiplicative_operators",
     "stcov",
