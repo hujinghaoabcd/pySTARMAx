@@ -85,10 +85,20 @@ Focused tests cover:
 - covariance and dimensional validation;
 - immutability of public result arrays.
 
-Initial CI confirmed the new numerical tests, coverage threshold, wheel, source
-distribution, and Twine metadata. Black 26.5.1 identified only formatting changes
-in two new files; the exact formatter was applied through a temporary workflow,
-which was removed immediately afterward. The standard CI workflow was restored.
+GitHub Actions CI run #179 completed successfully:
+
+- 77 tests passed;
+- total branch coverage was 88.25%, above the configured 80% threshold;
+- Black, isort, Ruff, and mypy passed;
+- the independent exact diagnostic fixture regenerated with a clean Git diff;
+- strict MkDocs construction passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11-3.14.
+
+Black 26.5.1 and the mypy type-alias correction were applied through temporary
+single-purpose workflows during development. Both workflows were removed after
+their changes were committed. The final PR contains only 14 formal files and no
+temporary diagnostics, formatters, or repair workflows.
 
 ## Explicit exclusions
 
