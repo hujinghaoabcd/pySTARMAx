@@ -1,0 +1,44 @@
+name: Temporary type fix
+
+on:
+  push:
+    branches: [agent/state-space-kalman-core]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/state-space-kalman-core
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/pystarmax/state_space.py")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace(
+              "from typing import Any, Literal, cast",
+              "from typing import Any, Literal, TypeAlias, cast",
+          )
+          text = text.replace(
+              "BoolArray = npt.NDArray[np.bool_]",
+              "BoolArray: TypeAlias = npt.NDArray[np.bool_]",
+          )
+          path.write_text(text, encoding="utf-8")
+          PY
+      - run: python -m pip install black==26.5.1 isort==8.0.1
+      - run: python -m isort src/pystarmax/state_space.py
+      - run: python -m black src/pystarmax/state_space.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pystarmax/state_space.py
+          git diff --cached --quiet || git commit -m "Declare the boolean array type alias"
+          git push origin HEAD:agent/state-space-kalman-core
