@@ -10,15 +10,17 @@ engineering conventions established in pyGWRx and pyKDEX.
 
 ## Repository state
 
-- PR #1 through PR #8 were squash-merged into `main`.
+- PR #1 through PR #9 were squash-merged into `main`.
 - PR #8, state-space filtering and missing observations, was merged as `258ceac7`.
-- `main` is version `0.0.8`.
-- Current branch: `agent/kalman-maximum-likelihood`.
-- Current draft pull request: PR #9, `Add Kalman maximum-likelihood STARMA estimation`.
-- Current development target: version `0.0.9`.
-- Current stage: direct stationary Gaussian Kalman maximum likelihood.
+- PR #9, Kalman maximum-likelihood estimation, was merged as `4c3c7146`.
+- `main` is version `0.0.9`.
+- Current branch: `agent/kalman-likelihood-inference`.
+- Current draft pull request: PR #10, `Add likelihood-Hessian inference diagnostics`.
+- Current development target: version `0.0.10`.
+- Current stage: observed-likelihood curvature, coefficient uncertainty, and
+  weak-curvature diagnostics for stationary Gaussian Kalman STARMA.
 
-## Completed baseline through 0.0.8
+## Completed baseline through 0.0.9
 
 - typed package, MIT licence, citation metadata, strict documentation, and CI;
 - immutable spatial-weight collections and constructors;
@@ -31,60 +33,80 @@ engineering conventions established in pyGWRx and pyKDEX.
 - explicit stationary STARMA state-space construction;
 - Gaussian fixed-parameter Kalman likelihood;
 - stationary, known, and approximate diffuse initialization;
-- partial-location and fully missing-row filtering.
+- partial-location and fully missing-row filtering;
+- independent `KalmanSTARMA` Gaussian maximum-likelihood estimator;
+- scalar, diagonal, and Cholesky full innovation covariance;
+- complete likelihood, covariance, optimizer, AIC, BIC, filtering, and prediction
+  diagnostics.
 
-## Completed in the current 0.0.9 step
+## Completed in the current 0.0.10 step
 
-- added independent `KalmanSTARMA` without changing the conditional estimator;
-- added direct Gaussian likelihood optimization with L-BFGS-B;
-- added scalar shared innovation variance;
-- added diagonal location-specific innovation variances;
-- added full positive-definite Cholesky innovation covariance;
-- counted all dynamic and covariance parameters in AIC and BIC;
-- supported complete and partially missing observations directly in the objective;
-- restricted location-mean filling to automatic starting-value construction;
-- used the conditional estimator for dynamic starting values;
-- added spectral-radius feasibility penalties and final stability validation;
-- added immutable `KalmanSTARMAResult` with optimizer, covariance, likelihood,
-  information-criterion, state-space, and filtering diagnostics;
-- added filtering of new incomplete matrices and recursive conditional-mean prediction;
-- added scalar white-noise exact MLE, AR recovery, diagonal/full covariance,
-  missing-data, prediction, and validation tests;
-- added complete maximum-likelihood documentation, example, roadmap, and handoff;
-- updated public exports, package version, and citation metadata to 0.0.9.
+- added central finite-difference score and Hessian evaluation;
+- added parameter-scaled relative and absolute perturbations;
+- added exact four-corner mixed-partial central stencils;
+- added function-evaluation accounting and immutable curvature results;
+- reconstructed the fitted Gaussian Kalman negative log likelihood on the raw
+  optimizer scale;
+- rejected stencil points that enter the stationarity feasibility penalty;
+- added observed-information covariance and parameter correlation;
+- added standard errors, z statistics, two-sided normal p values, and normal
+  confidence intervals for intercept and AR/MA coefficients;
+- added separate dynamic-coefficient and complete optimizer-parameter tables;
+- added Hessian eigenvalues, numerical rank, condition number, maximum score, and
+  stationarity-boundary distance;
+- made non-positive-definite or rank-deficient Hessians fail by default;
+- added an explicit positive-eigenspace pseudoinverse route for diagnosis;
+- marked pseudoinverse results and kept zero-information directions finite;
+- exposed inference through `KalmanSTARMA.infer()`;
+- exported `FiniteDifferenceCurvature`, `LikelihoodInferenceResult`,
+  `finite_difference_curvature()`, and `finite_difference_hessian()`;
+- added analytic quadratic, scalar Gaussian white-noise, incomplete AR(1),
+  validation, and singular-Hessian tests;
+- added README, MkDocs, method documentation, example, roadmap, citation, and
+  Step 10 handoff updates;
+- updated package and citation metadata to 0.0.10.
 
 ## Statistical interpretation
 
-`KalmanSTARMA` is a distinct stationary Gaussian maximum-likelihood estimator.
-It does not replace `STARMA.fit()`, which remains the transparent conditional
-baseline used by existing bootstrap and seasonal wrappers.
+`KalmanSTARMA.infer()` computes local observed-likelihood curvature at the fitted
+raw optimizer point. The inverse Hessian is used only when the observed
+information is positive definite and numerically full rank.
 
-Missing cells are omitted from Kalman measurement updates. Automatic mean filling
-is used only to obtain starting values. Full innovation covariance is represented
-as `L @ L.T`, with exponentiated Cholesky diagonal elements.
+Intercept and AR/MA entries are already on their natural coefficient scale.
+Scalar and diagonal covariance entries remain log standard deviations. Full
+covariance entries remain log Cholesky diagonals and unconstrained lower
+Cholesky elements. Version 0.0.10 does not transform covariance-factor
+uncertainty into variance, covariance, or correlation uncertainty.
 
-The current stationarity control is an explicit spectral-radius feasibility
-boundary. It is not a smooth stability reparameterization. MA invertibility is
-not yet constrained.
+The default behavior refuses indefinite and rank-deficient curvature. The
+explicit `allow_singular=True` route uses only positive eigen-directions above
+the numerical threshold and records `used_pseudoinverse=True`. It is diagnostic,
+not a silent substitute for regular maximum-likelihood inference.
 
-## Final validation for 0.0.9
+The estimator still uses a spectral-radius feasibility boundary rather than a
+smooth stability parameterization. Finite-difference points entering the large
+penalty region are rejected. MA invertibility is not yet constrained.
 
-GitHub Actions CI run #217 completed successfully on the fully documented branch
-head:
+## Validation state for 0.0.10
 
-- 85 tests passed;
+GitHub Actions CI run #231 completed successfully on the implementation plus
+method documentation and example head:
+
+- 91 tests passed;
 - total branch coverage was 87.84%, above the configured 80% threshold;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic reference regeneration produced a clean diff;
 - strict MkDocs construction passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
-- the final PR surface contains only formal source, test, example, documentation,
-  metadata, and navigation files, with no temporary workflow files.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-The final validation-record edit changes documentation only. Numerical code,
-tests, public exports, metadata, and CI configuration are unchanged from the
-validated head.
+Run #231 reported one `RuntimeWarning` because `np.where` eagerly evaluated the
+inverse of a zero Hessian eigenvalue in the explicit pseudoinverse test. The
+result was numerically correct, but the implementation has now been changed to
+masked `np.divide` so excluded eigen-directions are never divided. README,
+roadmap, project-status, and Step 10 handoff updates were also added after run
+#231. A final complete warning-free CI run is required before PR #10 is marked
+ready and merged.
 
 ## Design principles
 
@@ -95,25 +117,31 @@ validated head.
 5. Count covariance parameters honestly in information criteria.
 6. Report optimizer convergence and feasibility diagnostics without hiding failures.
 7. Treat spectral-radius penalties as feasibility controls, not smooth constraints.
-8. Keep non-symmetric spatial-matrix orientation explicit.
-9. Use stable linear solves and immutable public result arrays.
-10. Add independent numerical references before claiming external equivalence.
+8. Do not differentiate through invalid feasibility-penalty regions.
+9. Refuse indefinite or rank-deficient observed information by default.
+10. Keep optimizer-scale and natural-scale uncertainty explicitly distinguished.
+11. Keep non-symmetric spatial-matrix orientation explicit.
+12. Use stable linear solves and immutable public result arrays.
+13. Add independent numerical references before claiming external equivalence.
 
 ## Immediate next tasks
 
-1. Merge PR #9 after the documentation-only final check repeats successfully.
-2. Add likelihood-Hessian covariance and standard errors.
-3. Add curvature rank, condition-number, and weak-identification diagnostics.
-4. Add explicit stationarity and MA invertibility checks.
-5. Add constrained fitting or stable reparameterization.
-6. Add integrated and multiplicative seasonal maximum-likelihood wrappers.
-7. Add state and disturbance smoothing.
-8. Add sparse matrices, ecosystem adapters, order selection, and exogenous inputs.
-9. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+1. Complete the final warning-free CI matrix for PR #10.
+2. Update this validation section with the final run number.
+3. Mark PR #10 ready and squash-merge it into `main`.
+4. Add reusable stationarity diagnostics independent of fitting.
+5. Add an explicit MA invertibility definition and checks for spatial STARMA.
+6. Add constrained fitting or a smooth stability/invertibility parameterization.
+7. Add delta-method transforms for innovation covariance elements.
+8. Add integrated and multiplicative seasonal maximum-likelihood wrappers.
+9. Add state and disturbance smoothing.
+10. Add sparse matrices, ecosystem adapters, order selection, and exogenous inputs.
+11. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
 
 ## Known limitations
 
-- no likelihood-Hessian standard errors or confidence intervals;
+- covariance-factor standard errors are not transformed to covariance elements;
+- no robust, sandwich, profile-likelihood, or likelihood-ratio inference;
 - no smooth stationarity parameterization or MA invertibility constraint;
 - approximate diffuse initialization is not exact diffuse likelihood;
 - no state or disturbance smoothing;
@@ -127,6 +155,7 @@ validated head.
 ## Handoff instruction
 
 Before the next substantial step, read this file, `docs/model.md`,
-`docs/state_space.md`, `docs/maximum_likelihood.md`, `docs/forecasting.md`, and
-the latest file under `docs/development/`. Update repository state, validation,
-next tasks, and limitations after every completed stage.
+`docs/state_space.md`, `docs/maximum_likelihood.md`,
+`docs/likelihood_inference.md`, and
+`docs/development/STEP_10_LIKELIHOOD_INFERENCE.md`. Update repository state,
+validation, next tasks, and limitations after every completed stage.
