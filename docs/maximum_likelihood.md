@@ -1,9 +1,14 @@
 # Kalman maximum-likelihood estimation
 
-Version 0.0.9 adds a dedicated `KalmanSTARMA` estimator. It maximizes the
-Gaussian likelihood evaluated by the state-space and Kalman filtering core added
-in version 0.0.8. The established conditional `STARMA.fit()` estimator remains
-available and unchanged.
+`KalmanSTARMA` is a dedicated stationary Gaussian maximum-likelihood estimator.
+It maximizes the likelihood evaluated by the package's state-space and Kalman
+filtering core. The established conditional `STARMA.fit()` estimator remains
+available and separate.
+
+Version 0.0.11 adds explicit autoregressive stationarity and moving-average
+invertibility diagnostics and applies both criteria consistently to automatic
+starting values, likelihood candidates, final fitted results, and
+likelihood-Hessian inference.
 
 ## Basic use
 
@@ -15,10 +20,15 @@ model = KalmanSTARMA(
     ma_order=1,
     covariance_type="full",
     include_intercept=True,
+    enforce_stationarity=True,
+    stability_margin=1e-6,
+    enforce_invertibility=True,
+    invertibility_margin=1e-6,
 )
 result = model.fit(data, weights)
 
 print(result.summary())
+print(model.admissibility().summary())
 print(model.predict(steps=6))
 ```
 
@@ -60,6 +70,11 @@ present. Missing cells are filled only for this starting-value calculation,
 using each location's observed mean. The actual objective always receives the
 original incomplete observation matrix.
 
+After conditional initialization, the AR and MA coefficient matrices are
+checked independently. When the corresponding constraint is enabled, each block
+is iteratively scaled until it lies safely inside its requested spectral-radius
+region. This affects only automatic starts.
+
 Users may supply dynamic starting values and an initial covariance:
 
 ```python
@@ -72,18 +87,67 @@ result = model.fit(
 ```
 
 `start_params` contains the optional common intercept followed by AR and MA
-coefficients in temporal-major, spatial-minor order.
+coefficients in temporal-major, spatial-minor order. User-supplied dynamic starts
+are checked for shape and finiteness but are not silently projected or rescaled.
 
-## Stationarity handling
+## Autoregressive stationarity
 
-With the default stationary initialization, candidates whose transition spectral
-radius reaches `1 - stability_margin` receive a large feasibility penalty. The
-final candidate is checked again before a result is returned.
+For lag matrices
 
-This is an explicit feasibility strategy, not a smooth stationarity
-reparameterization. Setting `enforce_stationarity=False` is mainly useful with
-approximate diffuse initialization; stationary initialization itself still
-requires a stable transition matrix.
+\[
+A_i = \sum_k \phi_{ik}W_k,
+\]
+
+the AR companion matrix has top block row `[A_1, ..., A_p]`. With
+`enforce_stationarity=True`, candidates at or beyond
+
+```text
+spectral_radius >= 1 - stability_margin
+```
+
+receive a large feasibility penalty. The final candidate is checked again before
+a result is returned.
+
+Stationary Kalman initialization itself requires a stable transition matrix.
+`enforce_stationarity=False` is therefore mainly meaningful with approximate
+diffuse initialization or for explicit diagnostic experiments.
+
+## Moving-average invertibility
+
+pySTARMAx uses the positive MA sign
+
+\[
+\varepsilon_t + \sum_j B_j\varepsilon_{t-j}.
+\]
+
+The innovation inverse recursion consequently has companion top block row
+`[-B_1, ..., -B_q]`. With `enforce_invertibility=True`, candidates at or beyond
+
+```text
+inverse_ma_spectral_radius >= 1 - invertibility_margin
+```
+
+receive the same feasibility treatment and the final candidate is hard-checked.
+
+Set `enforce_invertibility=False` only when a non-invertible solution is
+intentionally required for research or diagnosis. The fitted result still
+computes and reports the inverse-MA radius, boundary distance, and invertibility
+decision even when enforcement is disabled.
+
+See [Stationarity and invertibility](admissibility.md) for the exact companion
+matrices, scalar reductions, public diagnostics, and limitations.
+
+## Feasibility strategy
+
+The current optimizer uses L-BFGS-B and a large continuous penalty outside either
+enabled spectral region. Squared AR and MA boundary excesses are accumulated
+before the penalty is returned.
+
+This is an explicit feasibility strategy, not a smooth bijective
+stationarity/invertibility reparameterization. The objective is smooth inside the
+admissible region but the spectral radius itself may be non-differentiable where
+dominant eigenvalues exchange. Near-boundary optimization and curvature should
+therefore be interpreted cautiously.
 
 ## Result object
 
@@ -96,11 +160,16 @@ requires a stable transition matrix.
 - log likelihood, AIC, and BIC;
 - observed-cell count and estimated-parameter count;
 - optimizer convergence, iteration count, function evaluations, and message;
-- transition spectral radius;
+- AR companion spectral radius and configured limit;
+- inverse-MA companion spectral radius and configured limit;
+- whether stationarity and invertibility were enforced;
+- signed AR and MA boundary distances;
+- stationary, invertible, and jointly admissible decisions;
 - the final `KalmanFilterResult`.
 
 All numerical arrays are immutable. Convenience DataFrames expose the dynamic
-coefficient vector and innovation covariance.
+coefficient vector and innovation covariance. Full companion matrices and
+complex eigenvalues are available through `model.admissibility()`.
 
 ## Filtering and forecasting
 
@@ -114,24 +183,41 @@ forecast = model.predict(steps=12)
 zero. It returns recursive conditional means on the stationary observation
 scale.
 
+## Likelihood inference
+
+```python
+inference = model.infer(relative_step=1e-4)
+print(inference.coefficient_table)
+print(inference.stability_boundary_distance)
+print(inference.invertibility_boundary_distance)
+```
+
+Finite-difference stencils use the same enabled AR and MA feasibility rules as
+fitting. A perturbed point entering either penalty region is rejected instead of
+differentiating the artificial penalty surface. See
+[Likelihood inference](likelihood_inference.md).
+
 ## Current statistical scope
 
-Included in 0.0.9:
+Included through 0.0.11:
 
 - Gaussian Kalman maximum-likelihood estimation;
 - complete and partially missing stationary observations;
 - scalar, diagonal, and full innovation covariance;
 - positive-definite full covariance parameterization;
 - explicit optimizer diagnostics;
-- stationarity feasibility checks;
+- AR stationarity and MA invertibility companion diagnostics;
+- default dual feasibility enforcement with independent margins;
+- fitted boundary distances and full companion eigensystems;
+- observed-information Hessian inference;
 - native filtering and conditional-mean prediction.
 
 Not yet included:
 
-- likelihood-Hessian standard errors;
+- a smooth stationarity/invertibility parameterization;
+- projection of arbitrary starts to the nearest admissible parameter vector;
 - profile or likelihood-ratio intervals;
-- a smooth stationarity parameterization;
-- MA invertibility constraints;
+- covariance-element delta-method transforms;
 - exact diffuse likelihood;
 - state or disturbance smoothing;
 - integrated and multiplicative seasonal maximum-likelihood wrappers;
