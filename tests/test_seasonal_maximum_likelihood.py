@@ -106,8 +106,7 @@ def test_pure_seasonal_ar_estimation_and_admissibility() -> None:
     innovations = rng.normal(scale=0.6, size=data.size)
     for time_index in range(seasonal_period, data.size):
         data[time_index] = (
-            coefficient * data[time_index - seasonal_period]
-            + innovations[time_index]
+            coefficient * data[time_index - seasonal_period] + innovations[time_index]
         )
     model = SeasonalKalmanSTARIMA(
         ar_order=0,

@@ -86,9 +86,7 @@ def _combined_difference_incomplete(
 
     ordinary_levels: list[FloatArray] = [observations.copy()]
     for _ in range(ordinary_order):
-        ordinary_levels.append(
-            cast(FloatArray, np.diff(ordinary_levels[-1], axis=0))
-        )
+        ordinary_levels.append(cast(FloatArray, np.diff(ordinary_levels[-1], axis=0)))
     ordinary_transformed = ordinary_levels[-1]
 
     seasonal_levels: list[FloatArray] = [ordinary_transformed.copy()]
@@ -109,9 +107,7 @@ def _combined_difference_incomplete(
     seasonal_histories = tuple(
         level[-seasonal_period:] for level in seasonal_levels[:-1]
     )
-    anchors_finite = all(
-        np.all(np.isfinite(anchor)) for anchor in ordinary_anchors
-    )
+    anchors_finite = all(np.all(np.isfinite(anchor)) for anchor in ordinary_anchors)
     histories_finite = all(
         np.all(np.isfinite(history)) for history in seasonal_histories
     )
@@ -534,7 +530,9 @@ class SeasonalKalmanSTARIMAResult:
 
     @property
     def covariance(self) -> pd.DataFrame:
-        names = [f"location{index}" for index in range(self.innovation_covariance.shape[0])]
+        names = [
+            f"location{index}" for index in range(self.innovation_covariance.shape[0])
+        ]
         return pd.DataFrame(
             self.innovation_covariance,
             index=names,
@@ -876,9 +874,7 @@ class SeasonalKalmanSTARIMA:
 
         codec = _CovarianceCodec(self.covariance_type, transformed.shape[1])
         coefficient_size = int(coefficient_start.size)
-        raw_start = np.concatenate(
-            [coefficient_start, codec.pack(covariance_start)]
-        )
+        raw_start = np.concatenate([coefficient_start, codec.pack(covariance_start)])
         coefficient_names = self._coefficient_names(resolved_weights)
         optimizer_names = coefficient_names + codec.names
         bounds = [(None, None)] * coefficient_size + codec.bounds
@@ -1022,12 +1018,8 @@ class SeasonalKalmanSTARIMA:
             invertibility_enforced=self.enforce_invertibility,
             n_original_rows=observations.shape[0],
             n_transformed_rows=transformed.shape[0],
-            original_missing_cells=int(
-                np.count_nonzero(~np.isfinite(observations))
-            ),
-            transformed_missing_cells=int(
-                np.count_nonzero(~np.isfinite(transformed))
-            ),
+            original_missing_cells=int(np.count_nonzero(~np.isfinite(observations))),
+            transformed_missing_cells=int(np.count_nonzero(~np.isfinite(transformed))),
             original_scale_forecast_available=state is not None,
             filter_result=filtered,
         )
