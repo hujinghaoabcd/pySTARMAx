@@ -102,8 +102,10 @@ positive eigen-directions above the numerical threshold and sets excluded invers
 eigenvalues to zero. The result is marked with `used_pseudoinverse=True`.
 
 Zero-standard-error directions produce finite diagnostic values rather than
-`NaN` or `Inf`. This design avoids contaminating immutable result validation, but
-the pseudoinverse route must not be presented as ordinary full-rank maximum-
+`NaN` or `Inf`. The positive-eigenspace inverse uses masked `numpy.divide`, so
+excluded zero or negative eigenvalues are never evaluated as denominators. This
+design avoids both non-finite results and divide-by-zero warnings, but the
+pseudoinverse route must not be presented as ordinary full-rank maximum-
 likelihood inference.
 
 ## Parameter scale
@@ -148,18 +150,23 @@ Tests cover:
 8. explicit positive-eigenspace pseudoinverse behavior;
 9. finite arrays and explicit `used_pseudoinverse` marking.
 
-The last complete pre-final-documentation CI run was run #231:
+Final implementation and documentation validation was completed by GitHub Actions
+CI run #237:
 
-- 91 tests passed;
+- 91 tests passed without Python test warnings;
 - total branch coverage was 87.84%;
 - Black, isort, Ruff, and mypy passed;
+- independent diagnostic reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11 through 3.14.
+- Ubuntu, Windows, and macOS passed on Python 3.11 through 3.14;
+- the singular-Hessian pseudoinverse path produced no divide-by-zero warning;
+- the PR contained only the 14 formal implementation, test, example,
+  documentation, metadata, and navigation files.
 
-That run exposed one NumPy eager-evaluation warning in the singular-eigenvalue
-branch. The implementation was subsequently changed from `np.where(1 / lambda)`
-to masked `np.divide`, so the final branch must be revalidated without warnings.
+The final validation-record edits are documentation only and require one final
+CI repeat before merge. Numerical code, tests, exports, package metadata, and CI
+configuration are unchanged from run #237.
 
 ## Deliberate exclusions
 
