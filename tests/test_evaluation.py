@@ -98,7 +98,10 @@ def test_rolling_result_metrics_and_horizon_metrics() -> None:
     metrics = result.metrics()
 
     assert result.shape == (2, 2, 1)
-    np.testing.assert_array_equal(result.covered, observed <= 1.0)
+    np.testing.assert_array_equal(
+        result.covered,
+        (observed >= -1.0) & (observed <= 1.0),
+    )
     np.testing.assert_allclose(result.widths, 2.0)
     assert metrics.nominal_coverage == 0.5
     assert metrics.empirical_coverage == 0.5
