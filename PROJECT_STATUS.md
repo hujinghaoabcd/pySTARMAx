@@ -67,9 +67,10 @@ The current stationarity control is an explicit spectral-radius feasibility
 boundary. It is not a smooth stability reparameterization. MA invertibility is
 not yet constrained.
 
-## Validation status for 0.0.9
+## Final validation for 0.0.9
 
-GitHub Actions CI run #210 validated the complete numerical implementation:
+GitHub Actions CI run #217 completed successfully on the fully documented branch
+head:
 
 - 85 tests passed;
 - total branch coverage was 87.84%, above the configured 80% threshold;
@@ -77,12 +78,13 @@ GitHub Actions CI run #210 validated the complete numerical implementation:
 - independent diagnostic reference regeneration produced a clean diff;
 - strict MkDocs construction passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
-- the Windows matrix was completing in the same workflow when the final
-  documentation and handoff files were added.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
+- the final PR surface contains only formal source, test, example, documentation,
+  metadata, and navigation files, with no temporary workflow files.
 
-The final documented branch head must repeat the complete workflow before PR #9
-is marked ready or merged.
+The final validation-record edit changes documentation only. Numerical code,
+tests, public exports, metadata, and CI configuration are unchanged from the
+validated head.
 
 ## Design principles
 
@@ -99,7 +101,7 @@ is marked ready or merged.
 
 ## Immediate next tasks
 
-1. Complete final clean-head CI and merge PR #9 if all checks remain green.
+1. Merge PR #9 after the documentation-only final check repeats successfully.
 2. Add likelihood-Hessian covariance and standard errors.
 3. Add curvature rank, condition-number, and weak-identification diagnostics.
 4. Add explicit stationarity and MA invertibility checks.
