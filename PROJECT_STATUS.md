@@ -12,14 +12,14 @@ cross-platform CI.
 ## Repository state
 
 - PR #1 through PR #12 have been squash-merged into `main`.
-- PR #11 added AR stationarity and MA invertibility diagnostics and enforcement.
-- PR #12 added natural-scale innovation covariance delta-method inference.
 - `main` is version `0.0.12` plus the restored complete CI workflow.
 - Current branch: `agent/kalman-state-smoothing`.
 - Current draft pull request: PR #13, `Add Kalman fixed-interval state smoothing`.
-- Current development target: version `0.0.13`.
-- Current stage: final documentation and cross-platform validation of RTS state
-  smoothing, lag-one covariance, and state-equation disturbance moments.
+- Current development version: `0.0.13`.
+- PR #13 contains 20 formal code, test, example, metadata, and documentation
+  files; no temporary workflow or diagnostic files remain.
+- The implementation and documentation head passed the complete CI matrix in
+  GitHub Actions run #304, run ID `30852463900`.
 
 ## Completed baseline through 0.0.11
 
@@ -66,9 +66,9 @@ cross-platform CI.
   covariance instead of an undefined local variable;
 - covariance-element indices have an explicit variable-length tuple type for
   current mypy versions;
-- the affected covariance and likelihood inference regression tests pass again.
+- the affected covariance and likelihood inference regression tests pass.
 
-## Completed in the current 0.0.13 step
+## Completed in 0.0.13
 
 ### Rauch--Tung--Striebel smoothing
 
@@ -92,7 +92,7 @@ cross-platform CI.
   projected to zero;
 - materially indefinite covariance raises.
 
-### Validation
+### Validation references
 
 - scalar AR(1) one-gap Gaussian bridge with analytic mean and variance;
 - contiguous missing block compared with direct joint-Gaussian conditioning;
@@ -138,23 +138,25 @@ C_{t,t+1|T}=J_tP_{t+1|T}.
 location-level innovation because the state selection matrix may not be
 one-to-one.
 
-## Core validation for 0.0.13
+## Authoritative 0.0.13 validation
 
-GitHub Actions CI run #286 validated the final numerical core before the formal
-documentation expansion:
+GitHub Actions CI run #304, run ID `30852463900`, validated the complete
+implementation and documentation head:
 
-- 119 tests passed without Python test failures;
+- 119 tests passed;
 - total branch coverage was 87.32%, above the required 80%;
+- `src/pystarmax/smoothing.py` branch coverage was 87.1%;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu and macOS passed on Python 3.11 through 3.14;
-- the Windows jobs were completing normally when documentation work began.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
+- no temporary workflows or diagnostic files were present in the validated
+  branch head.
 
-A final complete CI run is required on the documentation head before PR #13 is
-marked ready and merged. This status section must be updated with that final run
-identifier and complete matrix result.
+A final documentation-only commit records these results. Its CI run is used as
+the merge gate and is reported in the PR description without rewriting this
+section again.
 
 ## Design principles
 
@@ -175,11 +177,10 @@ identifier and complete matrix result.
 
 ## Immediate next tasks
 
-1. Complete documentation synchronization for README, index, navigation, roadmap,
-   covariance inference, smoothing, examples, and handoffs.
-2. Run the complete final CI matrix on the documentation head.
-3. Record the authoritative run identifier, test count, and coverage.
-4. Mark PR #13 ready and squash-merge it into `main`.
+1. Run the final complete CI matrix on this validation-record-only head.
+2. Update PR #13 with the final merge-gate CI identifier.
+3. Mark PR #13 ready and squash-merge it into `main`.
+4. Create `agent/innovation-disturbance-smoothing` from the merge commit.
 5. Derive original location-level innovation disturbance smoothing without using
    a naive selection-matrix pseudoinverse.
 6. Add integrated and multiplicative seasonal state-space/MLE wrappers.
