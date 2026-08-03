@@ -1,14 +1,10 @@
 # Likelihood-Hessian inference
 
-Version 0.0.10 added observed-likelihood curvature diagnostics for a fitted
-`KalmanSTARMA` model. Version 0.0.11 aligns every finite-difference evaluation
-with both the autoregressive stationarity and moving-average invertibility
-criteria used by fitting.
-
-The implementation evaluates the negative Gaussian Kalman log likelihood around
-the optimizer solution using central finite differences. It reports coefficient
-uncertainty only when the resulting observed-information matrix is numerically
-defensible.
+Version 0.0.10 introduced observed-likelihood curvature diagnostics for a fitted
+`KalmanSTARMA` model. Version 0.0.11 aligned every finite-difference evaluation
+with both the AR stationarity and MA invertibility criteria used during fitting.
+Version 0.0.12 added a separate analytic delta-method layer for natural
+innovation variance and covariance elements.
 
 ## Basic use
 
@@ -21,41 +17,51 @@ model = KalmanSTARMA(
     covariance_type="full",
     include_intercept=True,
 )
-fit = model.fit(data, weights)
+model.fit(data, weights)
 inference = model.infer()
 
 print(inference.summary())
 print(inference.coefficient_table)
+print(inference.optimizer_table)
 print(inference.confidence_intervals(level=0.95))
 print(inference.stability_boundary_distance)
 print(inference.invertibility_boundary_distance)
 ```
 
-`model.infer()` uses the same incomplete training matrix, spatial weights,
-initialization policy, covariance parameterization, AR and MA margins,
-enforcement flags, and fitted optimizer point as `model.fit()`.
+`model.infer()` reuses the fitted observation matrix, spatial weights,
+initialization policy, covariance parameterization, stationarity and
+invertibility margins, enforcement flags, and optimizer point.
 
 ## Finite-difference convention
 
-For a raw optimizer parameter vector `x`, each parameter receives a scale-aware
-step
+For a raw optimizer vector \(x\), parameter \(i\) receives
 
 \[
-h_i = \max(h_{\mathrm{abs}}, h_{\mathrm{rel}}\max(1, |x_i|)).
+h_i=\max\{h_{\mathrm{abs}},
+           h_{\mathrm{rel}}\max(1,|x_i|)\}.
 \]
 
-The score uses a central two-sided difference. Diagonal Hessian terms use the
-three-point stencil, while mixed terms use the four-corner central stencil:
+The gradient uses a central two-sided difference. Diagonal Hessian elements use
+the three-point stencil. Mixed elements use
 
 \[
-\frac{f(x+h_i e_i+h_j e_j)-f(x+h_i e_i-h_j e_j)
--f(x-h_i e_i+h_j e_j)+f(x-h_i e_i-h_j e_j)}{4h_i h_j}.
+\frac{
+ f(x+h_i e_i+h_j e_j)
+-f(x+h_i e_i-h_j e_j)
+-f(x-h_i e_i+h_j e_j)
++f(x-h_i e_i-h_j e_j)
+}{4h_i h_j}.
 \]
 
-The returned `FiniteDifferenceCurvature` records the optimizer point, step
-vector, objective value, score, Hessian, and total function evaluations. For
-`k` parameters the complete central stencil evaluates the objective
-`1 + 2k + 4k(k-1)/2` times.
+`FiniteDifferenceCurvature` records the optimizer point, step vector, objective
+value, gradient, Hessian, and total function evaluations. For \(k\) parameters,
+the full stencil evaluates the objective
+
+\[
+1+2k+2k(k-1)
+\]
+
+times.
 
 Low-level functions are public:
 
@@ -66,62 +72,63 @@ curvature = finite_difference_curvature(objective, point)
 hessian = finite_difference_hessian(objective, point)
 ```
 
-They are useful for reproducible numerical-method tests independent of STARMA.
-
 ## Observed information
 
-The Hessian of the negative log likelihood is interpreted as observed
-information. If it is positive definite and numerically full rank, its inverse
-is used as the asymptotic covariance matrix.
+The Hessian of the negative Gaussian Kalman log likelihood is interpreted as the
+observed-information matrix. If it is positive definite and numerically full
+rank, its inverse is used as the asymptotic covariance matrix.
 
-`LikelihoodInferenceResult` contains:
+`LikelihoodInferenceResult` stores:
 
-- raw optimizer estimates and names;
-- observed-information Hessian;
-- asymptotic covariance and correlation matrices;
+- raw optimizer parameter names and estimates;
+- the observed-information Hessian;
+- optimizer-scale covariance and correlation matrices;
 - standard errors, normal z statistics, and two-sided p values;
-- normal-approximation confidence intervals for intercept and dynamic AR/MA
-  coefficients;
+- coefficient confidence intervals;
 - Hessian eigenvalues, numerical rank, and condition number;
-- the finite-difference score and maximum absolute score component;
-- finite-difference steps and function-evaluation count;
-- distance from the configured AR stationarity boundary;
-- distance from the configured inverse-MA invertibility boundary;
-- the minimum signed distance to either admissibility boundary.
+- the finite-difference gradient and maximum absolute score;
+- step sizes and function-evaluation count;
+- signed distances from the AR and inverse-MA feasibility boundaries;
+- the minimum signed distance to either boundary;
+- covariance type and fitted number of locations.
 
-All numerical arrays are immutable.
+All numerical arrays are defensive, contiguous, and read-only.
 
 ## Parameter scale
 
-Inference is computed on the raw optimizer scale.
+The observed-information result is on the raw optimizer scale.
 
-- The common intercept and AR/MA coefficients are already on their natural
-  coefficient scale.
-- Scalar and diagonal covariance parameters are log standard deviations.
-- Full-covariance parameters are log Cholesky diagonal entries and unconstrained
-  lower-triangular Cholesky entries.
+- intercept, AR, and MA entries are already natural coefficients;
+- scalar and diagonal covariance entries are log standard deviations;
+- full covariance entries are log Cholesky diagonals and unrestricted
+  strict-lower Cholesky elements.
 
-Therefore, covariance-parameter standard errors in `optimizer_table` are not
-standard errors of covariance matrix elements. The current implementation
-deliberately does not apply a delta-method transformation to variances,
-correlations, or covariance entries. `coefficient_table` and
-`confidence_intervals()` are restricted to the intercept and dynamic
-coefficients.
+Therefore `optimizer_table` covariance standard errors are not standard errors
+of covariance matrix elements. Use the analytic natural-scale layer:
+
+```python
+natural = inference.innovation_covariance_inference()
+
+print(natural.element_table)
+print(natural.standard_error_matrix)
+print(natural.dynamic_cross_covariance)
+```
+
+`coefficient_table` and `confidence_intervals()` remain restricted to the
+intercept and dynamic AR/MA coefficients. See
+[Innovation covariance inference](covariance_inference.md) for the covariance
+Jacobian and statistical policy.
 
 ## Rank and definiteness policy
 
-By default, inference fails if the observed-information Hessian is not positive
-definite and numerically full rank:
+Inference fails by default if the observed-information Hessian is indefinite or
+numerically rank deficient:
 
 ```python
-inference = model.infer()  # raises on indefinite or rank-deficient curvature
+inference = model.infer()
 ```
 
-This prevents an indefinite matrix or weakly identified parameter direction from
-being silently presented as reliable standard errors.
-
-For diagnosis only, users may explicitly request a positive-eigenvalue
-pseudoinverse:
+For explicit diagnosis, a positive-eigenspace pseudoinverse is available:
 
 ```python
 inference = model.infer(allow_singular=True)
@@ -129,40 +136,33 @@ print(inference.used_pseudoinverse)
 print(inference.rank)
 ```
 
-The pseudoinverse sets non-positive or numerically negligible eigen-directions to
-zero. The result is marked with `used_pseudoinverse=True`; it should not be
-interpreted as ordinary full-rank maximum-likelihood covariance.
+Non-positive and numerically negligible eigen-directions are excluded. The
+result is marked `used_pseudoinverse=True`; it must not be presented as ordinary
+full-rank likelihood covariance.
 
 ## Admissibility boundaries
 
-The maximum-likelihood estimator uses explicit AR and inverse-MA spectral-radius
-feasibility boundaries. Finite-difference stencils reconstruct the same two
-criteria and reject an objective value that enters either enabled penalty region.
-The artificial penalty surface is never treated as likelihood curvature.
+Fitting uses explicit AR and inverse-MA spectral-radius feasibility regions.
+The finite-difference objective reconstructs the same criteria. A stencil point
+inside an enabled artificial penalty region is rejected rather than treated as
+likelihood curvature.
 
-The AR distance is
-
-\[
-d_{AR} = 1 - \text{stability_margin} - \rho(C_{AR}),
-\]
-
-and the MA distance is
+The signed distances are
 
 \[
-d_{MA} = 1 - \text{invertibility_margin} - \rho(C_{MA}^{-1}).
+d_{AR}=1-\text{stability margin}-\rho(C_{AR}),
 \]
 
-`minimum_admissibility_distance` is `min(d_AR, d_MA)`. A small positive value
-indicates that the central stencil may be sensitive to one of the feasibility
-boundaries.
+\[
+d_{MA}=1-\text{invertibility margin}-\rho(C_{MA}^{-1}).
+\]
 
-If a stencil crosses a boundary, reduce `relative_step` and `absolute_step`, or
-treat local asymptotic inference as unavailable. A smaller step can avoid an
-artificial crossing but cannot repair genuinely boundary-adjacent estimation or
-weak identification.
+`minimum_admissibility_distance` is the smaller distance. A small positive value
+warns that local curvature may be sensitive to an admissibility boundary.
+Reducing finite-difference steps can avoid an artificial crossing, but it cannot
+repair genuinely boundary-adjacent estimation or weak identification.
 
-See [Stationarity and invertibility](admissibility.md) for the companion-matrix
-sign convention and public eigensystem diagnostics.
+See [Stationarity and invertibility](admissibility.md).
 
 ## Step-size controls
 
@@ -174,41 +174,63 @@ inference = model.infer(
 )
 ```
 
-- `relative_step` controls scale-proportional perturbations;
-- `absolute_step` prevents zero or tiny raw parameters from receiving a
-  vanishing perturbation;
-- `rcond` defines the eigenvalue threshold used for numerical rank and
-  positive-definiteness decisions.
+- `relative_step` supplies scale-proportional perturbations;
+- `absolute_step` prevents zero or tiny parameters from receiving a vanishing
+  perturbation;
+- `rcond` determines numerical Hessian rank and positive-definiteness.
 
-Step-size sensitivity should be examined when the Hessian condition number is
-large, the optimizer score is not close to zero, the model is near either
+Step-size sensitivity should be checked when the Hessian condition number is
+large, the score is not close to zero, the fitted model is near either
 admissibility boundary, or covariance parameters are weakly identified.
 
-## Statistical scope
+## Natural covariance inference
 
-Included through 0.0.11:
+For raw covariance parameters \(\eta\), natural elements \(g(\eta)\), analytic
+Jacobian \(J\), and optimizer covariance \(V\), version 0.0.12 uses
+
+\[
+\operatorname{Var}\{g(\hat\eta)\}
+\approx J V_{\eta\eta}J^\top.
+\]
+
+Cross covariance with the dynamic coefficient block \(\beta\) is retained:
+
+\[
+\operatorname{Cov}\{\hat\beta,g(\hat\eta)\}
+\approx V_{\beta\eta}J^\top.
+\]
+
+The transformation covers scalar, diagonal, and full Cholesky covariance
+parameterizations. It reports only free natural covariance elements and does not
+duplicate a shared scalar variance by location.
+
+## Statistical scope through 0.0.13
+
+Included:
 
 - central finite-difference score and Hessian;
 - observed-information covariance;
-- dynamic coefficient standard errors and normal tests;
+- dynamic coefficient standard errors, normal tests, and intervals;
+- analytic natural-scale scalar, diagonal, and full-Cholesky covariance
+  transformations;
+- dynamic/covariance-element cross covariance;
 - rank, definiteness, condition, score, and dual-boundary diagnostics;
-- explicit pseudoinverse diagnostics;
-- complete and partially missing stationary observations through the fitted
-  Kalman likelihood;
-- rejection of AR-stationarity and MA-invertibility penalty points.
+- explicit positive-eigenspace pseudoinverse status;
+- complete and partially missing stationary observations;
+- rejection of AR and inverse-MA penalty points.
 
-Not yet included:
+Not included:
 
-- delta-method uncertainty for variance, covariance, correlation, spectral
-  radius, polynomial roots, or transformed Cholesky quantities;
+- delta-method inference for correlations, spectral radii, or polynomial roots;
 - robust or sandwich covariance;
-- profile likelihood or likelihood-ratio confidence intervals;
-- bootstrap uncertainty for `KalmanSTARMA`;
+- profile-likelihood or likelihood-ratio intervals;
+- bootstrap likelihood inference for `KalmanSTARMA`;
 - smooth stationarity/invertibility parameterization;
 - exact diffuse likelihood;
-- integrated and multiplicative seasonal maximum-likelihood inference;
-- sparse or automatic-differentiation Hessians.
+- integrated or multiplicative seasonal Kalman MLE;
+- sparse or automatic-differentiation Hessians;
+- parameter-uncertainty propagation into filtered or smoothed states.
 
-These exclusions are explicit. A numerically invertible Hessian alone does not
-establish model adequacy, Gaussian correctness, strong identification, or a safe
-distance from the admissibility boundaries.
+A numerically invertible Hessian does not by itself establish Gaussian
+correctness, model adequacy, strong identification, or a safe distance from the
+admissibility boundaries.

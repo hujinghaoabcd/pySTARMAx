@@ -3,156 +3,177 @@
 ## Implemented in 0.0.1
 
 - immutable spatial-weight collections;
-- higher-order lattice/contiguity construction;
+- higher-order lattice and contiguity construction;
 - STAR ordinary least squares;
 - STARMA iterative conditional least squares;
 - recursive forecasts and deterministic simulation;
 - STACF, regression diagnostic, residual portmanteau test;
-- typed result objects, tests, documentation, and CI.
+- typed results, tests, documentation, and CI.
 
 ## Implemented in 0.0.2
 
 - public space-time covariance with explicit past/future weight orientation;
 - corrected classical STACF for non-symmetric spatial weights;
-- classical nested Yule-Walker STPACF as the default;
+- classical nested Yule--Walker STPACF as the default;
 - retained regression STPACF analogue behind an explicit method option;
 - exact-rational independent reference fixture and regeneration check;
-- singular-system solver policy and additional diagnostic validation tests.
+- singular-system solver policy and diagnostic validation.
 
 ## Implemented in 0.0.3
 
-- ordinary temporal differencing for arbitrary non-negative order;
+- arbitrary-order ordinary differencing;
 - immutable end-of-sample differencing state;
 - recursive original-scale forecast inversion;
-- compositional `STARIMA(p, d, q)` wrapper over the STARMA estimator;
-- explicit stationary-scale forecasts through `predict_differenced()`;
-- integrated-process simulation with optional initial difference state;
-- zero-order compatibility tests against the existing STARMA API.
+- compositional `STARIMA(p,d,q)` wrapper;
+- explicit stationary-scale forecasts;
+- integrated-process simulation;
+- zero-order compatibility with STARMA.
 
 ## Implemented in 0.0.4
 
-- reversible seasonal differencing for arbitrary `D` and period `s`;
+- reversible seasonal differencing;
 - combined ordinary-seasonal differencing state;
-- factorized `(p,d,q)x(P,D,Q)_s` model specification;
-- ordered matrix-polynomial expansion with constrained cross terms;
-- nonlinear conditional least-squares estimation for seasonal factors;
+- factorized `(p,d,q)x(P,D,Q)_s` specification;
+- ordered matrix-polynomial expansion;
+- nonlinear conditional least squares for seasonal factors;
 - stationary and integrated seasonal simulation;
-- compatibility routes for zero seasonal AR/MA orders.
+- zero seasonal-order compatibility.
 
 ## Implemented in 0.0.5
 
 - combined differencing-polynomial coefficients;
 - aligned original-scale one-step fitted values;
 - immutable `ForecastInterval` results;
-- conditional innovation simulation for STAR, STARMA, STARIMA, and seasonal STARIMA;
-- pathwise ordinary-seasonal inverse differencing before interval quantiles;
-- stable simulation from singular fitted innovation covariance matrices;
-- reproducible interval tests across linear and nonlinear seasonal cores.
+- conditional innovation simulation for all public model families;
+- pathwise ordinary-seasonal inversion before quantiles;
+- stable simulation from singular fitted innovation covariance.
 
 ## Implemented in 0.0.6
 
-- residual direct bootstrap using centered complete innovation vectors;
-- Gaussian parametric bootstrap from fitted contemporaneous covariance;
-- same-length conditional pseudo-series generation;
-- model refitting for every accepted bootstrap replication;
-- parameter-only and combined parameter/future-innovation intervals;
-- recursive pseudo-series restoration for ordinary and seasonal integration;
+- residual direct bootstrap of complete centered innovation vectors;
+- Gaussian parametric bootstrap;
+- same-length conditional pseudo-series;
+- refitting for every accepted replication;
+- parameter-only and combined predictive intervals;
+- recursive integrated-scale reconstruction;
 - linear and multiplicative seasonal bootstrap routes;
-- explicit convergence, retry, and reproducibility controls;
-- focused tests for all public model families.
+- convergence, retry, and reproducibility controls.
 
 ## Implemented in 0.0.7
 
-- central Winkler interval scores;
+- Winkler interval scores;
 - immutable aggregate interval metrics;
-- immutable rolling-origin forecast arrays;
-- expanding-window and fixed-length rolling-window evaluation;
-- conditional-innovation and bootstrap interval dispatch through one API;
-- empirical coverage, signed coverage gap, absolute coverage error, and width;
-- mean interval score, point-forecast MAE, and RMSE;
-- overall and forecast-horizon-specific summaries;
-- deterministic per-origin random-state derivation;
-- examples and documentation for calibration diagnostics.
+- expanding and fixed-window rolling-origin evaluation;
+- conditional and bootstrap interval dispatch;
+- coverage, signed gap, absolute error, width, score, MAE, and RMSE;
+- overall and horizon-specific summaries;
+- deterministic per-origin random states.
 
 ## Implemented in 0.0.8
 
-- explicit linear Gaussian state-space representation for stationary STARMA;
+- explicit stationary STARMA state-space representation;
 - companion construction from temporal-by-spatial AR and MA coefficients;
-- preservation of non-symmetric spatial-weight orientation;
-- stationary initialization from the unconditional mean and Lyapunov covariance;
-- user-supplied known initialization;
-- explicit approximate diffuse initialization;
-- Gaussian Kalman filtering and fixed-parameter log likelihood;
-- partial-location and fully missing-row observation handling;
-- immutable predicted/filtered state, covariance, innovation, and mask results;
-- numerical Cholesky jitter and covariance-stability safeguards;
-- fitted `STAR` and `STARMA` state-space conversion and filtering methods;
-- scalar closed-form and missing-observation reference tests.
+- preservation of non-symmetric weight orientation;
+- stationary, known, and approximate diffuse initialization;
+- fixed-parameter Gaussian filtering and log likelihood;
+- partial-location and fully missing-row handling;
+- immutable state, covariance, innovation, mask, and likelihood results;
+- numerical jitter and covariance safeguards;
+- conversion from fitted conditional STAR and STARMA estimators.
 
 ## Implemented in 0.0.9
 
 - independent `KalmanSTARMA` maximum-likelihood estimator;
-- Gaussian likelihood optimization through the state-space filter;
-- complete and partially missing observation matrices;
-- scalar shared innovation variance;
-- diagonal location-specific innovation variance;
-- full positive-definite Cholesky innovation covariance;
+- complete and incomplete observation matrices;
+- scalar, diagonal, and full Cholesky innovation covariance;
 - conditional-estimator automatic starting values;
-- explicit spectral-radius stationarity feasibility checks;
+- explicit AR spectral-radius feasibility checks;
 - immutable optimizer, likelihood, covariance, and filter diagnostics;
-- AIC and BIC with complete covariance-parameter counting;
-- fitted filtering, state-space access, and recursive mean prediction;
-- scalar closed-form, AR recovery, and covariance recovery tests.
+- AIC and BIC with complete parameter counting;
+- fitted filtering, state-space access, and recursive mean prediction.
 
 ## Implemented in 0.0.10
 
 - central finite-difference likelihood score and Hessian;
-- parameter-scaled relative and absolute finite-difference steps;
-- four-corner mixed-partial Hessian stencil;
-- rejection of stencils that enter the stationarity penalty region;
-- observed-information covariance on the raw optimizer scale;
-- standard errors, z statistics, normal-approximation p values, and confidence intervals;
-- separate dynamic-coefficient and full optimizer-parameter tables;
-- Hessian eigenvalues, numerical rank, condition number, and maximum score diagnostics;
-- explicit distance from the fitted solution to the stationarity feasibility boundary;
-- default refusal to invert indefinite or rank-deficient observed information;
-- explicit diagnostic positive-eigenspace pseudoinverse with result marking;
-- finite outputs for zero-standard-error pseudoinverse directions;
-- analytic quadratic, Gaussian white-noise, missing-data AR(1), and singular-Hessian tests;
-- full documentation, example, citation metadata, and MkDocs navigation.
+- parameter-scaled relative and absolute steps;
+- four-corner mixed-partial stencil;
+- rejection of stationarity-penalty stencil points;
+- observed-information covariance;
+- standard errors, normal tests, and coefficient intervals;
+- dynamic and full optimizer tables;
+- Hessian eigenvalues, rank, condition number, and score diagnostics;
+- strict indefinite/rank-deficient behavior;
+- explicit positive-eigenspace pseudoinverse for diagnosis.
 
 ## Implemented in 0.0.11
 
-- reusable temporal-lag matrix composition from ordered spatial weights;
+- reusable temporal-lag operator composition;
 - immutable AR and inverse-MA companion diagnostics;
-- preserved non-symmetric spatial-matrix orientation;
-- complex companion eigenvalues, spectral radii, limits, and signed distances;
-- scalar AR(1), MA(1), and higher-order polynomial-root reference tests;
-- explicit positive-MA-sign inverse recursion with `[-B1, ..., -Bq]` top row;
-- zero-order AR and MA polynomials with radius zero;
-- joint `STARMAAdmissibility` results and minimum boundary distance;
-- public low-level radius helpers and complete eigensystem diagnostics;
-- automatic AR and MA starting-value shrinkage for Kalman MLE;
+- complex eigenvalues, spectral radii, limits, and signed distances;
+- positive-MA-sign inverse recursion using `[-B1, ..., -Bq]`;
+- zero-order AR and MA diagnostics;
+- joint `STARMAAdmissibility` results;
+- automatic AR and MA start shrinkage;
 - dual stationarity and invertibility feasibility penalties;
 - independent enforcement flags and margins;
 - final hard validation of both fitted polynomial blocks;
-- fitted result reporting for both radii, limits, distances, and enforcement flags;
-- explicit return of non-admissible diagnostics when a constraint is disabled;
-- likelihood-Hessian rejection of stencils crossing either enabled boundary;
-- dual-boundary and minimum-distance inference diagnostics;
-- method documentation, example, README coverage, citation metadata, and Step 11 handoff.
+- likelihood-Hessian rejection of either enabled penalty region.
+
+## Implemented in 0.0.12
+
+- scalar shared-variance natural inference;
+- diagonal location-variance natural inference;
+- analytic full-Cholesky covariance-element Jacobian;
+- first-order delta covariance `J V J.T`;
+- dynamic-coefficient/covariance-element cross covariance;
+- immutable natural estimates, standard errors, correlations, intervals, and
+  matrix-shaped standard errors;
+- one scalar variance rather than duplicated location entries;
+- explicit boundary-null and unbounded-normal-interval policy;
+- analytic, finite-difference, propagation, fitted-model, validation, and
+  immutability tests.
+
+## Implemented in 0.0.13
+
+- Rauch--Tung--Striebel fixed-interval state smoothing;
+- smoothed state and observation means and covariances;
+- retained smoothing gains;
+- lag-one state cross covariance;
+- state-equation disturbance means and conditional covariances;
+- positive-eigenspace pseudoinverse for rank-deficient predictions;
+- per-transition prediction rank and pseudoinverse diagnostics;
+- fitted `KalmanSTARMA.smooth()` for training or new incomplete data;
+- scalar Gaussian bridge and direct joint-conditioning references;
+- final-state, covariance-reduction, disturbance-recovery, edge, and
+  immutability tests;
+- correction of inherited 0.0.12 location metadata and covariance index typing;
+- covariance and smoothing method guides, runnable example, and Step 12/13
+  handoffs.
 
 ## Next priorities
 
-1. Smooth stability/invertibility parameterization for optimization and inference.
-2. Delta-method transforms for innovation covariance elements.
-3. Integrated and multiplicative seasonal state-space/MLE wrappers.
-4. State and disturbance smoothing.
-5. Sparse spatial matrices and large-network computation.
-6. Automatic order selection using STACF/STPACF and information criteria.
-7. Exogenous regressors and intervention variables.
-8. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-9. Cross-language estimator fixtures and a first PyPI pre-release.
-10. Optional parallel bootstrap and rolling-origin execution behind stable APIs.
-11. Advanced bootstrap, profile-likelihood, sandwich, and conformal calibration.
-12. Generalized, location-varying, and time-varying STARMA extensions.
+1. Original location-level innovation disturbance smoothing using an explicit
+   conditional Gaussian derivation, including posterior covariance and
+   selection-matrix null-space behavior.
+2. Integrated and multiplicative seasonal state-space and Kalman MLE wrappers.
+3. Smooth stationarity/invertibility parameterization for optimization and
+   inference.
+4. Sparse spatial weights and sparse state matrices for large networks.
+5. Automatic order selection using STACF, STPACF, and information criteria.
+6. Exogenous regressors and intervention variables.
+7. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+8. Cross-language estimator fixtures and the first PyPI pre-release.
+9. Optional parallel bootstrap and rolling-origin execution.
+10. Advanced bootstrap, profile-likelihood, sandwich, and conformal methods.
+11. Generalized, location-varying, and time-varying STARMA extensions.
+
+## Research safeguards for future work
+
+- Do not call state-equation disturbances original location innovations.
+- Do not recover innovations with a naive pseudoinverse of the selection matrix
+  without deriving conditional covariance and null-space behavior.
+- Do not treat feasibility penalties as a smooth parameterization.
+- Do not report singular observed-information inverses without explicit status.
+- Do not silently clip variance interval endpoints or impute missing likelihood
+  observations.
+- Preserve non-symmetric spatial-matrix orientation in every extension.

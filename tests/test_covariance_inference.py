@@ -130,9 +130,7 @@ def test_full_covariance_analytic_jacobian_matches_finite_difference() -> None:
             covariance_type="full",
             n_locations=3,
         ).elements
-        numerical[:, parameter_index] = (plus_elements - minus_elements) / (
-            2.0 * step
-        )
+        numerical[:, parameter_index] = (plus_elements - minus_elements) / (2.0 * step)
 
     np.testing.assert_allclose(transform.jacobian, numerical, rtol=2e-6, atol=2e-8)
 

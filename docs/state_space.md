@@ -1,46 +1,61 @@
 # State-space filtering and missing observations
 
-Version 0.0.8 introduces an explicit linear Gaussian state-space representation
-for stationary `STAR` and `STARMA` models. The implementation is independent of
-the existing conditional least-squares estimator: it can be constructed directly
-from coefficient matrices, or from coefficients already fitted by `STAR` or
-`STARMA`.
+pySTARMAx provides an explicit linear Gaussian state-space representation for
+stationary STARMA models. It can be built directly from coefficients or from a
+fitted conditional or maximum-likelihood estimator.
+
+Version 0.0.8 introduced fixed-parameter filtering with incomplete observation
+matrices. Version 0.0.9 added direct Gaussian Kalman maximum likelihood. Version
+0.0.13 adds a separate fixed-interval smoothing layer documented in
+[Fixed-interval state smoothing](smoothing.md).
 
 ## Model convention
 
-Let
+For
 
 \[
-z_t = c + \sum_{i=1}^{p} A_i z_{t-i}
-      + \varepsilon_t
-      + \sum_{j=1}^{q} M_j \varepsilon_{t-j},
+z_t=c+\sum_{i=1}^{p}A_i z_{t-i}
+    +\varepsilon_t
+    +\sum_{j=1}^{q}M_j\varepsilon_{t-j},
 \qquad
-\varepsilon_t \sim \mathcal N(0, \Sigma).
+\varepsilon_t\sim\mathcal N(0,\Sigma),
 \]
 
-Each temporal operator is assembled from the ordered spatial-weight collection:
+operators are assembled from the ordered spatial weights:
 
 \[
-A_i = \sum_{k=0}^{\lambda} \phi_{ik} W_k,
+A_i=\sum_{k=0}^{\lambda}\phi_{ik}W_k,
 \qquad
-M_j = \sum_{k=0}^{\lambda} \theta_{jk} W_k.
+M_j=\sum_{k=0}^{\lambda}\theta_{jk}W_k.
 \]
 
-No symmetry or commutativity is assumed. In particular, a non-symmetric
-row-standardized matrix is used in the same orientation as in the simulation,
-conditional estimation, and forecasting modules.
+No symmetry or commutativity is assumed. A non-symmetric row-standardized matrix
+keeps exactly the orientation supplied to simulation, fitting, filtering, and
+forecasting.
 
-The companion state contains the required observation lags followed by moving-
-average innovation lags. For `p=0`, one current observation block is retained so
-that pure MA and white-noise specifications still have an observation state.
-The same innovation vector enters the current observation block and the first
-innovation-history block.
+The state equation is
+
+\[
+\alpha_t=d+T\alpha_{t-1}+R\eta_t,
+\qquad
+\eta_t\sim\mathcal N(0,\Sigma),
+\]
+
+with observation equation
+
+\[
+y_t=Z\alpha_t.
+\]
+
+The state retains the required observation lags followed by MA innovation lags.
+For `p=0`, one current observation block remains so pure MA and white-noise
+specifications still have an observation state. The same location innovation
+enters the current observation block and the first innovation-history block.
 
 ## Direct construction
 
 ```python
 import numpy as np
-
 from pystarmax import (
     SpatialWeights,
     build_starma_state_space,
@@ -66,31 +81,47 @@ print(filtered.log_likelihood)
 print(filtered.filtered_observations)
 ```
 
-Parameter arrays use shape `(temporal order, number of spatial weights)`. An
-empty AR or MA order is represented by an empty array with the correct spatial
-width, for example `np.empty((0, len(weights)))`.
+Parameter arrays use shape `(temporal order, number of spatial weights)`. A
+zero-order block is an empty matrix with the correct spatial width, for example
+`np.empty((0, len(weights)))`.
 
-## Filtering a fitted estimator
+## Filtering a fitted conditional estimator
 
 ```python
 from pystarmax import STARMA
 
-model = STARMA(ar_order=1, ma_order=1)
-conditional_result = model.fit(complete_training_data, weights)
+conditional = STARMA(ar_order=1, ma_order=1)
+conditional.fit(complete_training_data, weights)
 
-state_space = model.to_state_space()
-kalman_result = model.filter_state_space()
+state_space = conditional.to_state_space()
+filtered = conditional.filter_state_space()
 ```
 
-`fit()` remains the established conditional estimator. `to_state_space()` maps
-its fitted coefficients and contemporaneous residual covariance into the state-
-space representation. `filter_state_space()` then evaluates those fixed
-parameters with the Kalman filter. It does not silently replace the estimator or
-rewrite the existing `STARMAResult` likelihood fields.
+This route maps conditional estimates and the residual covariance into the
+state-space representation. It does not replace the conditional estimator or
+rewrite its historical likelihood fields.
 
-This separation is intentional: users can compare the historical conditional
-baseline with a fixed-parameter Gaussian state-space evaluation before direct
-maximum-likelihood optimization is introduced.
+## Filtering a fitted maximum-likelihood estimator
+
+```python
+from pystarmax import KalmanSTARMA
+
+mle = KalmanSTARMA(
+    ar_order=1,
+    ma_order=1,
+    covariance_type="full",
+)
+mle.fit(training_data, weights)
+
+state_space = mle.to_state_space()
+filtered_training = mle.filter()
+filtered_new = mle.filter(new_incomplete_data)
+```
+
+The maximum-likelihood model stores its fitted spatial weights, coefficients,
+intercept, innovation covariance, observation matrix, and initialization policy.
+Calling `filter()` without data evaluates the training matrix; supplying data
+evaluates a new sequence under fixed fitted parameters.
 
 ## Missing observations
 
@@ -98,27 +129,24 @@ Missing cells are represented by `NaN`:
 
 ```python
 incomplete = complete_training_data.copy()
-incomplete[10, 2] = np.nan       # one location is missing
-incomplete[25, :] = np.nan       # every location is missing
+incomplete[10, 2] = np.nan
+incomplete[25, :] = np.nan
 
-filtered = model.filter_state_space(incomplete)
+filtered = kalman_filter(incomplete, state_space)
 ```
 
-At every time step, the measurement equation is reduced to the locations that
-are actually observed.
+At each time step the measurement equation is reduced to observed locations.
 
-- A partially missing row updates the state with only its observed locations.
-- A fully missing row performs the state prediction but no measurement update.
+- A partially missing row updates the state using only observed locations.
+- A fully missing row performs state prediction but no measurement update.
 - A fully missing row contributes zero to the Gaussian log likelihood.
-- Missing values are not mean-filled, interpolated, or converted to zeros.
+- Missing cells are never mean-filled, interpolated, or converted to zero.
 
-`KalmanFilterResult.observed_mask` records the exact cells used in the
-likelihood. Innovations and innovation-covariance entries that do not correspond
-to observed cells remain `NaN`.
+`KalmanFilterResult.observed_mask` records every cell used by the likelihood.
+Innovation and innovation-covariance entries outside observed cells remain
+`NaN`.
 
 ## Initialization
-
-Three initialization policies are available.
 
 ### Stationary
 
@@ -126,23 +154,20 @@ Three initialization policies are available.
 filtered = kalman_filter(data, state_space, initialization="stationary")
 ```
 
-This is the default. It requires the transition spectral radius to be strictly
-below one. The unconditional mean solves
+Stationary initialization requires transition spectral radius below one. The
+unconditional state mean solves
 
 \[
-\mu_\alpha = (I-T)^{-1} d,
+\mu_\alpha=(I-T)^{-1}d,
 \]
 
-and the state covariance solves the discrete Lyapunov equation
+and the covariance solves
 
 \[
-P = TPT^\top + R\Sigma R^\top.
+P=TPT^\top+R\Sigma R^\top.
 \]
 
-The resulting likelihood is the stationary Gaussian likelihood for the supplied
-fixed parameters.
-
-### Known
+### Known moments
 
 ```python
 filtered = kalman_filter(
@@ -154,7 +179,7 @@ filtered = kalman_filter(
 )
 ```
 
-Both arrays must be supplied and must match the complete state dimension.
+Both moments must match the complete state dimension.
 
 ### Approximate diffuse
 
@@ -167,60 +192,76 @@ filtered = kalman_filter(
 )
 ```
 
-This uses a zero initial mean and a large diagonal covariance. It is an explicit
-large-variance approximation, not an exact diffuse Kalman likelihood. The chosen
-scale can affect early likelihood contributions and should be reported in
-reproducible analyses.
+This uses zero initial mean and a large diagonal covariance. It is an explicit
+large-variance approximation, not an exact diffuse likelihood. The chosen scale
+can affect early likelihood contributions and should be reported.
 
-## Result arrays
+## Filter result
 
-`KalmanFilterResult` is frozen and stores read-only arrays:
+`KalmanFilterResult` stores immutable read-only arrays:
 
-- `predicted_state` and `predicted_covariance` before each measurement update;
-- `filtered_state` and `filtered_covariance` after each update;
-- `innovations` on the observation scale;
-- `innovation_covariance` for the locations observed at each time;
+- `predicted_state` and `predicted_covariance` before measurement updates;
+- `filtered_state` and `filtered_covariance` after updates;
+- observation-scale `innovations`;
+- observed-location `innovation_covariance` matrices;
 - `observed_mask`;
 - per-time `log_likelihood_contributions`;
-- any diagonal `jitter` used to stabilize a nearly singular innovation matrix;
-- total `log_likelihood` and scalar `n_observations`.
+- recorded diagonal `jitter` when a nearly singular innovation matrix requires
+  stabilization;
+- total `log_likelihood`, `n_observations`, and initialization metadata.
 
-Convenience properties return predicted and filtered observation-scale values.
+Convenience properties return predicted and filtered observation-scale means.
+The complete predicted and filtered moment sequences are also the input to the
+RTS smoother.
 
 ## Numerical safeguards
 
 The filter:
 
 - symmetrizes propagated covariance matrices;
-- uses Cholesky solves rather than explicit matrix inversion;
-- adds a recorded, scale-aware diagonal jitter only when required;
+- uses Cholesky solves instead of explicit innovation-matrix inversion;
+- adds scale-aware recorded diagonal jitter only when required;
 - clips only numerically tiny negative filtered-covariance eigenvalues;
-- raises if a materially indefinite covariance is encountered;
-- validates the supplied innovation covariance as positive semidefinite.
+- raises on materially indefinite covariance;
+- validates the location innovation covariance as positive semidefinite.
 
-These safeguards address floating-point error. They do not turn an invalid
-statistical specification into a valid one.
+These safeguards address floating-point error; they do not turn an invalid
+statistical model into a valid one.
 
-## Statistical scope of 0.0.8
+## Fixed-interval smoothing
 
-Included:
+```python
+from pystarmax import kalman_smoother
 
-- auditable STARMA companion construction;
+smoothed = kalman_smoother(filtered)
+```
+
+The smoother returns full-interval state and observation moments, smoothing
+gains, lag-one state covariance, state-equation disturbance moments, and
+per-transition numerical rank diagnostics. See
+[Fixed-interval state smoothing](smoothing.md) for formulas and interpretation.
+
+## Current scope
+
+Included through 0.0.13:
+
+- auditable stationary STARMA companion construction;
 - stationary, known, and approximate diffuse initialization;
-- fixed-parameter Gaussian Kalman likelihood;
-- complete and partially missing observation sequences;
-- mapping from fitted stationary `STAR` and `STARMA` models;
-- full contemporaneous innovation covariance in filtering.
+- fixed-parameter Gaussian filtering and likelihood;
+- direct Gaussian Kalman maximum-likelihood estimation;
+- partial-location and fully missing rows;
+- scalar, diagonal, and full location innovation covariance;
+- RTS fixed-interval state smoothing;
+- lag-one state covariance;
+- state-equation disturbance conditional moments;
+- explicit rank-deficient prediction diagnostics.
 
-Not yet included:
+Not included:
 
-- direct maximization of the Kalman likelihood;
-- constrained covariance parameterization during optimization;
-- likelihood-Hessian standard errors;
-- exact diffuse initialization;
-- smoothing or disturbance smoothing;
-- integrated and multiplicative seasonal wrapper methods;
-- Kalman-based forecasting intervals;
+- exact diffuse filtering or smoothing;
+- original location-level innovation disturbance smoothing when the selection
+  mapping is not one-to-one;
+- parameter-uncertainty propagation into state estimates;
+- integrated and multiplicative seasonal Kalman wrappers;
+- simulation smoothing;
 - sparse state matrices for large location systems.
-
-Those omissions are explicit next-stage work rather than hidden approximations.

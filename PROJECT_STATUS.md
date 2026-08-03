@@ -4,194 +4,211 @@ Updated: 2026-08-04
 
 ## Purpose
 
-Build a modern Python implementation of classical and extended STARMA models,
-using the transparent statistical workflow of the original literature and the
-engineering conventions established in pyGWRx and pyKDEX.
+Build a modern Python implementation of classical and extended STARMA models
+with transparent statistical conventions, typed public APIs, immutable result
+objects, independent numerical tests, strict documentation, and reproducible
+cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #10 were squash-merged into `main`.
-- PR #8, state-space filtering and missing observations, was merged as `258ceac7`.
-- PR #9, Kalman maximum-likelihood estimation, was merged as `4c3c7146`.
-- PR #10, likelihood-Hessian inference, was merged as `288a32b6`.
-- `main` is version `0.0.10`.
-- Current branch: `agent/stability-invertibility-diagnostics`.
-- Current draft pull request: PR #11, `Add STARMA stability and invertibility diagnostics`.
-- Current development target: version `0.0.11`.
-- Current stage: reusable AR stationarity and MA invertibility diagnostics plus
-  dual admissibility enforcement in stationary Gaussian Kalman STARMA.
+- PR #1 through PR #12 have been squash-merged into `main`.
+- `main` is version `0.0.12` plus the restored complete CI workflow.
+- Current branch: `agent/kalman-state-smoothing`.
+- Current draft pull request: PR #13, `Add Kalman fixed-interval state smoothing`.
+- Current development version: `0.0.13`.
+- PR #13 contains 20 formal code, test, example, metadata, and documentation
+  files; no temporary workflow or diagnostic files remain.
+- The implementation and documentation head passed the complete CI matrix in
+  GitHub Actions run #304, run ID `30852463900`.
 
-## Completed baseline through 0.0.10
+## Completed baseline through 0.0.11
 
-- typed package, MIT licence, citation metadata, strict documentation, and CI;
 - immutable spatial-weight collections and constructors;
 - STAR ordinary least squares and STARMA iterative conditional least squares;
-- deterministic simulation, recursive prediction, diagnostics, and summaries;
+- simulation, recursive prediction, STACF/STPACF, and residual diagnostics;
 - ordinary STARIMA and constrained multiplicative seasonal STARIMA;
 - reversible ordinary-seasonal differencing and original-scale reconstruction;
 - conditional and bootstrap forecast intervals;
 - rolling-origin calibration, sharpness, and point-error evaluation;
-- explicit stationary STARMA state-space construction;
-- Gaussian fixed-parameter Kalman likelihood;
-- stationary, known, and approximate diffuse initialization;
-- partial-location and fully missing-row filtering;
-- independent `KalmanSTARMA` Gaussian maximum-likelihood estimator;
+- stationary STARMA state-space construction;
+- stationary, known, and approximate diffuse Kalman initialization;
+- Gaussian filtering with partial-location and fully missing rows;
+- independent `KalmanSTARMA` Gaussian maximum-likelihood estimation;
 - scalar, diagonal, and Cholesky full innovation covariance;
-- likelihood, optimizer, AIC, BIC, filtering, and prediction diagnostics;
-- central finite-difference likelihood score and Hessian;
-- observed-information covariance, standard errors, normal tests, and intervals;
-- Hessian rank, eigenvalues, condition number, score, and boundary diagnostics;
-- strict indefinite/rank-deficient behavior and explicit diagnostic pseudoinverse.
+- AIC, BIC, optimizer, covariance, filtering, and prediction diagnostics;
+- finite-difference likelihood score and observed-information Hessian;
+- coefficient standard errors, normal tests, intervals, rank, condition, score,
+  and boundary diagnostics;
+- reusable AR and inverse-MA companion eigensystem diagnostics;
+- dual stationarity/invertibility start shrinkage, penalties, and final checks.
 
-## Completed in the current 0.0.11 step
+## Completed in 0.0.12
 
-### Reusable matrix-polynomial diagnostics
+### Natural covariance transformations
 
-- added `compose_lag_operators()` for temporal-lag matrices built from ordered
-  spatial weights;
-- added immutable `PolynomialAdmissibility` results;
-- added `autoregressive_diagnostics()` with the standard AR block companion;
-- added `moving_average_diagnostics()` with the positive-sign inverse recursion
-  companion top row `[-B1, ..., -Bq]`;
-- added `STARMAAdmissibility` for joint stationarity and invertibility;
-- added low-level AR and inverse-MA spectral-radius helpers;
-- preserved non-symmetric spatial-weight orientation;
-- represented zero-order AR and MA polynomials by empty companions with radius 0;
-- reported operators, companion matrices, complex eigenvalues, limits, signed
-  boundary distances, and admissibility decisions;
-- exported all diagnostic APIs from the top-level package.
+- scalar shared variance from one log standard deviation;
+- diagonal location variances from location log standard deviations;
+- full covariance lower triangle from log-Cholesky diagonal and unrestricted
+  lower-factor entries;
+- analytic Jacobian for `Sigma = L L.T`;
+- first-order delta covariance `J V J.T`;
+- retained dynamic-coefficient/covariance-element cross covariance;
+- immutable natural estimates, standard errors, correlations, intervals, and
+  symmetric matrix-shaped standard errors;
+- no duplicated scalar variance parameters;
+- no ordinary variance-equals-zero Wald test for a boundary null;
+- no silent clipping of negative lower endpoints from unbounded normal
+  approximations.
 
-### Maximum-likelihood enforcement
+### Integration corrections completed during 0.0.13
 
-- added `enforce_invertibility=True` and `invertibility_margin=1e-6` defaults;
-- validated AR and MA margins independently;
-- shrank automatic conditional-estimator AR and MA starts into their configured
-  regions;
-- applied a joint feasibility penalty that accumulates squared AR and MA excess;
-- hard-checked both dynamic blocks after optimization;
-- preserved explicit research behavior when either enforcement flag is disabled;
-- added fitted `KalmanSTARMA.admissibility()` diagnostics;
-- extended `KalmanSTARMAResult` with both radii, limits, enforcement flags,
-  distances, and joint admissibility;
-- extended result summaries without hiding a disabled or failed criterion.
+- `infer_kalman_starma()` now obtains `n_locations` from the fitted innovation
+  covariance instead of an undefined local variable;
+- covariance-element indices have an explicit variable-length tuple type for
+  current mypy versions;
+- the affected covariance and likelihood inference regression tests pass.
 
-### Likelihood inference
+## Completed in 0.0.13
 
-- reconstructed both admissibility criteria in every finite-difference objective;
-- rejected stencils crossing either enabled penalty boundary;
-- added inverse-MA boundary distance and minimum admissibility distance to
-  `LikelihoodInferenceResult`;
-- retained raw optimizer-scale uncertainty and strict Hessian policies.
+### Rauch--Tung--Striebel smoothing
 
-### Tests and documentation
+- added immutable `KalmanSmootherResult`;
+- added public `kalman_smoother()`;
+- added fitted `KalmanSTARMA.smooth()` for training or new incomplete data;
+- implemented RTS state mean and covariance recursion;
+- retained every smoothing gain;
+- retained lag-one covariance `Cov(alpha_t, alpha_(t+1) | y_1:T)`;
+- exposed smoothed observation means and covariances;
+- derived state-equation disturbance means and conditional covariances;
+- preserved partial-location and fully missing-row semantics from filtering.
 
-- added scalar AR(1), MA(1), and MA(2) polynomial-root references;
-- added asymmetric spatial-weight orientation and zero-order tests;
-- added explicit joint-boundary and validation tests;
-- added fitted MA recovery and admissibility tests;
-- added forced non-invertible final-candidate tests with enforcement enabled and
-  disabled;
-- updated likelihood-inference boundary tests;
-- added `docs/admissibility.md` and `examples/admissibility.py`;
-- updated model, maximum-likelihood, inference, index, roadmap, citation, and
-  navigation documentation;
-- updated package version and citation metadata to 0.0.11.
+### Rank-deficient prediction policy
+
+- full-rank predicted covariance uses a stable linear solve;
+- rank-deficient prediction uses a positive-eigenspace pseudoinverse;
+- `rcond` defines the retained eigenspace;
+- every transition records numerical prediction rank and pseudoinverse use;
+- covariance matrices are symmetrized and only tiny negative eigenvalues are
+  projected to zero;
+- materially indefinite covariance raises.
+
+### Validation references
+
+- scalar AR(1) one-gap Gaussian bridge with analytic mean and variance;
+- contiguous missing block compared with direct joint-Gaussian conditioning;
+- exact state-disturbance recovery for fully observed scalar AR(1);
+- final smoothed state/covariance equality with the final filtered values;
+- smoothed covariance reduction relative to filtering;
+- explicit rank-deficient prediction path;
+- fitted-model smoothing of a new incomplete matrix;
+- one-time-point edge case, immutability, and validation tests.
 
 ## Mathematical convention
 
-For
+The state equation is
 
 \[
-z_t = c + \sum_i A_i z_{t-i} + \varepsilon_t
-      + \sum_j B_j\varepsilon_{t-j},
+\alpha_{t+1}=d+T\alpha_t+w_{t+1}.
 \]
 
-stationarity uses the block companion with top row `[A1, ..., Ap]`.
-
-Because the MA sign is positive, the innovation inverse recursion is
+The RTS gain is
 
 \[
-\varepsilon_t = r_t - \sum_j B_j\varepsilon_{t-j},
+J_t=P_{t|t}T^\top P_{t+1|t}^{+}.
 \]
 
-so invertibility uses the block companion with top row `[-B1, ..., -Bq]`.
-Each criterion requires its spectral radius to be strictly below
-`1 - configured_margin`.
+The smoothed moments are
 
-A signed distance is positive inside the region, zero on the configured limit,
-and negative outside. The public result retains the full eigensystem rather than
-reducing the diagnosis to a Boolean.
+\[
+a_{t|T}=a_{t|t}+J_t(a_{t+1|T}-a_{t+1|t}),
+\]
 
-## Final validation for 0.0.11
+\[
+P_{t|T}=P_{t|t}+J_t(P_{t+1|T}-P_{t+1|t})J_t^\top.
+\]
 
-GitHub Actions CI run #269 completed successfully on the final implementation,
-test, example, and documentation head:
+The stored lag-one covariance is
 
-- 103 tests passed without Python test warnings;
-- total branch coverage was 87.48%, above the configured 80% threshold;
+\[
+C_{t,t+1|T}=J_tP_{t+1|T}.
+\]
+
+`state_disturbance_mean` describes
+`alpha_(t+1) - d - T @ alpha_t`. It is not automatically the original
+location-level innovation because the state selection matrix may not be
+one-to-one.
+
+## Authoritative 0.0.13 validation
+
+GitHub Actions CI run #304, run ID `30852463900`, validated the complete
+implementation and documentation head:
+
+- 119 tests passed;
+- total branch coverage was 87.32%, above the required 80%;
+- `src/pystarmax/smoothing.py` branch coverage was 87.1%;
 - Black, isort, Ruff, and mypy passed;
-- independent diagnostic reference generation produced a clean diff;
-- strict MkDocs construction passed;
+- independent diagnostic reference regeneration produced a clean diff;
+- strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
-- the PR surface contained exactly 20 formal source, test, example,
-  documentation, metadata, and navigation files;
-- `.github/workflows/ci.yml` was absent from the final PR difference;
-- no temporary formatting workflow or diagnostic file remained.
+- no temporary workflows or diagnostic files were present in the validated
+  branch head.
 
-The validation-record edits after run #269 are documentation only. Numerical
-code, tests, examples, public exports, package metadata, and CI configuration are
-unchanged from the fully validated head. One final documentation-head CI repeat
-is required before PR #11 is marked ready and merged.
+A final documentation-only commit records these results. Its CI run is used as
+the merge gate and is reported in the PR description without rewriting this
+section again.
 
 ## Design principles
 
 1. Keep conditional and maximum-likelihood estimators separate and explicit.
-2. Preserve one `(time, location)` convention.
-3. Never impute missing observations inside a likelihood evaluation.
+2. Preserve one `(time, location)` observation convention.
+3. Never impute missing observations inside likelihood, filtering, or smoothing.
 4. Preserve supplied non-symmetric spatial-matrix orientation.
-5. Use the model's positive MA sign consistently in inverse-recursion diagnostics.
-6. Report complete eigensystems and signed distances, not only booleans.
-7. Treat spectral-radius penalties as feasibility controls, not smooth constraints.
-8. Do not differentiate through AR or MA feasibility-penalty regions.
-9. Preserve explicit behavior when enforcement is disabled.
-10. Refuse indefinite or rank-deficient observed information by default.
-11. Keep optimizer-scale and natural-scale uncertainty explicitly distinguished.
-12. Use immutable public result arrays and stable linear solves.
-13. Add independent scalar and matrix-polynomial references before broad claims.
+5. Use the positive MA sign consistently in inverse-recursion diagnostics.
+6. Treat spectral-radius penalties as feasibility controls, not smooth
+   parameterizations.
+7. Refuse indefensible observed information by default.
+8. Keep optimizer-scale and natural-scale uncertainty separate and auditable.
+9. Use stable solves before explicit inverses.
+10. Record rank-deficient pseudoinverse use rather than hiding it.
+11. Distinguish state disturbances from original location innovations.
+12. Require analytic or independent Gaussian references for new numerical claims.
+13. Keep public numerical arrays immutable.
 
 ## Immediate next tasks
 
-1. Complete the final documentation-head CI repeat for PR #11.
-2. Mark PR #11 ready and squash-merge it into `main`.
-3. Start delta-method innovation-covariance inference unless a general, auditable
-   matrix-polynomial stability/invertibility parameterization is established
-   first.
-4. Add integrated and multiplicative seasonal maximum-likelihood wrappers.
-5. Add state and disturbance smoothing.
-6. Add sparse matrices, ecosystem adapters, order selection, and exogenous inputs.
-7. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+1. Run the final complete CI matrix on this validation-record-only head.
+2. Update PR #13 with the final merge-gate CI identifier.
+3. Mark PR #13 ready and squash-merge it into `main`.
+4. Create `agent/innovation-disturbance-smoothing` from the merge commit.
+5. Derive original location-level innovation disturbance smoothing without using
+   a naive selection-matrix pseudoinverse.
+6. Add integrated and multiplicative seasonal state-space/MLE wrappers.
+7. Add sparse spatial/state matrices, order selection, exogenous inputs,
+   ecosystem adapters, and cross-language fixtures.
 
 ## Known limitations
 
-- feasibility is enforced by a large penalty, not a smooth bijection;
-- arbitrary user starts are not projected to a nearest admissible parameter vector;
-- dense eigendecomposition is used for every dynamic candidate;
-- no covariance-factor delta-method transformation;
-- no robust, sandwich, profile-likelihood, or likelihood-ratio inference;
-- approximate diffuse initialization is not exact diffuse likelihood;
-- no state or disturbance smoothing;
-- maximum likelihood currently covers stationary non-seasonal STARMA only;
-- multiplicative seasonal factor admissibility is not yet implemented;
+- state smoothing is fixed-parameter and does not propagate parameter
+  uncertainty;
+- state disturbances are not yet mapped to original location innovations;
+- exact diffuse filtering and smoothing are unavailable;
+- maximum likelihood covers stationary non-seasonal STARMA only;
 - integrated and seasonal wrappers still use conditional estimation;
-- conditional/bootstrap rolling refits execute serially;
+- feasibility is enforced by penalties rather than a smooth bijection;
+- dense eigendecomposition and dense state matrices limit large networks;
+- natural covariance intervals are first-order unbounded normal approximations;
+- robust, sandwich, profile-likelihood, likelihood-ratio, and Kalman-MLE
+  bootstrap inference are unavailable;
+- bootstrap and rolling refits execute serially;
 - model order and spatial weights remain fixed across bootstrap replications;
 - exogenous regressors and intervention variables are unsupported.
 
 ## Handoff instruction
 
 Before the next substantial step, read this file, `docs/model.md`,
-`docs/admissibility.md`, `docs/state_space.md`, `docs/maximum_likelihood.md`,
-`docs/likelihood_inference.md`, and the latest development handoff. Update
+`docs/admissibility.md`, `docs/state_space.md`, `docs/smoothing.md`,
+`docs/maximum_likelihood.md`, `docs/likelihood_inference.md`,
+`docs/covariance_inference.md`, and the latest development handoff. Update
 repository state, validation, next tasks, and limitations after every completed
 stage.
