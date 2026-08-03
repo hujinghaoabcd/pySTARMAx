@@ -11,8 +11,10 @@ nav:
   - Ordinary STARIMA: starima.md
   - Seasonal STARIMA: seasonal.md
   - State-space filtering: state_space.md
+  - Fixed-interval smoothing: smoothing.md
   - Maximum likelihood: maximum_likelihood.md
   - Likelihood inference: likelihood_inference.md
+  - Innovation covariance inference: covariance_inference.md
   - Forecasting: forecasting.md
   - Bootstrap intervals: bootstrap.md
   - Rolling evaluation: evaluation.md
