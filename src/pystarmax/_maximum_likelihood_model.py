@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jinghao Hu
 # SPDX-License-Identifier: MIT
 
-"""Kalman maximum-likelihood estimator for stationary STARMA models."""
+"""Kalman maximum-likelihood estimator for stationary invertible STARMA models."""
 
 from __future__ import annotations
 
@@ -18,6 +18,12 @@ from pystarmax._maximum_likelihood_utils import (
     _validate_incomplete_data,
 )
 from pystarmax._validation import FloatArray, validate_nonnegative_int
+from pystarmax.admissibility import (
+    STARMAAdmissibility,
+    autoregressive_spectral_radius,
+    moving_average_inverse_spectral_radius,
+    starma_admissibility,
+)
 from pystarmax.state_space import (
     Initialization,
     KalmanFilterResult,
@@ -29,7 +35,7 @@ from pystarmax.weights import SpatialWeights, coerce_weights
 
 
 class KalmanSTARMA:
-    """Estimate a stationary Gaussian STARMA model by Kalman likelihood."""
+    """Estimate a stationary invertible Gaussian STARMA model by likelihood."""
 
     def __init__(
         self,
@@ -42,6 +48,8 @@ class KalmanSTARMA:
         diffuse_scale: float = 1e6,
         enforce_stationarity: bool = True,
         stability_margin: float = 1e-6,
+        enforce_invertibility: bool = True,
+        invertibility_margin: float = 1e-6,
         max_iter: int = 500,
         tol: float = 1e-9,
     ) -> None:
@@ -55,6 +63,11 @@ class KalmanSTARMA:
             raise ValueError("diffuse_scale must be positive and finite")
         if not np.isfinite(stability_margin) or not 0.0 < stability_margin < 1.0:
             raise ValueError("stability_margin must be between zero and one")
+        if (
+            not np.isfinite(invertibility_margin)
+            or not 0.0 < invertibility_margin < 1.0
+        ):
+            raise ValueError("invertibility_margin must be between zero and one")
         self.max_iter = validate_nonnegative_int(max_iter, name="max_iter")
         if self.max_iter == 0:
             raise ValueError("max_iter must be positive")
@@ -66,6 +79,8 @@ class KalmanSTARMA:
         self.diffuse_scale = float(diffuse_scale)
         self.enforce_stationarity = bool(enforce_stationarity)
         self.stability_margin = float(stability_margin)
+        self.enforce_invertibility = bool(enforce_invertibility)
+        self.invertibility_margin = float(invertibility_margin)
         self.tol = float(tol)
         self.result_: KalmanSTARMAResult | None = None
         self.state_space_: StateSpaceModel | None = None
@@ -136,6 +151,36 @@ class KalmanSTARMA:
             return np.empty(0, dtype=float)
         return cast(FloatArray, np.concatenate(pieces))
 
+    def _shrink_initial_dynamics(
+        self,
+        ar_parameters: FloatArray,
+        ma_parameters: FloatArray,
+        weights: SpatialWeights,
+    ) -> tuple[FloatArray, FloatArray]:
+        ar_values = np.asarray(ar_parameters, dtype=float).copy()
+        ma_values = np.asarray(ma_parameters, dtype=float).copy()
+        if self.ar_order and self.enforce_stationarity:
+            target = 1.0 - max(self.stability_margin * 10.0, 1e-4)
+            for _ in range(40):
+                radius = autoregressive_spectral_radius(ar_values, weights)
+                if radius < target:
+                    break
+                factor = min(0.9, 0.9 * target / max(radius, 1e-12))
+                ar_values *= factor
+            if autoregressive_spectral_radius(ar_values, weights) >= target:
+                raise RuntimeError("failed to construct a stationary initial AR point")
+        if self.ma_order and self.enforce_invertibility:
+            target = 1.0 - max(self.invertibility_margin * 10.0, 1e-4)
+            for _ in range(80):
+                radius = moving_average_inverse_spectral_radius(ma_values, weights)
+                if radius < target:
+                    break
+                factor = min(0.9, 0.9 * target / max(radius, 1e-12))
+                ma_values *= factor
+            if moving_average_inverse_spectral_radius(ma_values, weights) >= target:
+                raise RuntimeError("failed to construct an invertible initial MA point")
+        return cast(FloatArray, ar_values), cast(FloatArray, ma_values)
+
     def _initial_values(
         self,
         observations: FloatArray,
@@ -191,25 +236,11 @@ class KalmanSTARMA:
             covariance_source,
             n_locations=observations.shape[1],
         )
-        if self.ar_order:
-            target = 1.0 - max(self.stability_margin * 10.0, 1e-4)
-            for _ in range(20):
-                candidate = build_starma_state_space(
-                    ar_parameters,
-                    ma_parameters,
-                    weights,
-                    covariance,
-                    intercept=intercept,
-                )
-                spectral_radius = float(
-                    np.max(
-                        np.abs(np.linalg.eigvals(candidate.transition)),
-                        initial=0.0,
-                    )
-                )
-                if spectral_radius < target:
-                    break
-                ar_parameters *= 0.9 * target / max(spectral_radius, 1e-12)
+        ar_parameters, ma_parameters = self._shrink_initial_dynamics(
+            ar_parameters,
+            ma_parameters,
+            weights,
+        )
         coefficients = self._join_coefficients(
             intercept,
             ar_parameters,
@@ -256,6 +287,7 @@ class KalmanSTARMA:
         coefficient_size = coefficient_start.size
         bounds = [(None, None)] * coefficient_size + codec.bounds
         stability_limit = 1.0 - self.stability_margin
+        invertibility_limit = 1.0 - self.invertibility_margin
         invalid_base = 1e12
 
         def decode(
@@ -266,6 +298,7 @@ class KalmanSTARMA:
             FloatArray,
             FloatArray,
             StateSpaceModel,
+            float,
             float,
         ]:
             intercept, ar_parameters, ma_parameters = self._split_coefficients(
@@ -280,11 +313,13 @@ class KalmanSTARMA:
                 covariance,
                 intercept=intercept,
             )
-            spectral_radius = float(
-                np.max(
-                    np.abs(np.linalg.eigvals(state_space.transition)),
-                    initial=0.0,
-                )
+            spectral_radius = autoregressive_spectral_radius(
+                ar_parameters,
+                resolved_weights,
+            )
+            ma_inverse_radius = moving_average_inverse_spectral_radius(
+                ma_parameters,
+                resolved_weights,
             )
             return (
                 intercept,
@@ -293,6 +328,7 @@ class KalmanSTARMA:
                 covariance,
                 state_space,
                 spectral_radius,
+                ma_inverse_radius,
             )
 
         def objective(raw: FloatArray) -> float:
@@ -305,11 +341,23 @@ class KalmanSTARMA:
                         _covariance,
                         state_space,
                         spectral_radius,
+                        ma_inverse_radius,
                     ) = decode(raw)
+                    squared_excess = 0.0
                     if self.enforce_stationarity and spectral_radius >= stability_limit:
-                        excess = spectral_radius - stability_limit
+                        squared_excess += (spectral_radius - stability_limit) ** 2
+                    if (
+                        self.enforce_invertibility
+                        and ma_inverse_radius >= invertibility_limit
+                    ):
+                        squared_excess += (
+                            ma_inverse_radius - invertibility_limit
+                        ) ** 2
+                    if squared_excess > 0.0:
                         return float(
-                            invalid_base + invalid_base * excess**2 + 1e-8 * (raw @ raw)
+                            invalid_base
+                            + invalid_base * squared_excess
+                            + 1e-8 * (raw @ raw)
                         )
                     filtered = kalman_filter(
                         observations,
@@ -348,9 +396,12 @@ class KalmanSTARMA:
             covariance,
             state_space,
             spectral_radius,
+            ma_inverse_radius,
         ) = decode(raw_final)
         if self.enforce_stationarity and spectral_radius >= stability_limit:
             raise RuntimeError("optimizer returned a non-stationary final candidate")
+        if self.enforce_invertibility and ma_inverse_radius >= invertibility_limit:
+            raise RuntimeError("optimizer returned a non-invertible final candidate")
         filtered = kalman_filter(
             observations,
             state_space,
@@ -384,6 +435,11 @@ class KalmanSTARMA:
             optimizer_method="L-BFGS-B",
             optimizer_message=str(optimized.message),
             spectral_radius=spectral_radius,
+            ma_inverse_spectral_radius=ma_inverse_radius,
+            stability_limit=stability_limit,
+            invertibility_limit=invertibility_limit,
+            stationarity_enforced=self.enforce_stationarity,
+            invertibility_enforced=self.enforce_invertibility,
             filter_result=filtered,
         )
         self.result_ = result
@@ -399,6 +455,18 @@ class KalmanSTARMA:
         if self.state_space_ is None or self.filter_result_ is None:
             raise RuntimeError("fit must be called before using the fitted model")
         return self.state_space_, self.filter_result_
+
+    def admissibility(self) -> STARMAAdmissibility:
+        """Return fitted AR stationarity and MA invertibility diagnostics."""
+        if self.result_ is None or self.weights_ is None:
+            raise RuntimeError("fit must be called before admissibility diagnostics")
+        return starma_admissibility(
+            self.result_.ar_parameters,
+            self.result_.ma_parameters,
+            self.weights_,
+            stability_margin=self.stability_margin,
+            invertibility_margin=self.invertibility_margin,
+        )
 
     def to_state_space(self) -> StateSpaceModel:
         """Return the fitted state-space representation."""
