@@ -6,8 +6,9 @@ current workflow covers spatial-weight construction, simulation, conditional and
 Gaussian Kalman maximum-likelihood estimation, AR stationarity and MA
 invertibility diagnostics, observed-likelihood Hessian inference, natural-scale
 innovation covariance inference, missing-observation filtering, fixed-interval
-state smoothing, differencing, original-scale forecast inversion, conditional
-and bootstrap intervals, and rolling-origin calibration diagnostics.
+state smoothing, original location-level innovation disturbance smoothing,
+differencing, original-scale forecast inversion, conditional and bootstrap
+intervals, and rolling-origin calibration diagnostics.
 
 ```python
 import numpy as np
@@ -36,6 +37,7 @@ covariance_inference = (
     likelihood_inference.innovation_covariance_inference()
 )
 smoothed = mle.smooth(incomplete)
+innovation_disturbances = mle.smooth_innovation_disturbances(incomplete)
 
 print(mle_result.summary())
 print(admissibility.summary())
@@ -43,6 +45,8 @@ print(likelihood_inference.coefficient_table)
 print(covariance_inference.element_table)
 print(smoothed.smoothed_observations[20:24, 1])
 print(smoothed.state_disturbance_mean)
+print(innovation_disturbances.innovation_mean)
+print(innovation_disturbances.unresolved_covariance)
 print(mle.predict(steps=6))
 
 evaluation = rolling_origin_evaluate(
@@ -63,6 +67,11 @@ See [Model convention](model.md) for the STARMA equation and data orientation,
 companion diagnostics, [State-space filtering](state_space.md) for missing-data
 filtering, and [Fixed-interval smoothing](smoothing.md) for RTS state and
 state-disturbance moments.
+
+[Original innovation smoothing](innovation_smoothing.md) documents the exact
+conditional-Gaussian transformation from `R @ eta_t` back to the original
+location-level innovation, including posterior covariance, rank-deficient
+process support, and selection-matrix null-space uncertainty.
 
 [Maximum likelihood](maximum_likelihood.md),
 [Likelihood inference](likelihood_inference.md), and
