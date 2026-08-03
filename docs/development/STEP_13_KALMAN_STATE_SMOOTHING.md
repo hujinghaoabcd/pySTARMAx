@@ -2,21 +2,15 @@
 
 ## Repository position
 
-- development version: `0.0.13`;
+- released development version: `0.0.13`;
 - branch: `agent/kalman-state-smoothing`;
 - pull request: PR #13, `Add Kalman fixed-interval state smoothing`;
-- base: version 0.0.12 on `main`;
+- squash merge commit: `1aa8d5ed0ffa0fff7fa2bddbb4c04f0d53b51153`;
 - authoritative implementation/documentation validation: GitHub Actions CI #304,
   run ID `30852463900`;
 - validation result: 119 tests passed and 87.32% branch coverage;
-- Black, isort, Ruff, mypy, independent fixture regeneration, strict MkDocs,
-  source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11 through 3.14;
-- PR surface: 20 formal files and no temporary workflow or diagnostic files.
-
-A final documentation-only commit records these results. Its complete CI run is
-the merge gate and is written into the PR description without creating another
-validation-record commit.
+- final merge-gate CI #306 also passed the complete quality, documentation,
+  packaging, and operating-system/Python matrix.
 
 ## Delivered API
 
@@ -93,17 +87,29 @@ The state-equation disturbance moments are derived from
 - materially indefinite covariance raises;
 - the final smoothed state and covariance equal the final filtered values.
 
-## Important interpretation boundary
+## Interpretation boundary and completed follow-up
 
 `state_disturbance_mean` is the conditional mean of the state disturbance
 \(w_t=R\eta_t\). It must not be labelled as the original location-level
-innovation \(\eta_t\) unless the selection mapping is explicitly invertible and
-the corresponding conditional covariance is derived consistently.
+innovation \(\eta_t\) without a covariance-aware conditional derivation.
 
-A future original-innovation disturbance smoother should solve the conditional
-Gaussian mapping from state disturbances to location innovations. It should not
-apply an arbitrary matrix inverse or pseudoinverse to `state_disturbance_mean`
-alone.
+Version 0.0.14 completes that follow-up through
+`innovation_disturbance_smoother()` and
+`KalmanSTARMA.smooth_innovation_disturbances()`. The transformation uses
+
+\[
+A=QR^\top(RQR^\top)^+
+\]
+
+and retains
+
+\[
+\operatorname{Var}(\eta_t\mid R\eta_t)
+=Q-A(RQR^\top)A^\top.
+\]
+
+See `docs/innovation_smoothing.md` and the Step 14 handoff. The implementation
+does not use `pinv(selection) @ state_disturbance_mean`.
 
 ## Validation references
 
@@ -132,15 +138,11 @@ The authoritative coverage job reported:
 
 Two 0.0.12 defects became visible when the restored full CI workflow ran:
 
-1. `infer_kalman_starma()` referenced an undefined `observations` local when
-   setting `n_locations`; the result now uses the fitted innovation covariance
+1. `infer_kalman_starma()` referenced an undefined local when setting
+   `n_locations`; the result now uses the fitted innovation covariance
    dimension.
-2. covariance-element indices were inferred by mypy as a fixed one-element
-   tuple in the scalar branch; an explicit variable-length tuple annotation now
-   covers scalar, diagonal, and full covariance branches.
-
-These fixes are covered by the inherited covariance and likelihood inference
-tests and are documented in the Step 12 handoff.
+2. covariance-element indices required an explicit variable-length tuple
+   annotation for scalar, diagonal, and full covariance branches.
 
 ## Files changed
 
@@ -165,13 +167,9 @@ Documentation and examples:
 - README, index, navigation, roadmap, project status, citation metadata;
 - Step 12 and Step 13 handoffs.
 
-## Next recommended stage
+## Continuation after Step 14
 
-The most direct continuation is original location-level innovation disturbance
-smoothing with a mathematically explicit conditional Gaussian derivation.
-Alternative high-priority work remains integrated/seasonal MLE wrappers, sparse
-state matrices, and smooth admissibility parameterization.
-
-Do not call state disturbances original innovations, and do not add a naive
-`pinv(selection) @ state_disturbance_mean` API without deriving its posterior
-covariance and null-space behavior.
+Original location-level innovation smoothing is now implemented. The next major
+model-development priority is integrated and multiplicative seasonal
+state-space/Kalman maximum-likelihood support. Further smoothing work includes
+cross-time innovation covariance and conditional simulation smoothing.
