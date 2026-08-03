@@ -1,0 +1,51 @@
+name: Temporary MLE fix
+
+on:
+  push:
+    branches: [agent/kalman-maximum-likelihood]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/kalman-maximum-likelihood
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/pystarmax/maximum_likelihood.py")
+          text = path.read_text(encoding="utf-8")
+          old = '''    scale = max(1.0, float(np.max(np.abs(eigenvalues), initial=0.0)))
+    if float(np.min(eigenvalues, initial=0.0)) <= 0.0:
+        if float(np.min(eigenvalues, initial=0.0)) < -1e-10 * scale:
+            raise ValueError("innovation_covariance must be positive definite")
+        raise ValueError("innovation_covariance must be strictly positive definite")
+'''
+          new = '''    scale = max(1.0, float(np.max(np.abs(eigenvalues), initial=0.0)))
+    minimum = float(np.min(eigenvalues))
+    if minimum <= 0.0:
+        if minimum < -1e-10 * scale:
+            raise ValueError("innovation_covariance must be positive definite")
+        raise ValueError("innovation_covariance must be strictly positive definite")
+'''
+          if old not in text:
+              raise SystemExit("target covariance validation block not found")
+          path.write_text(text.replace(old, new), encoding="utf-8")
+          PY
+      - run: python -m pip install black==26.5.1 isort==8.0.1
+      - run: python -m isort src/pystarmax/maximum_likelihood.py
+      - run: python -m black src/pystarmax/maximum_likelihood.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pystarmax/maximum_likelihood.py
+          git diff --cached --quiet || git commit -m "Fix positive-definite covariance validation"
+          git push origin HEAD:agent/kalman-maximum-likelihood
