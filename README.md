@@ -8,14 +8,14 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: version 0.0.9 implements spatial-weight handling, conditional and
-> Gaussian Kalman maximum-likelihood STARMA estimation, ordinary
-> `STARIMA(p, d, q)` and multiplicative seasonal `(p,d,q)x(P,D,Q)_s` modelling,
-> reversible ordinary-seasonal differencing, original-scale fitted values and
-> forecasts, conditional and bootstrap intervals, rolling-origin evaluation,
-> and state-space filtering with partial missing observations. Likelihood-Hessian
-> inference, smooth stability constraints, sparse computation, and time-varying
-> extensions remain planned.
+> Status: version 0.0.10 implements spatial-weight handling, conditional and
+> Gaussian Kalman maximum-likelihood STARMA estimation, observed-likelihood
+> Hessian inference, ordinary `STARIMA(p, d, q)` and multiplicative seasonal
+> `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal differencing,
+> original-scale fitted values and forecasts, conditional and bootstrap
+> intervals, rolling-origin evaluation, and state-space filtering with partial
+> missing observations. Smooth stability/invertibility constraints, sparse
+> computation, smoothing, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -68,8 +68,10 @@ mle = KalmanSTARMA(
     include_intercept=False,
 )
 mle_result = mle.fit(incomplete, weights)
+inference = mle.infer(relative_step=1e-4)
 
 print(mle_result.summary())
+print(inference.summary())
 print(mle.predict(steps=6))
 ```
 
@@ -82,8 +84,44 @@ parameterization.
 The optimizer reports convergence, iterations, function evaluations, spectral
 radius, log likelihood, AIC, and BIC. The current stationarity control is an
 explicit spectral-radius feasibility penalty, not a smooth reparameterization.
-Likelihood-Hessian standard errors and MA invertibility constraints are not yet
-included. See [`docs/maximum_likelihood.md`](docs/maximum_likelihood.md).
+MA invertibility is not yet constrained. See
+[`docs/maximum_likelihood.md`](docs/maximum_likelihood.md).
+
+## Likelihood-curvature inference
+
+```python
+inference = mle.infer(
+    relative_step=1e-4,
+    absolute_step=1e-6,
+    rcond=1e-10,
+)
+
+print(inference.coefficient_table)
+print(inference.optimizer_table)
+print(inference.confidence_intervals(level=0.95))
+print(inference.eigenvalues)
+print(inference.condition_number)
+print(inference.stability_boundary_distance)
+```
+
+`KalmanSTARMA.infer()` computes a central finite-difference score and Hessian of
+the negative Gaussian Kalman log likelihood at the fitted optimizer parameters.
+The inverse observed-information matrix provides covariance, standard errors,
+z statistics, normal-approximation p values, parameter correlations, and
+confidence intervals for the dynamic coefficients.
+
+Inference is reported on the raw optimizer scale. Intercept, AR, and MA entries
+are already on their natural coefficient scale. Covariance entries remain
+log-standard-deviation or Cholesky-factor parameters; their standard errors are
+not automatically transformed into covariance-element standard errors.
+
+A non-positive-definite or rank-deficient Hessian raises by default. Setting
+`allow_singular=True` explicitly uses only the positive-curvature eigenspace and
+marks `used_pseudoinverse=True`; this route is diagnostic and should not be
+silently treated as regular publication-quality inference. Finite-difference
+stencils that cross the stationarity feasibility boundary are rejected rather
+than differentiated through the penalty. See
+[`docs/likelihood_inference.md`](docs/likelihood_inference.md).
 
 ## Fixed-parameter state-space filtering
 
@@ -227,8 +265,9 @@ print(test)
 - identity, adjacency, distance, and higher-order spatial-weight construction;
 - separate conditional and Kalman maximum-likelihood estimation routes;
 - scalar, diagonal, and Cholesky full innovation covariance models;
-- structured fit results with coefficients, covariance, likelihood, information
-  criteria, convergence state, optimizer diagnostics, and readable summaries;
+- central finite-difference likelihood score and observed-information Hessian;
+- explicit Hessian rank, eigenvalue, condition-number, score, and boundary checks;
+- structured fit and inference results with immutable numerical arrays;
 - deterministic stationary and integrated simulation with static numerical tests;
 - ordinary and seasonal differencing with immutable forecast-inversion state;
 - aligned original-scale one-step fitted values;
@@ -247,7 +286,7 @@ The classical STPACF is computed from nested leading-principal Yule-Walker
 systems in temporal-major, spatial-minor order. `stpacf(..., method="regression")`
 retains the projection-based diagnostic shipped in 0.0.1 for reproducibility.
 
-## Estimation and likelihood scope
+## Estimation and inference scope
 
 `STAR` uses ordinary least squares, while `STARMA` uses iterative conditional
 least squares. Seasonal factor models use nonlinear conditional least squares so
@@ -257,10 +296,14 @@ coefficients. These estimators remain the basis of existing bootstrap intervals.
 `KalmanSTARMA` is a distinct stationary Gaussian maximum-likelihood estimator.
 It supports complete or incomplete observations and scalar, diagonal, or full
 contemporaneous innovation covariance. It currently uses L-BFGS-B with an
-explicit stationarity feasibility boundary. Likelihood-Hessian uncertainty,
-smooth stationarity and invertibility parameterization, exact diffuse likelihood,
-smoothing, and integrated-seasonal maximum-likelihood wrappers remain future
-work.
+explicit stationarity feasibility boundary.
+
+Likelihood-curvature inference uses the observed Hessian at the fitted optimizer
+point. It does not currently include sandwich covariance, delta-method covariance
+transforms, profile likelihood, exact diffuse likelihood, or automatic weak-
+identification correction. Smooth stationarity and invertibility
+parameterization, smoothing, integrated-seasonal maximum-likelihood wrappers,
+and sparse computation remain future work.
 
 ## References
 
