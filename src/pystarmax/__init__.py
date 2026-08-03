@@ -7,8 +7,19 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.10"
+__version__ = "0.0.11"
 
+from pystarmax.admissibility import (
+    PolynomialAdmissibility,
+    PolynomialKind,
+    STARMAAdmissibility,
+    autoregressive_diagnostics,
+    autoregressive_spectral_radius,
+    compose_lag_operators,
+    moving_average_diagnostics,
+    moving_average_inverse_spectral_radius,
+    starma_admissibility,
+)
 from pystarmax.diagnostics import (
     PortmanteauResult,
     space_time_portmanteau,
@@ -82,6 +93,9 @@ __all__ = [
     "KalmanSTARMAResult",
     "LikelihoodInferenceResult",
     "FiniteDifferenceCurvature",
+    "PolynomialAdmissibility",
+    "STARMAAdmissibility",
+    "PolynomialKind",
     "ForecastInterval",
     "IntervalMetrics",
     "RollingOriginResult",
@@ -108,6 +122,12 @@ __all__ = [
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",
+    "compose_lag_operators",
+    "autoregressive_diagnostics",
+    "moving_average_diagnostics",
+    "starma_admissibility",
+    "autoregressive_spectral_radius",
+    "moving_average_inverse_spectral_radius",
     "build_starma_state_space",
     "fitted_starma_state_space",
     "kalman_filter",
