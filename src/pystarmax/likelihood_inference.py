@@ -415,9 +415,7 @@ def _negative_log_likelihood(model: Any, raw: FloatArray) -> float:
     if model.enforce_invertibility and ma_inverse_radius >= invertibility_limit:
         squared_excess += (ma_inverse_radius - invertibility_limit) ** 2
     if squared_excess > 0.0:
-        return float(
-            invalid_base + invalid_base * squared_excess + 1e-8 * (raw @ raw)
-        )
+        return float(invalid_base + invalid_base * squared_excess + 1e-8 * (raw @ raw))
     filtered = kalman_filter(
         observations,
         state_space,
@@ -524,7 +522,5 @@ def infer_kalman_starma(
         n_function_evaluations=curvature.n_function_evaluations,
         objective_value=curvature.function_value,
         stability_boundary_distance=model.result_.stability_boundary_distance,
-        invertibility_boundary_distance=(
-            model.result_.invertibility_boundary_distance
-        ),
+        invertibility_boundary_distance=(model.result_.invertibility_boundary_distance),
     )
