@@ -61,16 +61,29 @@
 - explicit convergence, retry, and reproducibility controls;
 - focused tests for all public model families.
 
+## Implemented in 0.0.7
+
+- central Winkler interval scores;
+- immutable aggregate interval metrics;
+- immutable rolling-origin forecast arrays;
+- expanding-window and fixed-length rolling-window evaluation;
+- conditional-innovation and bootstrap interval dispatch through one API;
+- empirical coverage, signed coverage gap, absolute coverage error, and width;
+- mean interval score, point-forecast MAE, and RMSE;
+- overall and forecast-horizon-specific summaries;
+- deterministic per-origin random-state derivation;
+- examples and documentation for calibration diagnostics.
+
 ## Next priorities
 
-1. Rolling-origin interval scores and empirical coverage calibration.
-2. Optional parallel bootstrap execution behind the stable API.
-3. Block, wild, predictive-residual, studentized, and bias-corrected bootstrap methods.
-4. Exact state-space/Kalman likelihood and missing observations.
-5. Diagonal and full contemporaneous innovation covariance likelihoods.
-6. Stationarity and invertibility checks with constrained parameterization.
-7. Sparse spatial matrices and large-network computation.
-8. Automatic order selection using STACF/STPACF and information criteria.
-9. Exogenous regressors, interventions, and generalized/location-varying STARMA.
-10. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-11. Cross-language estimator fixtures and a first PyPI pre-release.
+1. Exact state-space/Kalman likelihood and missing observations.
+2. Diagonal and full contemporaneous innovation covariance likelihoods.
+3. Stationarity and invertibility checks with constrained parameterization.
+4. Sparse spatial matrices and large-network computation.
+5. Automatic order selection using STACF/STPACF and information criteria.
+6. Exogenous regressors, interventions, and generalized/location-varying STARMA.
+7. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+8. Cross-language estimator fixtures and a first PyPI pre-release.
+9. Optional parallel bootstrap and rolling-origin execution behind stable APIs.
+10. Block, wild, predictive-residual, studentized, and bias-corrected bootstrap methods.
+11. Automated interval recalibration or conformal post-processing after benchmark evidence.
