@@ -27,8 +27,7 @@ def test_scalar_covariance_transform_uses_one_shared_variance() -> None:
     )
     variance = standard_deviation**2
 
-    assert transform.parameter_names if hasattr(transform, "parameter_names") else True
-    assert transform.raw_parameter_names == ("cov.log_std.shared",)
+    assert transform.raw_parameter_names == ("cov.log_std",)
     assert transform.element_names == ("variance.shared",)
     assert transform.element_indices == ((0, 0),)
     assert transform.n_elements == 1
