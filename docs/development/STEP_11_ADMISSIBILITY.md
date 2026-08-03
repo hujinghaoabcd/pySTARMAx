@@ -10,9 +10,8 @@ pySTARMAx, then apply that definition consistently to diagnostics, maximum-
 likelihood starting values, optimization, fitted results, and likelihood-Hessian
 inference.
 
-The implementation must preserve non-symmetric spatial-weight orientation and
-must not hide a non-admissible result when a user explicitly disables a
-constraint.
+The implementation preserves non-symmetric spatial-weight orientation and does
+not hide a non-admissible result when a user explicitly disables a constraint.
 
 ## Model convention
 
@@ -253,27 +252,24 @@ The test suite includes:
 13. pre-fit and constructor-control validation;
 14. dual boundary distances in likelihood inference.
 
-## Validation before final documentation
+## Final validation
 
-Core numerical validation established:
+GitHub Actions CI run #269 completed successfully on the final implementation,
+test, example, and documentation head:
 
-- CI run #247: 103 tests passed;
-- CI run #247: 87.48% total branch coverage;
-- CI run #247: Ubuntu, Windows, and macOS passed on Python 3.11 through 3.14;
-- CI run #247: wheel, source distribution, and Twine checks passed;
-- the only failure was Black formatting on three new implementation files.
-
-After applying the exact Black 26.5.1 result:
-
-- CI run #252: Black, isort, Ruff, and mypy passed;
-- independent diagnostic reference generation remained clean;
+- 103 tests passed without Python test warnings;
+- total branch coverage was 87.48%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic reference generation produced a clean diff;
 - strict MkDocs passed;
-- distributions passed;
-- cross-platform tests continued passing before later documentation commits
-  superseded the head.
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11 through 3.14;
+- exactly 20 formal files remained in the PR difference;
+- the standard CI workflow matched `main` and was absent from the PR;
+- no temporary formatting or diagnostic artifacts remained.
 
-One authoritative complete final-head CI run is still required after README,
-project-status, this handoff, and all documentation edits are complete.
+The validation-record edits after run #269 are documentation only. One final
+CI repeat is required before marking PR #11 ready and merging it.
 
 ## Performance note
 
