@@ -72,9 +72,7 @@ def test_scalar_ar1_stationary_likelihood_matches_closed_form() -> None:
     )
     for time_index in range(1, data.shape[0]):
         innovation = data[time_index, 0] - phi * data[time_index - 1, 0]
-        expected += -0.5 * (
-            np.log(2.0 * np.pi * variance) + innovation**2 / variance
-        )
+        expected += -0.5 * (np.log(2.0 * np.pi * variance) + innovation**2 / variance)
 
     assert result.log_likelihood == pytest.approx(expected)
     assert kalman_loglikelihood(data, model) == pytest.approx(expected)

@@ -130,9 +130,7 @@ class StateSpaceModel:
         if design.shape[1] != state_dim:
             raise ValueError("design columns must match the state dimension")
         if selection.shape != (state_dim, n_locations):
-            raise ValueError(
-                "selection must have shape (state dimension, locations)"
-            )
+            raise ValueError("selection must have shape (state dimension, locations)")
         if state_intercept.shape != (state_dim,):
             raise ValueError("state_intercept must match the state dimension")
         if innovation_covariance.shape != (n_locations, n_locations):
@@ -343,15 +341,11 @@ def build_starma_state_space(
     for block in range(1, z_blocks):
         row = block * n_locations
         column = (block - 1) * n_locations
-        transition[row : row + n_locations, column : column + n_locations] = (
-            identity
-        )
+        transition[row : row + n_locations, column : column + n_locations] = identity
     for block in range(1, ma_order):
         row = innovation_offset + block * n_locations
         column = innovation_offset + (block - 1) * n_locations
-        transition[row : row + n_locations, column : column + n_locations] = (
-            identity
-        )
+        transition[row : row + n_locations, column : column + n_locations] = identity
 
     design = np.zeros((n_locations, state_dim), dtype=float)
     design[:, :n_locations] = identity
@@ -559,8 +553,7 @@ def kalman_filter(
     for time_index in range(n_time):
         state_prediction = model.state_intercept + model.transition @ state
         covariance_prediction = (
-            model.transition @ covariance @ model.transition.T
-            + process_covariance
+            model.transition @ covariance @ model.transition.T + process_covariance
         )
         covariance_prediction = _symmetric(covariance_prediction)
         predicted_state[time_index] = state_prediction
@@ -578,12 +571,10 @@ def kalman_filter(
         observed = observations[time_index, mask]
         innovation = observed - design @ state_prediction
         innovation_covariance = design @ covariance_prediction @ design.T
-        factor, jitter = _innovation_cholesky(
-            cast(FloatArray, innovation_covariance)
+        factor, jitter = _innovation_cholesky(cast(FloatArray, innovation_covariance))
+        adjusted_covariance = (
+            innovation_covariance + np.eye(innovation_covariance.shape[0]) * jitter
         )
-        adjusted_covariance = innovation_covariance + np.eye(
-            innovation_covariance.shape[0]
-        ) * jitter
         covariance_state_observation = covariance_prediction @ design.T
         gain = np.linalg.solve(
             factor.T,
@@ -607,9 +598,7 @@ def kalman_filter(
         solved = np.linalg.solve(factor, innovation)
         log_determinant = 2.0 * float(np.sum(np.log(np.diag(factor))))
         contributions[time_index] = -0.5 * (
-            int(mask.sum()) * log_two_pi
-            + log_determinant
-            + float(solved @ solved)
+            int(mask.sum()) * log_two_pi + log_determinant + float(solved @ solved)
         )
 
         observed_indices = np.flatnonzero(mask)
