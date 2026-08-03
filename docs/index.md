@@ -107,6 +107,11 @@ documents ordinary differencing before the stationary likelihood, conditioning
 on the first `d` level rows, missing-value propagation, and the separation
 between transformed and recursively restored original scales.
 
+[Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
+observed-information result contract for ordinary and seasonal factor parameters,
+rejects expanded-boundary stencil points, and enables natural innovation covariance
+delta-method inference with factor/covariance cross uncertainty.
+
 [Seasonal STARIMA](seasonal.md) compares the conditional and Gaussian seasonal
 routes. [Multiplicative seasonal Kalman STARIMA](seasonal_maximum_likelihood.md)
 documents ordered matrix-polynomial expansion, arbitrary-lag companion states,

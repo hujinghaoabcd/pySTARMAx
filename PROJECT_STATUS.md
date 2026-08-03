@@ -11,19 +11,17 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #15 have been squash-merged into `main`.
-- `main` is version `0.0.15` at merge commit
+- PR #1 through PR #16 have been squash-merged into `main`.
+- `main` is version `0.0.16` at merge commit
   `6306da985ec760142f15cb113760ab58d758afae`.
-- Current branch: `agent/seasonal-kalman-starima`.
-- Current draft pull request: PR #16, `Add multiplicative seasonal Kalman
-  STARIMA`.
-- Current development version: `0.0.16`.
-- The current estimator fits ordinary and seasonal factor parameters by a
-  Gaussian Kalman likelihood on the combined transformed process.
-- Multiplicative cross-lag matrices are ordered products of factor matrices,
-  applied directly without projection onto the spatial-weight basis.
-- The likelihood remains conditional on the ordinary-seasonal transformation
-  history and is not presented as an exact diffuse level-state likelihood.
+- Current branch: `agent/seasonal-likelihood-inference`.
+- Current draft pull request: PR #17, `Add seasonal likelihood-Hessian
+  inference`.
+- Current development version: `0.0.17`.
+- The current stage adds observed-information inference for multiplicative
+  ordinary and seasonal factor parameters and covariance optimizer coordinates.
+- Every stencil point uses the complete expanded recursion and rejects enabled
+  feasibility-penalty regions.
 
 ## Completed baseline through 0.0.15
 
@@ -193,6 +191,31 @@ Tests cover:
 8. original fitted alignment using the complete combined lag polynomial;
 9. constructor, sample-offset, dimensionality, infinity, and fitted-state
    validation.
+
+## Completed in 0.0.17
+
+- added `infer_seasonal_kalman_starima()` and
+  `SeasonalKalmanSTARIMA.infer()`;
+- reused central finite-difference curvature and immutable
+  `LikelihoodInferenceResult`;
+- reconstructed factor expansion, covariance, state space, and Gaussian
+  likelihood at every objective point;
+- rejected enabled expanded stationarity/invertibility penalty points;
+- provided factor and optimizer tables, standard errors, normal tests,
+  confidence intervals, correlation, score, rank, condition, eigenvalues, and
+  boundary distances;
+- retained strict positive-definite full-rank behavior by default and explicit
+  diagnostic positive-eigenspace pseudoinverse behavior;
+- enabled natural innovation covariance delta-method inference and seasonal
+  factor/covariance cross covariance;
+- added equivalence, pure seasonal, penalty, singular-Hessian, and validation
+  tests plus method documentation and example.
+
+## Validation status for 0.0.17
+
+Final test count, branch coverage, quality, strict documentation, distribution,
+and operating-system/Python matrix results are pending on the formal branch
+head. These values must be recorded before PR #17 is marked ready and merged.
 
 ## Authoritative validation for 0.0.16
 
