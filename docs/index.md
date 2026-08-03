@@ -3,10 +3,10 @@
 pySTARMAx provides transparent, typed building blocks for classical STARMA,
 ordinary STARIMA, and multiplicative seasonal STARIMA modelling in Python. The
 current workflow covers spatial-weight construction, simulation, conditional and
-Gaussian Kalman maximum-likelihood estimation, diagnostics, temporal
-differencing, original-scale forecast inversion, conditional and bootstrap
-intervals, rolling-origin calibration diagnostics, and missing-observation
-state-space filtering.
+Gaussian Kalman maximum-likelihood estimation, observed-likelihood Hessian
+inference, diagnostics, temporal differencing, original-scale forecast inversion,
+conditional and bootstrap intervals, rolling-origin calibration diagnostics, and
+missing-observation state-space filtering.
 
 ```python
 import numpy as np
@@ -27,7 +27,11 @@ mle = KalmanSTARMA(
     covariance_type="full",
 )
 mle_result = mle.fit(incomplete, weights)
+inference = mle.infer(relative_step=1e-4)
+
 print(mle_result.summary())
+print(inference.coefficient_table)
+print(inference.confidence_intervals())
 print(mle.predict(steps=6))
 
 evaluation = rolling_origin_evaluate(
@@ -47,6 +51,11 @@ See [Model convention](model.md) for the STARMA equation and data orientation,
 [Ordinary STARIMA](starima.md) plus [Seasonal STARIMA](seasonal.md) for
 differencing and multiplicative factors, [State-space filtering](state_space.md)
 for fixed-parameter filtering, [Maximum likelihood](maximum_likelihood.md) for
-direct Gaussian Kalman estimation, [Forecasting](forecasting.md) and
-[Bootstrap intervals](bootstrap.md) for predictive uncertainty, and
-[Rolling evaluation](evaluation.md) for calibration and sharpness diagnostics.
+direct Gaussian Kalman estimation, and
+[Likelihood inference](likelihood_inference.md) for observed-information standard
+errors, confidence intervals, Hessian rank, eigenvalue, condition-number, score,
+and stability-boundary diagnostics.
+
+[Forecasting](forecasting.md), [Bootstrap intervals](bootstrap.md), and
+[Rolling evaluation](evaluation.md) cover predictive uncertainty, parameter
+refitting, calibration, sharpness, and point-error assessment.
