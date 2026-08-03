@@ -9,15 +9,15 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.15:** conditional and Gaussian Kalman maximum-likelihood
-> STARMA estimation, conditional ordinary-integrated Kalman STARIMA, AR
-> stationarity and MA invertibility diagnostics, observed-information inference,
-> natural-scale innovation covariance inference, missing-observation filtering,
-> Rauch--Tung--Striebel fixed-interval state smoothing, original innovation
-> disturbance smoothing, conditional ordinary and multiplicative seasonal
-> STARIMA, forecast intervals, bootstrap refitting, and rolling-origin
-> evaluation. Exact diffuse integrated likelihood, seasonal Kalman MLE, sparse
-> computation, exogenous regressors, and time-varying extensions remain planned.
+> **Status — 0.0.16:** conditional and Gaussian Kalman maximum-likelihood
+> STARMA estimation, conditional ordinary and multiplicative seasonal Kalman
+> STARIMA, AR stationarity and positive-sign MA invertibility diagnostics,
+> observed-information and natural covariance inference for the stationary core,
+> missing-observation filtering, fixed-interval state and original innovation
+> smoothing, original-scale reconstruction, conditional/bootstrap intervals, and
+> rolling-origin evaluation. Exact diffuse integrated likelihood, seasonal-factor
+> Hessian inference, original-scale Kalman intervals, sparse computation,
+> exogenous regressors, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -351,45 +351,79 @@ disturbance. It is not a naive pseudoinverse of the selection matrix.
 
 See [`docs/innovation_smoothing.md`](docs/innovation_smoothing.md).
 
-## Conditional ordinary and seasonal STARIMA
+## Conditional and Gaussian seasonal STARIMA
 
-The original conditional wrapper remains available:
-
-```python
-from pystarmax import STARIMA
-
-integrated = STARIMA(
-    ar_order=1,
-    integration_order=1,
-    ma_order=1,
-)
-integrated.fit(level_series, weights)
-print(integrated.predict_differenced(steps=6))
-print(integrated.predict(steps=6))
-```
-
-Multiplicative seasonal estimation is also available:
+The conditional nonlinear least-squares route remains available:
 
 ```python
 from pystarmax import SeasonalSTARIMA
 
-seasonal = SeasonalSTARIMA(
+conditional_seasonal = SeasonalSTARIMA(
     ar_order=1,
     integration_order=1,
+    ma_order=1,
     seasonal_ar_order=1,
     seasonal_integration_order=1,
+    seasonal_ma_order=1,
     seasonal_period=24,
     include_intercept=False,
 )
-seasonal.fit(seasonal_series, weights)
-print(seasonal.predict(steps=24))
+conditional_seasonal.fit(seasonal_series, weights)
+print(conditional_seasonal.predict(steps=24))
 ```
 
-Seasonal cross-lag matrices are ordered products rather than independent
-coefficients. Seasonal Kalman maximum likelihood is not yet implemented.
+Version 0.0.16 adds the Gaussian Kalman route:
 
-See [`docs/starima.md`](docs/starima.md) and
-[`docs/seasonal.md`](docs/seasonal.md).
+```python
+from pystarmax import SeasonalKalmanSTARIMA
+
+seasonal_mle = SeasonalKalmanSTARIMA(
+    ar_order=1,
+    integration_order=1,
+    ma_order=1,
+    seasonal_ar_order=1,
+    seasonal_integration_order=1,
+    seasonal_ma_order=1,
+    seasonal_period=24,
+    covariance_type="full",
+    include_intercept=False,
+    enforce_stationarity=True,
+    enforce_invertibility=True,
+)
+seasonal_result = seasonal_mle.fit(incomplete_seasonal_levels, weights)
+
+print(seasonal_result.summary())
+print(seasonal_mle.admissibility().summary())
+print(seasonal_mle.predict_differenced(steps=24))
+print(seasonal_mle.predict(steps=24))
+print(seasonal_mle.smooth().smoothed_observations)
+```
+
+Both routes use the multiplicative convention
+
+\[
+\Phi_s(B^s)\Phi(B)x_t=\Theta_s(B^s)\Theta(B)\eta_t.
+\]
+
+Ordered matrix products are preserved. AR cross lags are
+`-S_r @ A_i`; positive-sign MA cross lags are `+N_u @ M_j`. Cross-lag
+matrices are applied directly and are not projected back onto the supplied
+spatial-weight basis.
+
+`SeasonalKalmanSTARIMA` optimizes only ordinary and seasonal factor
+parameters, builds an arbitrary-lag companion state from the complete expanded
+matrices, and checks stationarity/invertibility on the expanded recursions. AIC
+and BIC count factor parameters and covariance parameters, not deterministic
+multiplicative cross terms.
+
+Its likelihood is conditional on the ordinary-seasonal history removed by
+`(1-B)^d(1-B^s)^D`. Missing levels propagate through the full differencing
+stencil without imputation, after which the transformed Kalman filter applies
+partial-location updates. Original-scale forecasts require finite ordinary
+terminal anchors and seasonal histories.
+
+See [`docs/seasonal.md`](docs/seasonal.md) and
+[`docs/seasonal_maximum_likelihood.md`](docs/seasonal_maximum_likelihood.md).
 
 ## Forecast intervals and rolling evaluation
 
@@ -485,14 +519,14 @@ coverage, pull request, and next-stage handoff.
 
 - `KalmanSTARIMA` uses a conditional differenced likelihood rather than exact
   diffuse integration on the level process;
-- seasonal Kalman MLE is unavailable;
-- original-scale Kalman STARIMA forecast intervals are not yet exposed;
+- seasonal-factor observed-information and natural covariance inference are not yet exposed;
+- original-scale ordinary and seasonal Kalman STARIMA forecast intervals are not yet exposed;
 - exact diffuse filtering and smoothing are unavailable;
 - state and innovation smoothing treat parameters as fixed;
 - innovation smoothing returns marginal covariance by transition, not
   cross-time innovation covariance;
 - AR/MA feasibility uses penalties rather than a smooth parameterization;
-- state and spatial matrices are dense;
+- state and spatial matrices are dense, and seasonal companion dimensions can grow rapidly;
 - robust, profile-likelihood, likelihood-ratio, and Kalman-MLE bootstrap
   inference remain future work;
 - exogenous regressors and interventions are unsupported;
