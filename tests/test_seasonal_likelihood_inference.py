@@ -232,7 +232,9 @@ def test_singular_hessian_requires_explicit_pseudoinverse(
             n_function_evaluations=9,
         )
 
-    monkeypatch.setattr(seasonal_inference, "finite_difference_curvature", fake_curvature)
+    monkeypatch.setattr(
+        seasonal_inference, "finite_difference_curvature", fake_curvature
+    )
 
     with pytest.raises(np.linalg.LinAlgError, match="not positive definite"):
         model.infer()
