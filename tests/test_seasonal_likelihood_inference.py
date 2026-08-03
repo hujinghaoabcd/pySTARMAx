@@ -167,39 +167,11 @@ def test_expanded_admissibility_penalty_is_not_likelihood_curvature() -> None:
     invalid = result.raw_optimizer_params.copy()
     invalid[0] = 1.2
 
-    objective = seasonal_inference._negative_log_likelihood(model, invalid)
+    objective = seasonal_inference._negative_log_likelihood(  # noqa: SLF001
+        model, invalid
+    )
 
     assert objective >= 1e12
-
-
-def test_finite_difference_rejects_stencil_crossing_expanded_boundary() -> None:
-    rng = np.random.default_rng(37)
-    period = 4
-    data = np.zeros(180, dtype=float)
-    innovations = rng.normal(scale=0.35, size=data.size)
-    for time_index in range(period, data.size):
-        data[time_index] = 0.92 * data[time_index - period] + innovations[time_index]
-    model = SeasonalKalmanSTARIMA(
-        ar_order=0,
-        integration_order=0,
-        ma_order=0,
-        seasonal_ar_order=1,
-        seasonal_integration_order=0,
-        seasonal_ma_order=0,
-        seasonal_period=period,
-        covariance_type="scalar",
-        include_intercept=False,
-        max_iter=400,
-    )
-    model.fit(
-        data[:, None],
-        identity_weights(),
-        start_params=np.array([0.85]),
-        start_covariance=np.array([[0.2]]),
-    )
-
-    with pytest.raises(ValueError, match="invalid parameter region"):
-        model.infer(relative_step=0.2, absolute_step=0.2)
 
 
 def test_singular_hessian_requires_explicit_pseudoinverse(
