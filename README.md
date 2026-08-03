@@ -8,12 +8,12 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: version 0.0.6 implements spatial-weight handling, STAR and iterative
+> Status: version 0.0.7 implements spatial-weight handling, STAR and iterative
 > conditional STARMA estimation, ordinary `STARIMA(p, d, q)` and multiplicative
 > seasonal `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal
 > differencing, original-scale fitted values and forecasts, conditional
 > innovation intervals, and residual or parametric direct-bootstrap intervals
-> with model refitting. State-space likelihoods, missing observations, sparse
+> with model refitting, plus rolling-origin interval evaluation. State-space likelihoods, missing observations, sparse
 > computation, and time-varying extensions remain planned.
 
 ## Installation
