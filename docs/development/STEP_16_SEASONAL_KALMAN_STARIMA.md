@@ -6,10 +6,12 @@
 - branch: `agent/seasonal-kalman-starima`;
 - pull request: PR #16, `Add multiplicative seasonal Kalman STARIMA`;
 - base: version 0.0.15 on `main`;
-- core validation: GitHub Actions CI #346, run ID `30858019154`;
-- core result: 143 tests passed and 87.04% total branch coverage;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #360, run ID `30858747303`;
+- validation result: 143 tests passed and 87.04% total branch coverage;
 - `src/pystarmax/seasonal_maximum_likelihood.py` coverage: 87.6%;
-- a complete final documentation-head CI is required before merge.
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+  macOS Python 3.11--3.14 all passed.
 
 ## Delivered API
 
@@ -244,13 +246,18 @@ Tests include:
     validation;
 11. the complete inherited package test suite.
 
-Core CI #346 reported:
+Authoritative CI #360 reported:
 
-- 143 tests passed in 39.66 seconds;
+- 143 tests passed;
 - total branch coverage: 87.04%;
 - seasonal Kalman module coverage: 87.6%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
-  regeneration passed.
+  regeneration passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives a final merge-gate CI before PR #16 is marked
+ready and merged.
 
 ## Files introduced or changed
 

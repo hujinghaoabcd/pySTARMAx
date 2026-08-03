@@ -194,10 +194,10 @@ Tests cover:
 9. constructor, sample-offset, dimensionality, infinity, and fitted-state
    validation.
 
-## Core validation for 0.0.16
+## Authoritative validation for 0.0.16
 
-GitHub Actions CI #346, run ID `30858019154`, validated the formatted numerical
-core before the final documentation expansion:
+GitHub Actions CI #360, run ID `30858747303`, validated the complete
+implementation and documentation head:
 
 - 143 tests passed in the coverage job;
 - total branch coverage was 87.04%, above the required 80%;
@@ -206,13 +206,11 @@ core before the final documentation expansion:
 - independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu and macOS passed on Python 3.11 through 3.14;
-- Windows jobs were superseded by later documentation commits after their
-  numerical test steps had completed successfully.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A complete final CI matrix is required on the documentation head before PR #16
-is marked ready and merged. The authoritative final run must be recorded here
-and in the Step 16 handoff.
+A final validation-record-only merge-gate CI is run after this status and the
+Step 16 handoff are updated. No implementation, test, API, example, or method
+document changes are made after CI #360.
 
 ## Design principles
 
@@ -240,16 +238,15 @@ and in the Step 16 handoff.
 
 ## Immediate next tasks
 
-1. Run the complete final CI matrix on the documentation head.
-2. Record the final run identifier, test count, and coverage.
-3. Update PR #16, mark it ready, and squash-merge it into `main`.
-4. Add observed-information and natural covariance inference for seasonal factor
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #16, mark it ready, and squash-merge it into `main`.
+3. Add observed-information and natural covariance inference for seasonal factor
    parameters.
-5. Add original-scale Gaussian forecast intervals for ordinary and seasonal
+4. Add original-scale Gaussian forecast intervals for ordinary and seasonal
    Kalman STARIMA.
-6. Design exact diffuse integrated level-state likelihood and smoothing as a
+5. Design exact diffuse integrated level-state likelihood and smoothing as a
    separate API.
-7. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
+6. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
    simulation smoothing, order selection, exogenous inputs, adapters, and
    cross-language fixtures.
 
