@@ -105,9 +105,8 @@ def _restore_incomplete_fitted(
                 continue
             original_value = float(value)
             for lag, coefficient in enumerate(coefficients[1:], start=1):
-                original_value -= (
-                    float(coefficient)
-                    * float(observations[time_index - lag, location_index])
+                original_value -= float(coefficient) * float(
+                    observations[time_index - lag, location_index]
                 )
             restored[time_index, location_index] = original_value
     return cast(FloatArray, np.ascontiguousarray(restored, dtype=float))
