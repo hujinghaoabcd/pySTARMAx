@@ -11,24 +11,26 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #13 have been squash-merged into `main`.
-- `main` is version `0.0.13`.
-- Current branch: `agent/innovation-disturbance-smoothing`.
-- Current pull request: PR #14, `Add original innovation disturbance
-  smoothing`.
-- Current development version: `0.0.14`.
-- The implementation maps RTS state disturbances back to original
-  location-level innovations with an exact conditional-Gaussian derivation.
-- No naive selection-matrix inverse is used, and unidentified innovation
-  covariance is retained explicitly.
+- PR #1 through PR #14 have been squash-merged into `main`.
+- `main` is version `0.0.14` at merge commit
+  `97e8e202c49c9c613d06a578f71e2945e62d01bd`.
+- Current branch: `agent/integrated-kalman-starima`.
+- Current draft pull request: PR #15, `Add conditional integrated Kalman
+  STARIMA`.
+- Current development version: `0.0.15`.
+- The current implementation estimates ordinary-integrated models through a
+  stationary Gaussian Kalman likelihood on `Delta^d y`, conditional on the
+  first `d` original level rows.
+- It is explicitly not presented as an exact diffuse integrated level-state
+  likelihood.
 
-## Completed baseline through 0.0.13
+## Completed baseline through 0.0.14
 
 - immutable spatial-weight collections and constructors;
 - STAR ordinary least squares and STARMA iterative conditional least squares;
-- simulation, recursive prediction, STACF/STPACF, and residual diagnostics;
-- ordinary STARIMA and constrained multiplicative seasonal STARIMA;
+- ordinary and multiplicative seasonal conditional STARIMA;
 - reversible ordinary-seasonal differencing and original-scale reconstruction;
+- simulation, recursive prediction, STACF/STPACF, and residual diagnostics;
 - conditional and bootstrap forecast intervals;
 - rolling-origin calibration, sharpness, and point-error evaluation;
 - stationary STARMA state-space construction;
@@ -39,150 +41,177 @@ cross-platform CI.
 - AIC, BIC, optimizer, covariance, filtering, and prediction diagnostics;
 - finite-difference likelihood score and observed-information Hessian;
 - natural-scale innovation covariance delta-method inference;
-- reusable AR and inverse-MA companion eigensystem diagnostics;
-- dual stationarity/invertibility start shrinkage, penalties, and final checks;
+- AR stationarity and positive-sign MA invertibility diagnostics and enforcement;
 - Rauch--Tung--Striebel fixed-interval state smoothing;
 - lag-one state covariance and state-equation disturbance moments;
-- explicit rank and pseudoinverse diagnostics for singular state prediction.
+- conditional-Gaussian original location-level innovation smoothing;
+- unresolved selection-nullspace covariance, rank, pseudoinverse, and support
+  diagnostics.
 
-## Completed in 0.0.14
+## Completed in 0.0.15
 
-### Conditional-Gaussian innovation recovery
+### Conditional integrated likelihood
 
-For
-
-\[
-w_t=R\eta_t,
-\qquad
-\eta_t\sim\mathcal N(0,Q),
-\]
-
-define
+For original observations `y_t`, define
 
 \[
-S=RQR^\top,
-\qquad
-A=QR^\top S^+.
+x_t=(1-B)^d y_t=\Delta^d y_t.
 \]
 
-Given the RTS posterior moments
+The transformed process is fitted with the existing stationary Gaussian
+`KalmanSTARMA` core. The likelihood scope is
 
 \[
-\mu_{w,t}=E(w_t\mid y_{1:T}),
-\qquad
-V_{w,t}=\operatorname{Var}(w_t\mid y_{1:T}),
+\ell_c(\vartheta;y_{1:T})
+=
+\ell\left(
+\vartheta;\Delta^d y_{d+1:T}\mid y_{1:d}
+\right).
 \]
 
-the implementation returns
+Consequences are explicit:
 
-\[
-E(\eta_t\mid y_{1:T})=A\mu_{w,t},
-\]
-
-\[
-\operatorname{Var}(\eta_t\mid y_{1:T})
-=Q-AS A^\top+A V_{w,t}A^\top.
-\]
-
-### Identifiability and rank policy
-
-- `unresolved_covariance = Q - A S A.T` is retained rather than discarded;
-- a full-rank process covariance uses a stable linear solve;
-- a rank-deficient process covariance uses a positive-eigenspace pseudoinverse;
-- `rcond` controls the retained eigenspace;
-- process rank and pseudoinverse use are explicit result fields;
-- materially indefinite process or posterior covariance raises;
-- only numerically tiny negative covariance eigenvalues are projected to zero.
-
-### Support diagnostics
-
-Exact state-disturbance moments lie in the range of `S`. The result reports:
-
-- `mean_support_residual[t] = ||mu_w - Pi_S mu_w||_2`;
-- `covariance_support_residual[t] = ||V_w - Pi_S V_w Pi_S||_F`.
-
-These diagnostics expose numerical leakage or inconsistent externally
-constructed state-smoother results. Unsupported state directions are not used to
-fabricate original innovation information.
+- the first `d` original level rows are conditioned on through differencing;
+- the likelihood time axis has `T - d` rows;
+- log likelihood, AIC, and BIC describe the transformed conditional model;
+- `initialization="diffuse"` concerns only the stationary transformed STARMA
+  state and remains a large-variance approximation;
+- no claim of exact diffuse integration on the level process is made.
 
 ### Public API
 
-- added immutable `InnovationDisturbanceResult`;
-- added public `innovation_disturbance_smoother()`;
-- added fitted `KalmanSTARMA.smooth_innovation_disturbances()`;
-- supports the training sample or a new incomplete observation matrix;
-- exposes innovation posterior means and marginal covariances, conditioning map,
-  unresolved covariance, process support, rank, and support residuals;
-- all public numerical arrays are defensive read-only copies.
+- added `KalmanSTARIMA(p,d,q)`;
+- added immutable `KalmanSTARIMAResult` wrapping the full stationary
+  `KalmanSTARMAResult`;
+- exposed original and differenced row counts and missing-cell counts;
+- exposed `order`, coefficient and covariance tables, convergence, likelihood,
+  AIC, and BIC;
+- inherited stationary-core admissibility diagnostics, state-space conversion,
+  filtering, smoothing, original innovation smoothing, and likelihood-Hessian
+  inference without duplicating optimizer code.
 
-### Time convention
+### Scale boundaries
 
-State transition index `t` describes
+Differenced-scale methods:
 
-```text
-alpha_(t+1) - state_intercept - transition @ alpha_t
-```
+- `filter()`;
+- `smooth()`;
+- `smooth_innovation_disturbances()`;
+- `infer()`;
+- `to_state_space()`;
+- `predict_differenced()`;
+- `fitted_differenced()`.
 
-and therefore innovation result index `t` corresponds to `eta_(t+1)`. A sample
-with `T` stored state times produces `T - 1` innovation disturbances. The
-initialization disturbance before the first stored state is not reconstructed.
+Original-scale methods:
 
-## Authoritative validation for 0.0.14
+- `predict()` recursively inverts ordinary differences using the stored
+  terminal `DifferencingState`;
+- `fitted_original()` aligns transformed one-step means to the original sample
+  and keeps unavailable rows as `NaN`.
 
-GitHub Actions CI #322, run ID `30855134698`, validated the complete
-implementation and documentation head:
+For `d=1`, original forecasts cumulate predicted first differences. For `d=2`,
+predicted second differences update the terminal slope before updating the
+level. The same recursion extends to arbitrary non-negative `d`.
 
-- 126 tests passed;
-- total branch coverage was 87.06%, above the required 80%;
-- `src/pystarmax/innovation_smoothing.py` coverage was 80.1%;
+### Missing observations and anchors
+
+- original missing cells are not imputed before differencing;
+- `NaN` propagates through the finite-difference stencil;
+- the transformed Kalman filter then applies its existing partial-location and
+  fully missing-row rules;
+- the result records both original and transformed missing-cell counts;
+- new level data are transformed before filtering and smoothing;
+- original-scale prediction requires finite terminal values for the level and
+  every lower-order difference;
+- when terminal anchors are unavailable, transformed-scale fitting and
+  forecasting remain valid but `predict()` raises rather than inventing a
+  level continuation.
+
+### Validation references
+
+Tests cover:
+
+1. exact `d=0` equivalence with `KalmanSTARMA` under identical starting values;
+2. a random walk with drift and cumulative original-scale forecast means;
+3. second-order inverse differencing from terminal level and slope;
+4. explicit missing-value expansion through first differences;
+5. available differenced forecasts but refused original forecasts with a
+   missing terminal anchor;
+6. new-data filtering, state smoothing, and innovation smoothing on the
+   transformed time axis;
+7. aligned original-scale fitted values with incomplete observed history;
+8. constructor, sample-length, dimensionality, infinity, and fitted-state
+   validation.
+
+## Core validation for 0.0.15
+
+GitHub Actions CI #330, run ID `30856284894`, validated the formatted numerical
+core before the final documentation expansion:
+
+- 134 tests passed in the coverage job;
+- total branch coverage was 86.96%, above the required 80%;
+- `src/pystarmax/integrated_maximum_likelihood.py` coverage was 84.3%;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+- Ubuntu and macOS passed on Python 3.11 through 3.14;
+- Windows test steps passed on Python 3.11 through 3.14; one superseded Windows
+  3.12 job was marked cancelled only after its pytest and cleanup steps had
+  already succeeded because later documentation commits started newer runs.
 
-A final validation-record-only merge-gate CI is run after this status and the
-Step 14 handoff are updated. No implementation, test, API, or method-document
-content changes are made after CI #322.
+A complete final CI matrix is required on the documentation head before PR #15
+is marked ready and merged. Its run identifier and final result must be recorded
+in this file and the Step 15 handoff.
 
 ## Design principles
 
-1. Keep conditional and maximum-likelihood estimators separate and explicit.
-2. Preserve one `(time, location)` observation convention.
-3. Never impute missing observations inside likelihood, filtering, or smoothing.
-4. Preserve supplied non-symmetric spatial-matrix orientation.
-5. Use the positive MA sign consistently in inverse-recursion diagnostics.
-6. Treat spectral-radius penalties as feasibility controls, not smooth
+1. Keep conditional least-squares and Gaussian maximum-likelihood estimators
+   separate and explicit.
+2. Distinguish a conditional differenced likelihood from an exact diffuse
+   integrated likelihood.
+3. Preserve one `(time, location)` observation convention.
+4. Never impute missing observations inside differencing, likelihood, filtering,
+   or smoothing.
+5. Keep transformed-scale and original-scale outputs explicitly labelled.
+6. Never restore original-scale forecasts without finite terminal anchors.
+7. Preserve supplied non-symmetric spatial-matrix orientation.
+8. Use the positive MA sign consistently in inverse-recursion diagnostics.
+9. Treat spectral-radius penalties as feasibility controls, not smooth
    parameterizations.
-7. Refuse indefensible observed information by default.
-8. Keep optimizer-scale and natural-scale uncertainty separate and auditable.
-9. Use stable solves before explicit inverses.
-10. Record rank-deficient pseudoinverse use rather than hiding it.
-11. Distinguish state disturbances from original location innovations.
-12. Preserve innovation uncertainty not identified by the state selection map.
-13. Require analytic or independent Gaussian references for numerical claims.
-14. Keep public numerical arrays immutable.
+10. Refuse indefensible observed information by default.
+11. Use stable solves before explicit inverses and record pseudoinverse use.
+12. Distinguish state disturbances from original location innovations.
+13. Preserve innovation uncertainty not identified by the state selection map.
+14. Require analytic or independent Gaussian references for numerical claims.
+15. Keep public numerical arrays immutable.
 
 ## Immediate next tasks
 
-1. Run the validation-record-only merge-gate CI.
-2. Update PR #14, mark it ready, and squash-merge it into `main`.
-3. Begin integrated and multiplicative seasonal state-space/Kalman MLE support.
-4. Add cross-time innovation covariance and conditional simulation smoothing.
-5. Add sparse spatial/state matrices, order selection, exogenous inputs,
-   ecosystem adapters, and cross-language fixtures.
+1. Complete final documentation synchronization and Step 15 review.
+2. Run the complete CI matrix on the documentation head.
+3. Record the authoritative final run, test count, and coverage.
+4. Update PR #15, mark it ready, and squash-merge it into `main`.
+5. Begin multiplicative seasonal Kalman STARIMA support.
+6. Design an exact diffuse integrated level-state likelihood as a separate API.
+7. Add original-scale Kalman STARIMA forecast intervals.
+8. Add cross-time innovation covariance, simulation smoothing, sparse matrices,
+   order selection, exogenous inputs, adapters, and cross-language fixtures.
 
 ## Known limitations
 
-- state and innovation smoothing are fixed-parameter and do not propagate
-  estimator uncertainty;
+- `KalmanSTARIMA` uses a conditional differenced likelihood, not exact diffuse
+  integration on the original level process;
+- seasonal Kalman maximum likelihood is unavailable;
+- original-scale Kalman STARIMA forecast intervals are unavailable;
+- original-scale filtered and smoothed level-state distributions are not
+  returned;
+- state and innovation smoothing treat parameters as fixed;
 - innovation smoothing exposes marginal covariance by transition, not cross-time
-  innovation covariance;
+  covariance;
 - the initialization disturbance before the first stored state is unavailable;
 - exact diffuse filtering and smoothing are unavailable;
 - simulation smoothing is unavailable;
-- maximum likelihood covers stationary non-seasonal STARMA only;
-- integrated and seasonal wrappers still use conditional estimation;
 - feasibility is enforced by penalties rather than a smooth bijection;
 - dense eigendecomposition and dense state matrices limit large networks;
 - natural covariance intervals are first-order unbounded normal approximations;
@@ -194,6 +223,7 @@ content changes are made after CI #322.
 ## Handoff instruction
 
 Before the next substantial step, read this file, `docs/model.md`,
+`docs/starima.md`, `docs/integrated_maximum_likelihood.md`,
 `docs/admissibility.md`, `docs/state_space.md`, `docs/smoothing.md`,
 `docs/innovation_smoothing.md`, `docs/maximum_likelihood.md`,
 `docs/likelihood_inference.md`, `docs/covariance_inference.md`, and the latest
