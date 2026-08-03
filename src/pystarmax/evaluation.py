@@ -100,20 +100,21 @@ class IntervalMetrics:
         )
         if not np.all(np.isfinite(np.asarray(finite_values, dtype=float))):
             raise ValueError("metric values must be finite")
-        if min(
-            self.average_width,
-            self.mean_interval_score,
-            self.mae,
-            self.rmse,
-        ) < 0.0:
+        if (
+            min(
+                self.average_width,
+                self.mean_interval_score,
+                self.mae,
+                self.rmse,
+            )
+            < 0.0
+        ):
             raise ValueError("width, score, MAE, and RMSE must be non-negative")
         object.__setattr__(self, "nominal_coverage", nominal)
         object.__setattr__(self, "empirical_coverage", empirical)
         object.__setattr__(self, "coverage_gap", float(self.coverage_gap))
         object.__setattr__(self, "average_width", float(self.average_width))
-        object.__setattr__(
-            self, "mean_interval_score", float(self.mean_interval_score)
-        )
+        object.__setattr__(self, "mean_interval_score", float(self.mean_interval_score))
         object.__setattr__(self, "mae", float(self.mae))
         object.__setattr__(self, "rmse", float(self.rmse))
         object.__setattr__(self, "n_forecasts", n_forecasts)
@@ -324,7 +325,7 @@ def rolling_origin_evaluate(
     uppers: list[FloatArray] = []
     for origin in origins:
         start = 0 if resolved_window is None else max(0, int(origin) - resolved_window)
-        training = observations[start:int(origin)]
+        training = observations[start : int(origin)]
         model = model_factory()
         model.fit(training, weights)
         seed = int(generator.integers(0, np.iinfo(np.uint32).max, dtype=np.uint32))
