@@ -8,13 +8,14 @@ the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
 strict validation, typed public APIs, structured result objects, independent
 numerical implementation, reproducible tests, and explicit research references.
 
-> Status: version 0.0.7 implements spatial-weight handling, STAR and iterative
+> Status: version 0.0.8 implements spatial-weight handling, STAR and iterative
 > conditional STARMA estimation, ordinary `STARIMA(p, d, q)` and multiplicative
 > seasonal `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal
-> differencing, original-scale fitted values and forecasts, conditional
-> innovation intervals, and residual or parametric direct-bootstrap intervals
-> with model refitting, plus rolling-origin interval evaluation. State-space likelihoods, missing observations, sparse
-> computation, and time-varying extensions remain planned.
+> differencing, original-scale fitted values and forecasts, conditional and
+> bootstrap intervals, rolling-origin evaluation, and fixed-parameter Gaussian
+> Kalman filtering with partial missing observations for stationary STAR/STARMA.
+> Direct Kalman maximum-likelihood optimization, sparse computation, and
+> time-varying extensions remain planned.
 
 ## Installation
 
@@ -50,6 +51,33 @@ print(model.predict(steps=6))
 
 The observation matrix uses the convention `(time, location)`. Spatial lag zero
 is the identity matrix; higher spatial lags are stored in `SpatialWeights`.
+
+## State-space filtering and missing observations
+
+```python
+incomplete = series.copy()
+incomplete[20, 2] = np.nan
+incomplete[80, :] = np.nan
+
+state_space = model.to_state_space()
+filtered = model.filter_state_space(incomplete)
+
+print(filtered.log_likelihood)
+print(filtered.n_observations)
+print(filtered.filtered_observations[-1])
+```
+
+`to_state_space()` maps the fitted stationary `STAR` or `STARMA` coefficients to
+an explicit companion representation. `filter_state_space()` evaluates those
+fixed parameters with a Gaussian Kalman filter. At each time, the measurement
+equation is reduced to the observed locations. A fully missing row performs only
+the prediction step and contributes zero to the likelihood.
+
+The default stationary initialization uses the unconditional state mean and a
+discrete Lyapunov covariance. Known initialization and an explicit approximate
+diffuse option are also available. Version 0.0.8 does not yet optimize model
+parameters by maximizing this likelihood. See
+[`docs/state_space.md`](docs/state_space.md).
 
 ## Ordinary STARIMA
 
@@ -181,33 +209,39 @@ print(test)
 - residual and parametric direct-bootstrap intervals with model refitting;
 - complete innovation-vector resampling to retain contemporaneous dependence;
 - factorized multiplicative seasonal operators with explicit matrix order;
+- explicit state-space matrices and missing-observation Kalman updates;
+- Cholesky likelihood solves with recorded numerical jitter;
 - exact-rational reference fixtures generated without importing pySTARMAx;
 - explicit covariance orientation for non-symmetric row-standardized weights;
 - one public numerical route first, with sparse and compiled acceleration hidden
   behind stable interfaces later;
 - research references and implementation limitations documented in the repository.
 
-The classical STPACF is computed from nested leading-principal Yule–Walker
+The classical STPACF is computed from nested leading-principal Yule-Walker
 systems in temporal-major, spatial-minor order. `stpacf(..., method="regression")`
 retains the projection-based diagnostic shipped in 0.0.1 for reproducibility.
 
-## Scope of the conditional estimator
+## Estimation and likelihood scope
 
-The current estimator uses ordinary least squares for pure STAR models and an
+The default estimator uses ordinary least squares for pure STAR models and an
 iterative conditional least-squares procedure for STARMA models. Seasonal factor
 models use nonlinear conditional least squares so multiplicative cross terms
 remain parameter products rather than independent coefficients. Bootstrap
-intervals propagate uncertainty through repeated use of these estimators; they
-do not change the underlying likelihood assumptions. The package remains a
-transparent, testable baseline rather than a replacement for a fully specified
-state-space maximum-likelihood implementation when observations are missing or
-innovation structure must be modelled exactly.
+intervals propagate uncertainty through repeated use of these estimators.
+
+The state-space layer currently supplies a fixed-parameter Gaussian Kalman
+likelihood and missing-observation filtering. When called from a fitted model,
+its parameters come from the conditional estimator; it does not overwrite the
+conditional result or claim direct maximum-likelihood estimation. Direct Kalman
+optimization, constrained covariance parameterization, likelihood-based standard
+errors, exact diffuse initialization, and smoothing remain future work.
 
 ## References
 
 The architecture is grounded in the classical STARMA identification, estimation,
-seasonal modelling, residual-diagnostic, and bootstrap predictive-inference
-literature. See [`docs/references.md`](docs/references.md) and
+seasonal modelling, residual-diagnostic, bootstrap predictive-inference, and
+linear Gaussian state-space literature. See
+[`docs/references.md`](docs/references.md) and
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Licence
