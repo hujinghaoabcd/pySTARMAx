@@ -147,6 +147,5 @@ class KalmanSTARMAResult:
             float_format=lambda value: f"{value: .6f}"
         )
         return "\n".join(
-            header
-            + [coefficients, "-" * 72, "Innovation covariance", covariance]
+            header + [coefficients, "-" * 72, "Innovation covariance", covariance]
         )
