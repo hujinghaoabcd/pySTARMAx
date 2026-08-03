@@ -2,43 +2,32 @@
 
 pySTARMAx provides transparent, typed building blocks for classical STARMA,
 ordinary STARIMA, and multiplicative seasonal STARIMA modelling in Python. The
-current workflow covers spatial-weight construction, simulation, model fitting,
-diagnostics, temporal differencing, original-scale forecast inversion, aligned
-one-step fitted values, conditional innovation intervals, parameter-aware
-bootstrap intervals, rolling-origin calibration diagnostics, constrained
-seasonal matrix-polynomial expansion, and reproducible numerical validation.
+current workflow covers spatial-weight construction, simulation, conditional
+model fitting, diagnostics, temporal differencing, original-scale forecast
+inversion, aligned one-step fitted values, conditional and bootstrap intervals,
+rolling-origin calibration diagnostics, and fixed-parameter Gaussian Kalman
+filtering with partial missing observations.
 
 ```python
-from pystarmax import SeasonalSTARIMA, rolling_origin_evaluate
+import numpy as np
 
-model = SeasonalSTARIMA(
-    ar_order=1,
-    integration_order=1,
-    seasonal_ar_order=1,
-    seasonal_integration_order=1,
-    seasonal_period=12,
-)
+from pystarmax import STARMA, rolling_origin_evaluate
+
+model = STARMA(ar_order=1, ma_order=1)
 result = model.fit(y, weights)
 print(result.summary())
 print(model.predict(steps=6))
-print(model.fitted_original())
 print(model.predict_interval(steps=6, random_state=42))
-print(
-    model.predict_bootstrap_interval(
-        steps=6,
-        n_bootstrap=200,
-        random_state=42,
-    )
-)
+
+incomplete = y.copy()
+incomplete[20, 1] = np.nan
+incomplete[80, :] = np.nan
+filtered = model.filter_state_space(incomplete)
+print(filtered.log_likelihood)
+print(filtered.filtered_observations[-1])
 
 evaluation = rolling_origin_evaluate(
-    lambda: SeasonalSTARIMA(
-        ar_order=1,
-        integration_order=1,
-        seasonal_ar_order=1,
-        seasonal_integration_order=1,
-        seasonal_period=12,
-    ),
+    lambda: STARMA(ar_order=1, ma_order=1),
     y,
     weights,
     initial_window=120,
@@ -52,7 +41,8 @@ print(evaluation.metrics())
 
 See [Model convention](model.md) for the STARMA equation and data orientation,
 [Ordinary STARIMA](starima.md) plus [Seasonal STARIMA](seasonal.md) for
-differencing and multiplicative factors, [Forecasting](forecasting.md) for
+differencing and multiplicative factors, [State-space filtering](state_space.md)
+for Kalman likelihood and missing observations, [Forecasting](forecasting.md) for
 conditional innovation intervals, [Bootstrap intervals](bootstrap.md) for
 parameter-aware predictive inference, and [Rolling evaluation](evaluation.md)
 for coverage, width, interval scores, MAE, and RMSE.

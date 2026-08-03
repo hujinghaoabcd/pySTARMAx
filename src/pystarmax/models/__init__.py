@@ -5,6 +5,6 @@
 
 from pystarmax.models.bootstrap_seasonal import SeasonalSTARIMA
 from pystarmax.models.bootstrap_starima import STARIMA
-from pystarmax.models.bootstrap_starma import STAR, STARMA
+from pystarmax.models.state_space_starma import STAR, STARMA
 
 __all__ = ["STAR", "STARMA", "STARIMA", "SeasonalSTARIMA"]

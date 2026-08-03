@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 
 from pystarmax.diagnostics import (
     PortmanteauResult,
@@ -44,6 +44,15 @@ from pystarmax.simulation import (
     simulate_starima,
     simulate_starma,
 )
+from pystarmax.state_space import (
+    Initialization,
+    KalmanFilterResult,
+    StateSpaceModel,
+    build_starma_state_space,
+    fitted_starma_state_space,
+    kalman_filter,
+    kalman_loglikelihood,
+)
 from pystarmax.weights import (
     SpatialWeights,
     distance_weights,
@@ -60,6 +69,9 @@ __all__ = [
     "ForecastInterval",
     "IntervalMetrics",
     "RollingOriginResult",
+    "StateSpaceModel",
+    "KalmanFilterResult",
+    "Initialization",
     "DifferencingState",
     "SeasonalDifferencingState",
     "CombinedDifferencingState",
@@ -76,6 +88,10 @@ __all__ = [
     "restore_fitted_values",
     "interval_score",
     "rolling_origin_evaluate",
+    "build_starma_state_space",
+    "fitted_starma_state_space",
+    "kalman_filter",
+    "kalman_loglikelihood",
     "LagOperator",
     "expand_multiplicative_operators",
     "stcov",
