@@ -10,9 +10,51 @@ z_t = c\mathbf{1} +
 \]
 
 `W_0` is the identity matrix. Observations are passed as a dense matrix with
-shape `(time, location)`. The current STARMA estimator uses iterative
-conditional least squares; future state-space likelihood estimation will keep
-the same public model convention.
+shape `(time, location)`. Conditional and Kalman maximum-likelihood estimators
+share this public model convention and retain the supplied spatial-matrix
+orientation.
+
+## Temporal-lag matrices
+
+For each temporal lag, pySTARMAx composes the ordered spatial weights as
+
+\[
+A_k = \sum_{\ell=0}^{L}\phi_{k\ell}W_\ell,
+\qquad
+B_k = \sum_{\ell=0}^{L}\theta_{k\ell}W_\ell.
+\]
+
+No symmetry, commutativity, or closure of the spatial-weight basis is assumed.
+`compose_lag_operators()` exposes these matrices directly.
+
+## Stationarity and invertibility
+
+The autoregressive companion matrix uses top block row
+
+\[
+[A_1, A_2, \ldots, A_p],
+\]
+
+with identity blocks on the first lower block diagonal. The implemented
+stationarity diagnostic requires its spectral radius to be below the configured
+limit `1 - stability_margin`.
+
+The positive moving-average sign in the model implies the inverse recursion
+
+\[
+\varepsilon_t = r_t - \sum_{k=1}^{q}B_k\varepsilon_{t-k}.
+\]
+
+Therefore the inverse-MA companion matrix uses top block row
+
+\[
+[-B_1, -B_2, \ldots, -B_q].
+\]
+
+Invertibility requires this companion spectral radius to be below
+`1 - invertibility_margin`. Zero-order AR and MA polynomials have spectral radius
+zero. See [Stationarity and invertibility](admissibility.md) for the complete API,
+boundary-distance convention, fitting controls, and limitations.
 
 ## Spatial weights
 
@@ -23,10 +65,11 @@ the number of locations.
 
 ## Initial observations
 
-Fitted values and residuals are undefined for the first `max(p, q)` time steps
-and are returned as `NaN` there. Conditional estimation uses zero pre-sample
-innovations, a convention stated explicitly in the fitted result.
-
+Fitted values and residuals from conditional estimation are undefined for the
+first `max(p, q)` time steps and are returned as `NaN` there. Conditional
+estimation uses zero pre-sample innovations, a convention stated explicitly in
+the fitted result. Kalman likelihood uses the configured stationary or
+approximate diffuse state initialization instead.
 
 ## Classical covariance orientation
 
@@ -51,9 +94,9 @@ The STACF is
 {\sqrt{\widehat{\gamma}_{ll}(0)\widehat{\gamma}_{00}(0)}}.
 \]
 
-The default STPACF constructs block Yule–Walker systems from these covariance
+The default STPACF constructs block Yule-Walker systems from these covariance
 matrices and solves nested leading-principal systems, retaining the newest
-coefficient at every temporal–spatial order.
+coefficient at every temporal-spatial order.
 
 ## Ordinary integration
 
@@ -74,7 +117,6 @@ whereas `STARIMA.predict()` returns the recursively reconstructed original
 scale. When an intercept is included and `d=1`, it is a drift term after
 inversion.
 
-
 ## Multiplicative seasonal integration
 
 For `(p,d,q)x(P,D,Q)_s`, the transformed process is
@@ -89,6 +131,9 @@ cross terms use `+N_j M_i`. Matrix multiplication order is retained exactly;
 no closure of the spatial-weight basis is assumed. Factor parameters are fitted
 by nonlinear conditional least squares when `P>0` or `Q>0`.
 
+The 0.0.11 admissibility diagnostics currently apply to the stationary
+non-seasonal STARMA matrix polynomial. Smooth multiplicative-factor constraints
+for seasonal models remain future work.
 
 ## Original-scale fitted-value convention
 
@@ -103,5 +148,5 @@ trajectory.
 `predict_interval()` draws future innovations from the fitted contemporaneous
 location covariance and recursively propagates them through AR and MA dynamics.
 For STARIMA models, each complete simulated path is inverse-differenced before
-quantiles are computed. The interval conditions on estimated coefficients and
-does not yet include parameter uncertainty.
+quantiles are computed. Conditional intervals hold estimated parameters fixed;
+direct-bootstrap intervals additionally refit the model across pseudo-series.

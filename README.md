@@ -5,16 +5,18 @@ space-time autoregressive moving-average modelling.
 
 The project starts from the STARMA framework of Pfeifer and Deutsch and follows
 the engineering conventions used in **pyGWRx** and **pyKDEX**: a `src/` layout,
-strict validation, typed public APIs, structured result objects, independent
-numerical implementation, reproducible tests, and explicit research references.
+strict validation, typed public APIs, structured immutable result objects,
+independent numerical implementation, reproducible tests, and explicit research
+references.
 
-> Status: version 0.0.10 implements spatial-weight handling, conditional and
-> Gaussian Kalman maximum-likelihood STARMA estimation, observed-likelihood
+> Status: version 0.0.11 implements spatial-weight handling, conditional and
+> Gaussian Kalman maximum-likelihood STARMA estimation, AR stationarity and MA
+> invertibility diagnostics, dual admissibility enforcement, observed-likelihood
 > Hessian inference, ordinary `STARIMA(p, d, q)` and multiplicative seasonal
 > `(p,d,q)x(P,D,Q)_s` modelling, reversible ordinary-seasonal differencing,
 > original-scale fitted values and forecasts, conditional and bootstrap
 > intervals, rolling-origin evaluation, and state-space filtering with partial
-> missing observations. Smooth stability/invertibility constraints, sparse
+> missing observations. Smooth admissibility parameterization, sparse
 > computation, smoothing, and time-varying extensions remain planned.
 
 ## Installation
@@ -52,6 +54,50 @@ print(model.predict(steps=6))
 The observation matrix uses the convention `(time, location)`. Spatial lag zero
 is the identity matrix; higher spatial lags are stored in `SpatialWeights`.
 
+## Stationarity and invertibility
+
+For the stationary model
+
+\[
+z_t = c + \sum_i A_i z_{t-i} + \varepsilon_t
+      + \sum_j B_j\varepsilon_{t-j},
+\]
+
+pySTARMAx evaluates AR stationarity with the block companion top row
+`[A_1, ..., A_p]`.
+
+Because the package uses a positive MA sign, the innovation inverse recursion is
+
+\[
+\varepsilon_t = r_t - \sum_j B_j\varepsilon_{t-j},
+\]
+
+so MA invertibility uses the inverse-recursion companion top row
+`[-B_1, ..., -B_q]`.
+
+```python
+from pystarmax import (
+    autoregressive_diagnostics,
+    moving_average_diagnostics,
+    starma_admissibility,
+)
+
+ar = autoregressive_diagnostics(phi, weights, margin=1e-6)
+ma = moving_average_diagnostics(theta, weights, margin=1e-6)
+joint = starma_admissibility(phi, theta, weights)
+
+print(ar.spectral_radius)
+print(ma.eigenvalues)
+print(joint.summary())
+```
+
+The immutable diagnostics retain composed lag matrices, block companions,
+complex eigenvalues, spectral radii, configured limits, signed boundary
+distances, and admissibility decisions. Non-symmetric spatial-matrix orientation
+is preserved exactly. Zero-order AR or MA polynomials have radius zero.
+
+See [`docs/admissibility.md`](docs/admissibility.md).
+
 ## Kalman maximum likelihood
 
 ```python
@@ -66,11 +112,17 @@ mle = KalmanSTARMA(
     ma_order=1,
     covariance_type="full",
     include_intercept=False,
+    enforce_stationarity=True,
+    stability_margin=1e-6,
+    enforce_invertibility=True,
+    invertibility_margin=1e-6,
 )
 mle_result = mle.fit(incomplete, weights)
+fitted_admissibility = mle.admissibility()
 inference = mle.infer(relative_step=1e-4)
 
 print(mle_result.summary())
+print(fitted_admissibility.summary())
 print(inference.summary())
 print(mle.predict(steps=6))
 ```
@@ -81,11 +133,21 @@ measurement update; fully missing rows perform state prediction only. Covariance
 options are `"scalar"`, `"diagonal"`, and positive-definite `"full"` Cholesky
 parameterization.
 
-The optimizer reports convergence, iterations, function evaluations, spectral
-radius, log likelihood, AIC, and BIC. The current stationarity control is an
-explicit spectral-radius feasibility penalty, not a smooth reparameterization.
-MA invertibility is not yet constrained. See
-[`docs/maximum_likelihood.md`](docs/maximum_likelihood.md).
+Automatic conditional-estimator starts are independently shrunk into the
+configured AR and inverse-MA regions. Likelihood candidates outside either
+enabled region receive a large feasibility penalty, and the final optimizer
+candidate is hard-checked again.
+
+The optimizer reports convergence, iterations, function evaluations, both
+spectral radii and limits, enforcement flags, signed boundary distances, joint
+admissibility, log likelihood, AIC, and BIC. The current controls are explicit
+spectral-radius feasibility penalties, not a smooth reparameterization.
+
+Setting either enforcement flag to `False` is an explicit research control. The
+corresponding diagnostics are still computed, so a returned non-stationary or
+non-invertible result is visible rather than hidden.
+
+See [`docs/maximum_likelihood.md`](docs/maximum_likelihood.md).
 
 ## Likelihood-curvature inference
 
@@ -102,6 +164,8 @@ print(inference.confidence_intervals(level=0.95))
 print(inference.eigenvalues)
 print(inference.condition_number)
 print(inference.stability_boundary_distance)
+print(inference.invertibility_boundary_distance)
+print(inference.minimum_admissibility_distance)
 ```
 
 `KalmanSTARMA.infer()` computes a central finite-difference score and Hessian of
@@ -118,10 +182,13 @@ not automatically transformed into covariance-element standard errors.
 A non-positive-definite or rank-deficient Hessian raises by default. Setting
 `allow_singular=True` explicitly uses only the positive-curvature eigenspace and
 marks `used_pseudoinverse=True`; this route is diagnostic and should not be
-silently treated as regular publication-quality inference. Finite-difference
-stencils that cross the stationarity feasibility boundary are rejected rather
-than differentiated through the penalty. See
-[`docs/likelihood_inference.md`](docs/likelihood_inference.md).
+silently treated as regular publication-quality inference.
+
+Finite-difference stencils use the same AR and MA constraints as fitting. A
+perturbed point crossing either enabled feasibility boundary is rejected rather
+than differentiated through the artificial penalty.
+
+See [`docs/likelihood_inference.md`](docs/likelihood_inference.md).
 
 ## Fixed-parameter state-space filtering
 
@@ -139,8 +206,9 @@ explicit companion representation. `filter_state_space()` evaluates those fixed
 parameters without replacing the original estimator or its result object. The
 default stationary initialization uses the unconditional state mean and a
 discrete Lyapunov covariance. Known initialization and an explicit approximate
-diffuse option are also available. See
-[`docs/state_space.md`](docs/state_space.md).
+diffuse option are also available.
+
+See [`docs/state_space.md`](docs/state_space.md).
 
 ## Ordinary STARIMA
 
@@ -150,16 +218,16 @@ from pystarmax import STARIMA
 model = STARIMA(ar_order=1, integration_order=1, ma_order=1)
 result = model.fit(integrated_series, weights)
 
-# Inference remains on the differenced scale.
 print(result.summary())
-
-# Forecasts are reconstructed on the original scale.
 print(model.predict(steps=6))
 ```
 
 `ordinary_difference()` exposes the same reversible transformation independently,
-and `predict_differenced()` returns forecasts before inverse differencing. See
-[`docs/starima.md`](docs/starima.md) for state and scale conventions.
+and `predict_differenced()` returns forecasts before inverse differencing. The
+fit result remains on the highest-difference scale; forecasts are reconstructed
+on the original scale.
+
+See [`docs/starima.md`](docs/starima.md).
 
 ## Seasonal STARIMA
 
@@ -180,12 +248,15 @@ print(model.predict(steps=24))
 
 Seasonal AR and MA factors are estimated under true multiplicative constraints.
 Cross-lag matrices are generated as ordered matrix products rather than fitted as
-independent coefficients. See [`docs/seasonal.md`](docs/seasonal.md).
+independent coefficients. The 0.0.11 admissibility diagnostics currently target
+the stationary non-seasonal STARMA polynomial; multiplicative seasonal factor
+admissibility remains future work.
+
+See [`docs/seasonal.md`](docs/seasonal.md).
 
 ## Fitted values and conditional intervals
 
 ```python
-# One-step fitted values aligned to the original observation matrix.
 fitted = model.fitted_original()
 
 interval = model.predict_interval(
@@ -204,8 +275,9 @@ so it represents aligned one-step conditional fits rather than a recursively
 integrated pseudo-series. `predict_interval()` simulates future innovations from
 the fitted location covariance, propagates them through AR and MA dynamics, and
 then inverts each ordinary-seasonal path before computing quantiles. These
-intervals condition on estimated parameters. See
-[`docs/forecasting.md`](docs/forecasting.md).
+intervals condition on estimated parameters.
+
+See [`docs/forecasting.md`](docs/forecasting.md).
 
 ## Bootstrap parameter uncertainty
 
@@ -229,7 +301,9 @@ innovation covariance.
 Set `include_future_innovations=False` for a parameter-only interval. The default
 combines parameter-estimation and future-innovation uncertainty. Failed refits
 are retried up to `max_attempts`; the method never silently returns fewer paths
-than requested. See [`docs/bootstrap.md`](docs/bootstrap.md).
+than requested.
+
+See [`docs/bootstrap.md`](docs/bootstrap.md).
 
 ## Diagnostics
 
@@ -244,7 +318,7 @@ gamma_10_1 = stcov(
     temporal_lag=1,
 )
 acf = stacf(result.residuals, weights, max_tlag=8)
-pacf = stpacf(series, weights, max_tlag=4)  # classical Yule-Walker default
+pacf = stpacf(series, weights, max_tlag=4)
 test = space_time_portmanteau(
     result.residuals,
     weights,
@@ -258,33 +332,35 @@ print(pacf)
 print(test)
 ```
 
+The classical STPACF is computed from nested leading-principal Yule-Walker
+systems in temporal-major, spatial-minor order. `stpacf(..., method="regression")`
+retains the projection-based diagnostic shipped in 0.0.1 for reproducibility.
+
 ## Design commitments
 
 - independent NumPy/SciPy implementation rather than runtime delegation to R;
-- explicit `(time, location)` data conventions and immutable weight collections;
-- identity, adjacency, distance, and higher-order spatial-weight construction;
+- explicit `(time, location)` convention and immutable spatial weights;
+- preservation of non-symmetric matrix orientation;
 - separate conditional and Kalman maximum-likelihood estimation routes;
 - scalar, diagonal, and Cholesky full innovation covariance models;
+- explicit AR and positive-sign inverse-MA companion definitions;
+- complete eigensystems, spectral radii, limits, and signed boundary distances;
+- dual feasibility enforcement with visible disabled-constraint behavior;
 - central finite-difference likelihood score and observed-information Hessian;
 - explicit Hessian rank, eigenvalue, condition-number, score, and boundary checks;
-- structured fit and inference results with immutable numerical arrays;
+- structured fit, admissibility, and inference results with immutable arrays;
 - deterministic stationary and integrated simulation with static numerical tests;
 - ordinary and seasonal differencing with immutable forecast-inversion state;
 - aligned original-scale one-step fitted values;
-- conditional innovation intervals with full pathwise inverse differencing;
+- conditional innovation intervals with pathwise inverse differencing;
 - residual and parametric direct-bootstrap intervals with model refitting;
 - factorized multiplicative seasonal operators with explicit matrix order;
 - explicit state-space matrices and missing-observation Kalman updates;
 - Cholesky likelihood solves with recorded numerical jitter;
 - exact-rational reference fixtures generated without importing pySTARMAx;
-- explicit covariance orientation for non-symmetric row-standardized weights;
 - one public numerical route first, with sparse and compiled acceleration hidden
   behind stable interfaces later;
-- research references and implementation limitations documented in the repository.
-
-The classical STPACF is computed from nested leading-principal Yule-Walker
-systems in temporal-major, spatial-minor order. `stpacf(..., method="regression")`
-retains the projection-based diagnostic shipped in 0.0.1 for reproducibility.
+- explicit implementation limitations in repository documentation.
 
 ## Estimation and inference scope
 
@@ -295,15 +371,19 @@ coefficients. These estimators remain the basis of existing bootstrap intervals.
 
 `KalmanSTARMA` is a distinct stationary Gaussian maximum-likelihood estimator.
 It supports complete or incomplete observations and scalar, diagonal, or full
-contemporaneous innovation covariance. It currently uses L-BFGS-B with an
-explicit stationarity feasibility boundary.
+contemporaneous innovation covariance. It uses L-BFGS-B with explicit AR
+stationarity and MA invertibility feasibility boundaries.
+
+The current general matrix-polynomial constraints are not smooth bijections.
+Coefficient-wise clipping or `tanh` transforms are not used because they do not
+guarantee a multivariate companion radius below one.
 
 Likelihood-curvature inference uses the observed Hessian at the fitted optimizer
 point. It does not currently include sandwich covariance, delta-method covariance
 transforms, profile likelihood, exact diffuse likelihood, or automatic weak-
-identification correction. Smooth stationarity and invertibility
-parameterization, smoothing, integrated-seasonal maximum-likelihood wrappers,
-and sparse computation remain future work.
+identification correction. Smooth admissibility parameterization, smoothing,
+integrated-seasonal maximum-likelihood wrappers, and sparse computation remain
+future work.
 
 ## References
 

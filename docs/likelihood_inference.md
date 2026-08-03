@@ -1,10 +1,14 @@
 # Likelihood-Hessian inference
 
-Version 0.0.10 adds observed-likelihood curvature diagnostics for a fitted
-`KalmanSTARMA` model. The implementation evaluates the negative Gaussian Kalman
-log likelihood around the optimizer solution using central finite differences.
-It reports coefficient uncertainty only when the resulting observed-information
-matrix is numerically defensible.
+Version 0.0.10 added observed-likelihood curvature diagnostics for a fitted
+`KalmanSTARMA` model. Version 0.0.11 aligns every finite-difference evaluation
+with both the autoregressive stationarity and moving-average invertibility
+criteria used by fitting.
+
+The implementation evaluates the negative Gaussian Kalman log likelihood around
+the optimizer solution using central finite differences. It reports coefficient
+uncertainty only when the resulting observed-information matrix is numerically
+defensible.
 
 ## Basic use
 
@@ -23,11 +27,13 @@ inference = model.infer()
 print(inference.summary())
 print(inference.coefficient_table)
 print(inference.confidence_intervals(level=0.95))
+print(inference.stability_boundary_distance)
+print(inference.invertibility_boundary_distance)
 ```
 
 `model.infer()` uses the same incomplete training matrix, spatial weights,
-initialization policy, covariance parameterization, stability margin, and fitted
-optimizer point as `model.fit()`.
+initialization policy, covariance parameterization, AR and MA margins,
+enforcement flags, and fitted optimizer point as `model.fit()`.
 
 ## Finite-difference convention
 
@@ -79,7 +85,9 @@ is used as the asymptotic covariance matrix.
 - Hessian eigenvalues, numerical rank, and condition number;
 - the finite-difference score and maximum absolute score component;
 - finite-difference steps and function-evaluation count;
-- distance from the configured stationarity feasibility boundary.
+- distance from the configured AR stationarity boundary;
+- distance from the configured inverse-MA invertibility boundary;
+- the minimum signed distance to either admissibility boundary.
 
 All numerical arrays are immutable.
 
@@ -94,10 +102,11 @@ Inference is computed on the raw optimizer scale.
   lower-triangular Cholesky entries.
 
 Therefore, covariance-parameter standard errors in `optimizer_table` are not
-standard errors of covariance matrix elements. Version 0.0.10 deliberately does
-not apply a delta-method transformation to variances, correlations, or covariance
-entries. `coefficient_table` and `confidence_intervals()` are restricted to the
-intercept and dynamic coefficients.
+standard errors of covariance matrix elements. The current implementation
+deliberately does not apply a delta-method transformation to variances,
+correlations, or covariance entries. `coefficient_table` and
+`confidence_intervals()` are restricted to the intercept and dynamic
+coefficients.
 
 ## Rank and definiteness policy
 
@@ -124,22 +133,36 @@ The pseudoinverse sets non-positive or numerically negligible eigen-directions t
 zero. The result is marked with `used_pseudoinverse=True`; it should not be
 interpreted as ordinary full-rank maximum-likelihood covariance.
 
-## Stability boundary
+## Admissibility boundaries
 
-The maximum-likelihood estimator uses an explicit transition spectral-radius
-feasibility boundary. Finite-difference stencils reject objective values that
-enter the large feasibility penalty. If this occurs, reduce `relative_step` and
-`absolute_step`, or treat local asymptotic inference as unavailable near the
-boundary.
+The maximum-likelihood estimator uses explicit AR and inverse-MA spectral-radius
+feasibility boundaries. Finite-difference stencils reconstruct the same two
+criteria and reject an objective value that enters either enabled penalty region.
+The artificial penalty surface is never treated as likelihood curvature.
 
-`stability_boundary_distance` is
+The AR distance is
 
 \[
-1 - \text{stability_margin} - \rho(T),
+d_{AR} = 1 - \text{stability_margin} - \rho(C_{AR}),
 \]
 
-where `rho(T)` is the fitted transition spectral radius. A small positive value
-indicates that curvature estimates may be sensitive to the feasibility boundary.
+and the MA distance is
+
+\[
+d_{MA} = 1 - \text{invertibility_margin} - \rho(C_{MA}^{-1}).
+\]
+
+`minimum_admissibility_distance` is `min(d_AR, d_MA)`. A small positive value
+indicates that the central stencil may be sensitive to one of the feasibility
+boundaries.
+
+If a stencil crosses a boundary, reduce `relative_step` and `absolute_step`, or
+treat local asymptotic inference as unavailable. A smaller step can avoid an
+artificial crossing but cannot repair genuinely boundary-adjacent estimation or
+weak identification.
+
+See [Stationarity and invertibility](admissibility.md) for the companion-matrix
+sign convention and public eigensystem diagnostics.
 
 ## Step-size controls
 
@@ -158,32 +181,34 @@ inference = model.infer(
   positive-definiteness decisions.
 
 Step-size sensitivity should be examined when the Hessian condition number is
-large, the optimizer score is not close to zero, the model is near the stability
-boundary, or covariance parameters are weakly identified.
+large, the optimizer score is not close to zero, the model is near either
+admissibility boundary, or covariance parameters are weakly identified.
 
 ## Statistical scope
 
-Included in 0.0.10:
+Included through 0.0.11:
 
 - central finite-difference score and Hessian;
 - observed-information covariance;
 - dynamic coefficient standard errors and normal tests;
-- rank, definiteness, condition, score, and boundary diagnostics;
+- rank, definiteness, condition, score, and dual-boundary diagnostics;
 - explicit pseudoinverse diagnostics;
 - complete and partially missing stationary observations through the fitted
-  Kalman likelihood.
+  Kalman likelihood;
+- rejection of AR-stationarity and MA-invertibility penalty points.
 
 Not yet included:
 
-- delta-method uncertainty for variance, covariance, correlation, or transformed
-  Cholesky quantities;
+- delta-method uncertainty for variance, covariance, correlation, spectral
+  radius, polynomial roots, or transformed Cholesky quantities;
 - robust or sandwich covariance;
 - profile likelihood or likelihood-ratio confidence intervals;
 - bootstrap uncertainty for `KalmanSTARMA`;
-- smooth stationarity or MA invertibility parameterization;
+- smooth stationarity/invertibility parameterization;
 - exact diffuse likelihood;
 - integrated and multiplicative seasonal maximum-likelihood inference;
 - sparse or automatic-differentiation Hessians.
 
 These exclusions are explicit. A numerically invertible Hessian alone does not
-establish model adequacy, Gaussian correctness, or strong identification.
+establish model adequacy, Gaussian correctness, strong identification, or a safe
+distance from the admissibility boundaries.

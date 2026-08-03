@@ -14,6 +14,10 @@ from scipy import stats
 
 from pystarmax._maximum_likelihood_utils import _CovarianceCodec
 from pystarmax._validation import FloatArray
+from pystarmax.admissibility import (
+    autoregressive_spectral_radius,
+    moving_average_inverse_spectral_radius,
+)
 from pystarmax.state_space import (
     Initialization,
     build_starma_state_space,
@@ -224,6 +228,7 @@ class LikelihoodInferenceResult:
     n_function_evaluations: int
     objective_value: float
     stability_boundary_distance: float
+    invertibility_boundary_distance: float
 
     def __post_init__(self) -> None:
         estimates = _freeze_float(self.estimates, name="estimates", ndim=1)
@@ -256,9 +261,14 @@ class LikelihoodInferenceResult:
         if np.isnan(condition) or condition <= 0.0:
             raise ValueError("condition_number must be positive")
         objective = float(self.objective_value)
-        boundary = float(self.stability_boundary_distance)
-        if not np.isfinite(objective) or not np.isfinite(boundary):
-            raise ValueError("objective and boundary distance must be finite")
+        stability_boundary = float(self.stability_boundary_distance)
+        invertibility_boundary = float(self.invertibility_boundary_distance)
+        if not np.isfinite(objective):
+            raise ValueError("objective_value must be finite")
+        if not np.isfinite(stability_boundary) or not np.isfinite(
+            invertibility_boundary
+        ):
+            raise ValueError("admissibility boundary distances must be finite")
         object.__setattr__(self, "estimates", estimates)
         object.__setattr__(self, "hessian", arrays[0])
         object.__setattr__(self, "covariance", arrays[1])
@@ -273,7 +283,16 @@ class LikelihoodInferenceResult:
         object.__setattr__(self, "rank", rank)
         object.__setattr__(self, "condition_number", condition)
         object.__setattr__(self, "objective_value", objective)
-        object.__setattr__(self, "stability_boundary_distance", boundary)
+        object.__setattr__(
+            self,
+            "stability_boundary_distance",
+            stability_boundary,
+        )
+        object.__setattr__(
+            self,
+            "invertibility_boundary_distance",
+            invertibility_boundary,
+        )
         object.__setattr__(self, "positive_definite", bool(self.positive_definite))
         object.__setattr__(self, "used_pseudoinverse", bool(self.used_pseudoinverse))
         object.__setattr__(
@@ -286,6 +305,16 @@ class LikelihoodInferenceResult:
     def max_abs_gradient(self) -> float:
         """Maximum absolute finite-difference score component."""
         return float(np.max(np.abs(self.gradient), initial=0.0))
+
+    @property
+    def minimum_admissibility_distance(self) -> float:
+        """Smallest signed distance to the AR or inverse-MA boundary."""
+        return float(
+            min(
+                self.stability_boundary_distance,
+                self.invertibility_boundary_distance,
+            )
+        )
 
     @property
     def coefficient_table(self) -> pd.DataFrame:
@@ -343,6 +372,8 @@ class LikelihoodInferenceResult:
             f"Condition number: {self.condition_number:.6g}",
             f"Maximum absolute score: {self.max_abs_gradient:.6g}",
             f"Stability-boundary distance: {self.stability_boundary_distance:.6g}",
+            f"Invertibility-boundary distance: "
+            f"{self.invertibility_boundary_distance:.6g}",
             "-" * 72,
         ]
         table = self.coefficient_table.to_string(
@@ -370,14 +401,21 @@ def _negative_log_likelihood(model: Any, raw: FloatArray) -> float:
         covariance,
         intercept=intercept,
     )
-    spectral_radius = float(
-        np.max(np.abs(np.linalg.eigvals(state_space.transition)), initial=0.0)
+    spectral_radius = autoregressive_spectral_radius(ar_parameters, weights)
+    ma_inverse_radius = moving_average_inverse_spectral_radius(
+        ma_parameters,
+        weights,
     )
     stability_limit = 1.0 - model.stability_margin
+    invertibility_limit = 1.0 - model.invertibility_margin
     invalid_base = 1e12
+    squared_excess = 0.0
     if model.enforce_stationarity and spectral_radius >= stability_limit:
-        excess = spectral_radius - stability_limit
-        return float(invalid_base + invalid_base * excess**2 + 1e-8 * (raw @ raw))
+        squared_excess += (spectral_radius - stability_limit) ** 2
+    if model.enforce_invertibility and ma_inverse_radius >= invertibility_limit:
+        squared_excess += (ma_inverse_radius - invertibility_limit) ** 2
+    if squared_excess > 0.0:
+        return float(invalid_base + invalid_base * squared_excess + 1e-8 * (raw @ raw))
     filtered = kalman_filter(
         observations,
         state_space,
@@ -464,9 +502,6 @@ def infer_kalman_starma(
         )
     else:
         condition_number = np.inf
-    boundary_distance = float(
-        1.0 - model.stability_margin - model.result_.spectral_radius
-    )
     return LikelihoodInferenceResult(
         parameter_names=model.result_.optimizer_parameter_names,
         estimates=estimates,
@@ -486,5 +521,6 @@ def infer_kalman_starma(
         used_pseudoinverse=used_pseudoinverse,
         n_function_evaluations=curvature.n_function_evaluations,
         objective_value=curvature.function_value,
-        stability_boundary_distance=boundary_distance,
+        stability_boundary_distance=model.result_.stability_boundary_distance,
+        invertibility_boundary_distance=(model.result_.invertibility_boundary_distance),
     )
