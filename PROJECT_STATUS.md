@@ -87,26 +87,27 @@ The estimator still uses a spectral-radius feasibility boundary rather than a
 smooth stability parameterization. Finite-difference points entering the large
 penalty region are rejected. MA invertibility is not yet constrained.
 
-## Validation state for 0.0.10
+## Final validation for 0.0.10
 
-GitHub Actions CI run #231 completed successfully on the implementation plus
-method documentation and example head:
+GitHub Actions CI run #237 completed successfully on the fully documented branch
+head:
 
-- 91 tests passed;
+- 91 tests passed without Python test warnings;
 - total branch coverage was 87.84%, above the configured 80% threshold;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic reference regeneration produced a clean diff;
 - strict MkDocs construction passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
+- the explicit singular-Hessian path used masked division and produced no
+  divide-by-zero warning;
+- the PR surface contains exactly 14 formal source, test, example, documentation,
+  metadata, and navigation files, with no temporary workflow or diagnostic files.
 
-Run #231 reported one `RuntimeWarning` because `np.where` eagerly evaluated the
-inverse of a zero Hessian eigenvalue in the explicit pseudoinverse test. The
-result was numerically correct, but the implementation has now been changed to
-masked `np.divide` so excluded eigen-directions are never divided. README,
-roadmap, project-status, and Step 10 handoff updates were also added after run
-#231. A final complete warning-free CI run is required before PR #10 is marked
-ready and merged.
+The validation-record edits after run #237 are documentation only. Numerical
+code, tests, public exports, package metadata, and CI configuration are unchanged
+from the fully validated head. A final documentation-head CI repeat is required
+before marking PR #10 ready and merging it.
 
 ## Design principles
 
@@ -126,17 +127,16 @@ ready and merged.
 
 ## Immediate next tasks
 
-1. Complete the final warning-free CI matrix for PR #10.
-2. Update this validation section with the final run number.
-3. Mark PR #10 ready and squash-merge it into `main`.
-4. Add reusable stationarity diagnostics independent of fitting.
-5. Add an explicit MA invertibility definition and checks for spatial STARMA.
-6. Add constrained fitting or a smooth stability/invertibility parameterization.
-7. Add delta-method transforms for innovation covariance elements.
-8. Add integrated and multiplicative seasonal maximum-likelihood wrappers.
-9. Add state and disturbance smoothing.
-10. Add sparse matrices, ecosystem adapters, order selection, and exogenous inputs.
-11. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+1. Complete the documentation-head CI repeat for PR #10.
+2. Mark PR #10 ready and squash-merge it into `main`.
+3. Add reusable stationarity diagnostics independent of fitting.
+4. Add an explicit MA invertibility definition and checks for spatial STARMA.
+5. Add constrained fitting or a smooth stability/invertibility parameterization.
+6. Add delta-method transforms for innovation covariance elements.
+7. Add integrated and multiplicative seasonal maximum-likelihood wrappers.
+8. Add state and disturbance smoothing.
+9. Add sparse matrices, ecosystem adapters, order selection, and exogenous inputs.
+10. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
 
 ## Known limitations
 
