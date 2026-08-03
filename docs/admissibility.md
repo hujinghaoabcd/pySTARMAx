@@ -217,7 +217,9 @@ print(result.invertible)
 print(result.admissible)
 print(result.stability_boundary_distance)
 print(result.invertibility_boundary_distance)
-print(diagnostic.eigenvalues if hasattr(diagnostic, "eigenvalues") else diagnostic.summary())
+print(diagnostic.summary())
+print(diagnostic.autoregressive.eigenvalues)
+print(diagnostic.moving_average.eigenvalues)
 ```
 
 `KalmanSTARMAResult` records:
