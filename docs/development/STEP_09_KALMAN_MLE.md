@@ -69,14 +69,15 @@ Focused tests cover:
 - start-value, missing-data, constructor, and pre-fit validation;
 - immutability and information-criterion parameter counts.
 
-GitHub Actions CI run #210 validated the numerical implementation:
+GitHub Actions CI run #217 completed successfully on the fully documented branch
+head:
 
 - 85 tests passed;
 - total branch coverage was 87.84%, above the configured 80% threshold;
 - Black, isort, Ruff, mypy, exact diagnostic fixture, and strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu and macOS passed on Python 3.11-3.14, with the Windows matrix completing
-  in the same final workflow.
+- Ubuntu, Windows, and macOS passed on Python 3.11-3.14;
+- no temporary formatting, repair, or diagnostic workflows remain in the PR.
 
 ## Explicit exclusions
 
