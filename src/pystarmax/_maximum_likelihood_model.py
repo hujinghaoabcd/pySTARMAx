@@ -350,9 +350,7 @@ class KalmanSTARMA:
                         self.enforce_invertibility
                         and ma_inverse_radius >= invertibility_limit
                     ):
-                        squared_excess += (
-                            ma_inverse_radius - invertibility_limit
-                        ) ** 2
+                        squared_excess += (ma_inverse_radius - invertibility_limit) ** 2
                     if squared_excess > 0.0:
                         return float(
                             invalid_base
