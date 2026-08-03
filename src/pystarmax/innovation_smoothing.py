@@ -72,9 +72,7 @@ def _conditioning_map(
         used_pseudoinverse = True
     else:
         retained_vectors = eigenvectors[:, retained]
-        pseudoinverse = (
-            retained_vectors / eigenvalues[retained]
-        ) @ retained_vectors.T
+        pseudoinverse = (retained_vectors / eigenvalues[retained]) @ retained_vectors.T
         mapping = cross_covariance @ pseudoinverse
         projector = retained_vectors @ retained_vectors.T
         used_pseudoinverse = True
@@ -279,17 +277,14 @@ def innovation_disturbance_smoother(
 
     for time_index, covariance in enumerate(state_covariance):
         supported_covariance = (
-            process_support_projector
-            @ covariance
-            @ process_support_projector
+            process_support_projector @ covariance @ process_support_projector
         )
         covariance_support_residual[time_index] = np.linalg.norm(
             covariance - supported_covariance,
             ord="fro",
         )
         posterior_covariance = (
-            unresolved_covariance
-            + conditioning_map @ covariance @ conditioning_map.T
+            unresolved_covariance + conditioning_map @ covariance @ conditioning_map.T
         )
         innovation_covariance[time_index] = _project_positive_semidefinite(
             cast(FloatArray, posterior_covariance),
