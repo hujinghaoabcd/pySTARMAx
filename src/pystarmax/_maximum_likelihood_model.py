@@ -48,9 +48,7 @@ class KalmanSTARMA:
         self.ar_order = validate_nonnegative_int(ar_order, name="ar_order")
         self.ma_order = validate_nonnegative_int(ma_order, name="ma_order")
         if covariance_type not in {"scalar", "diagonal", "full"}:
-            raise ValueError(
-                "covariance_type must be 'scalar', 'diagonal', or 'full'"
-            )
+            raise ValueError("covariance_type must be 'scalar', 'diagonal', or 'full'")
         if initialization not in {"stationary", "diffuse"}:
             raise ValueError("initialization must be 'stationary' or 'diffuse'")
         if not np.isfinite(diffuse_scale) or diffuse_scale <= 0.0:
@@ -308,15 +306,10 @@ class KalmanSTARMA:
                         state_space,
                         spectral_radius,
                     ) = decode(raw)
-                    if (
-                        self.enforce_stationarity
-                        and spectral_radius >= stability_limit
-                    ):
+                    if self.enforce_stationarity and spectral_radius >= stability_limit:
                         excess = spectral_radius - stability_limit
                         return float(
-                            invalid_base
-                            + invalid_base * excess**2
-                            + 1e-8 * (raw @ raw)
+                            invalid_base + invalid_base * excess**2 + 1e-8 * (raw @ raw)
                         )
                     filtered = kalman_filter(
                         observations,
