@@ -426,7 +426,13 @@ def infer_kalman_starma(
                 "inspect curvature or set allow_singular=True explicitly"
             )
         used_pseudoinverse = True
-        inverse_eigenvalues = np.where(eigenvalues > threshold, 1.0 / eigenvalues, 0.0)
+        inverse_eigenvalues = np.zeros_like(eigenvalues)
+        np.divide(
+            1.0,
+            eigenvalues,
+            out=inverse_eigenvalues,
+            where=eigenvalues > threshold,
+        )
 
     covariance = (eigenvectors * inverse_eigenvalues) @ eigenvectors.T
     covariance = 0.5 * (covariance + covariance.T)
