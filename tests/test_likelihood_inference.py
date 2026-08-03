@@ -27,13 +27,10 @@ def simulate_scalar_ar1(
 ) -> np.ndarray:
     rng = np.random.default_rng(random_state)
     data = np.empty((n_steps, 1), dtype=float)
-    data[0, 0] = rng.normal(
-        scale=standard_deviation / np.sqrt(1.0 - phi**2)
-    )
+    data[0, 0] = rng.normal(scale=standard_deviation / np.sqrt(1.0 - phi**2))
     for time_index in range(1, n_steps):
-        data[time_index, 0] = (
-            phi * data[time_index - 1, 0]
-            + rng.normal(scale=standard_deviation)
+        data[time_index, 0] = phi * data[time_index - 1, 0] + rng.normal(
+            scale=standard_deviation
         )
     return data
 
@@ -111,9 +108,7 @@ def test_white_noise_inference_matches_closed_form_standard_errors() -> None:
 
     inference = model.infer(relative_step=2e-4)
 
-    fitted_standard_deviation = float(
-        np.sqrt(fit.innovation_covariance[0, 0])
-    )
+    fitted_standard_deviation = float(np.sqrt(fit.innovation_covariance[0, 0]))
     expected_mean_se = fitted_standard_deviation / np.sqrt(n_time)
     expected_log_std_se = 1.0 / np.sqrt(2.0 * n_time)
     assert inference.positive_definite
