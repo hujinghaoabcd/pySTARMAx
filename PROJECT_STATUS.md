@@ -14,7 +14,7 @@ cross-platform CI.
 - PR #1 through PR #13 have been squash-merged into `main`.
 - `main` is version `0.0.13`.
 - Current branch: `agent/innovation-disturbance-smoothing`.
-- Current draft pull request: PR #14, `Add original innovation disturbance
+- Current pull request: PR #14, `Add original innovation disturbance
   smoothing`.
 - Current development version: `0.0.14`.
 - The implementation maps RTS state disturbances back to original
@@ -127,25 +127,23 @@ and therefore innovation result index `t` corresponds to `eta_(t+1)`. A sample
 with `T` stored state times produces `T - 1` innovation disturbances. The
 initialization disturbance before the first stored state is not reconstructed.
 
-## Validation status
+## Authoritative validation for 0.0.14
 
-The initial implementation head passed GitHub Actions CI #308 numerically on
-all supported operating-system/Python combinations. The only failure was Black
-formatting of the new module, which was subsequently corrected using the exact
-CI Black version.
-
-The initial coverage job reported:
+GitHub Actions CI #322, run ID `30855134698`, validated the complete
+implementation and documentation head:
 
 - 126 tests passed;
-- total branch coverage 87.06%, above the required 80%;
-- `src/pystarmax/innovation_smoothing.py` coverage 80.1%;
+- total branch coverage was 87.06%, above the required 80%;
+- `src/pystarmax/innovation_smoothing.py` coverage was 80.1%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS tests passed on Python 3.11 through 3.14.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-On the formatted core head, CI #311 passed Black, isort, Ruff, mypy, independent
-reference regeneration, strict MkDocs, and distribution checks. A final complete
-CI matrix is required after the documentation expansion. Its run identifier and
-final result must be recorded here before PR #14 is marked ready and merged.
+A final validation-record-only merge-gate CI is run after this status and the
+Step 14 handoff are updated. No implementation, test, API, or method-document
+content changes are made after CI #322.
 
 ## Design principles
 
@@ -167,13 +165,11 @@ final result must be recorded here before PR #14 is marked ready and merged.
 
 ## Immediate next tasks
 
-1. Finish documentation synchronization and Step 14 handoff review.
-2. Run the complete final CI matrix on the documentation head.
-3. Record the authoritative run identifier, test count, and coverage.
-4. Update PR #14, mark it ready, and squash-merge it into `main`.
-5. Begin integrated and multiplicative seasonal state-space/Kalman MLE support.
-6. Add cross-time innovation covariance and conditional simulation smoothing.
-7. Add sparse spatial/state matrices, order selection, exogenous inputs,
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #14, mark it ready, and squash-merge it into `main`.
+3. Begin integrated and multiplicative seasonal state-space/Kalman MLE support.
+4. Add cross-time innovation covariance and conditional simulation smoothing.
+5. Add sparse spatial/state matrices, order selection, exogenous inputs,
    ecosystem adapters, and cross-language fixtures.
 
 ## Known limitations
