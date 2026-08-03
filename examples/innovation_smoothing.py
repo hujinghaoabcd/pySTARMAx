@@ -39,9 +39,7 @@ def main() -> None:
     incomplete[80:90, 0] = np.nan
     result = model.smooth_innovation_disturbances(incomplete)
 
-    posterior_standard_deviation = np.sqrt(
-        result.innovation_covariance[:, 0, 0]
-    )
+    posterior_standard_deviation = np.sqrt(result.innovation_covariance[:, 0, 0])
     print("Innovation posterior means around the missing block:")
     print(result.innovation_mean[76:94, 0])
     print("Innovation posterior standard deviations:")
