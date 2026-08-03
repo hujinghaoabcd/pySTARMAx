@@ -1,0 +1,46 @@
+name: Patch stage 7 README
+
+on:
+  push:
+    branches: [agent/rolling-origin-interval-evaluation]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/rolling-origin-interval-evaluation
+      - name: Update README status
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("README.md")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace(
+              "> Status: version 0.0.6 implements",
+              "> Status: version 0.0.7 implements",
+              1,
+          )
+          text = text.replace(
+              "> with model refitting. State-space likelihoods,",
+              "> with model refitting, plus rolling-origin interval evaluation. State-space likelihoods,",
+              1,
+          )
+          path.write_text(text, encoding="utf-8")
+          PY
+      - name: Remove temporary workflow
+        run: rm .github/workflows/patch-stage7-readme.yml
+      - name: Commit README update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Update README for rolling-origin evaluation"
+          git push origin HEAD:agent/rolling-origin-interval-evaluation
