@@ -1,6 +1,6 @@
 # pySTARMAx project status
 
-Updated: 2026-07-29
+Updated: 2026-08-03
 
 ## Purpose
 
@@ -14,16 +14,15 @@ engineering conventions established in pyGWRx and pyKDEX.
 - PR #2 was squash-merged into `main` as commit `689f9927`.
 - PR #3 was squash-merged into `main` as commit `d89fa7ce`.
 - PR #4 was squash-merged into `main` as commit `6bd29a63`.
-- PR #5 was squash-merged into `main` as commit `cc1e8ac7` after GitHub Actions
-  passed quality, coverage, distributions, and the Ubuntu/Windows/macOS matrix
-  for Python 3.11 through 3.14.
-- Current branch: `agent/bootstrap-forecast-intervals`.
-- Current draft pull request: PR #6, `Add parameter-aware bootstrap forecast intervals`.
-- Current development target: version `0.0.6`.
-- Current stage: residual and parametric direct-bootstrap forecast intervals.
-- Authoritative validation: GitHub Actions CI run #137 completed successfully.
+- PR #5 was squash-merged into `main` as commit `cc1e8ac7`.
+- PR #6 was squash-merged into `main` as commit `cd7ac0c9` after full quality,
+  coverage, distribution, and Ubuntu/Windows/macOS validation on Python 3.11–3.14.
+- Current branch: `agent/rolling-origin-interval-evaluation`.
+- Current draft pull request: PR #7, `Add rolling-origin interval evaluation`.
+- Current development target: version `0.0.7`.
+- Current stage: out-of-sample interval calibration and sharpness diagnostics.
 
-## Completed baseline through 0.0.5
+## Completed baseline through 0.0.6
 
 - repository metadata, MIT licence, citation file, contribution and security policies;
 - `src/` package layout and typed public API;
@@ -37,72 +36,73 @@ engineering conventions established in pyGWRx and pyKDEX.
 - multiplicative seasonal STARIMA with constrained matrix-polynomial factors;
 - aligned original-scale one-step fitted values;
 - conditional future-innovation intervals with pathwise inverse differencing;
+- residual and Gaussian parametric bootstrap intervals with model refitting;
+- parameter-only and full predictive bootstrap uncertainty;
 - packaging, strict documentation, and multi-platform CI.
 
-## Completed in the current 0.0.6 step
+## Completed in the current 0.0.7 step
 
-- added `pystarmax.bootstrap` with bootstrap-method and replication validation;
-- added complete finite residual-row extraction and location-wise centering;
-- added joint residual-vector resampling that retains contemporaneous location dependence;
-- added Gaussian parametric bootstrap draws from fitted covariance;
-- added recursive same-length pseudo-series generation for STAR and STARMA;
-- added combined-differencing pseudo-series reconstruction for ordinary and seasonal models;
-- added estimator cloning and refitting for every accepted replication;
-- added `predict_bootstrap_interval()` to public `STAR`, `STARMA`, `STARIMA`, and
-  `SeasonalSTARIMA` classes;
-- added parameter-only intervals through `include_future_innovations=False`;
-- added full predictive intervals that combine parameter and future-innovation uncertainty;
-- added residual and parametric future-path simulation after every refit;
-- added linear seasonal reuse of the STARMA core and a separate multiplicative
-  seasonal `LagOperator` recursion;
-- added bounded retry through `max_attempts` and optional convergence enforcement;
-- added deterministic random-state handling through one shared NumPy generator;
-- added nine focused tests covering utilities, stationary models, ordinary
-  integration, linear seasonal integration, and nonlinear multiplicative seasonality;
-- increased the complete suite from 52 to 61 tests;
-- updated README, MkDocs, research references, third-party notices, roadmap, and
-  citation metadata to version 0.0.6.
+- added `pystarmax.evaluation` without modifying model estimation cores;
+- added the central Winkler `interval_score()` for arbitrary finite array shapes;
+- added immutable `IntervalMetrics` with nominal and empirical coverage, signed
+  coverage gap, absolute coverage error, average width, mean interval score,
+  point-forecast MAE, RMSE, and forecast count;
+- added immutable `RollingOriginResult` with read-only arrays shaped
+  `(origins, horizon, locations)`;
+- added derived coverage, width, and interval-score arrays;
+- added pooled and horizon-specific metric summaries;
+- added expanding-window rolling-origin evaluation;
+- added fixed-length rolling training windows through `window_size`;
+- added conditional and bootstrap interval dispatch through one public function;
+- added deterministic per-origin seeds derived from one NumPy generator;
+- prevented interval keyword arguments from overriding evaluator-controlled
+  `steps`, `level`, and `random_state`;
+- added focused tests for scores, validation, aggregation, dispatch, windows,
+  reproducibility, and unsupported model interfaces;
+- added a runnable rolling-origin example and a complete evaluation guide;
+- updated package exports and version metadata to 0.0.7.
 
 ## Statistical interpretation
 
-`predict_interval()` remains a conditional future-innovation interval. It holds
-estimated coefficients fixed.
+`rolling_origin_evaluate()` performs genuine out-of-sample evaluation. At each
+origin it constructs a new model and fits only the observations available before
+that origin. It supports either all prior observations or a fixed-length recent
+window.
 
-`predict_bootstrap_interval()` generates and refits same-length pseudo-samples.
-With `include_future_innovations=False`, its empirical spread represents
-parameter-estimation variation under the selected bootstrap method. With the
-default `True`, every refitted model contributes one new future path and the
-interval combines parameter-estimation and future-innovation uncertainty.
+Empirical coverage is interpreted jointly with average width and the central
+interval score. High coverage alone is not sufficient evidence of a useful
+interval because arbitrarily wide endpoints can cover nearly all observations.
+MAE and RMSE remain point-forecast diagnostics; interval score and coverage assess
+the probabilistic output.
 
-The model order and spatial weights remain fixed across replications. The
-bootstrap therefore does not include order-selection or weight-construction
-uncertainty.
+Metrics can be pooled across all horizons and locations or reported separately
+by forecast horizon. Version 0.0.7 diagnoses calibration but does not
+conformalize, rescale, or otherwise alter interval endpoints.
 
 ## Design principles
 
 1. Preserve one explicit `(time, location)` convention.
 2. Keep numerical methods independent and auditable.
-3. Separate transforms, weights, estimation, diagnostics, forecasting, bootstrap,
-   simulation, and results.
+3. Separate transforms, weights, estimation, diagnostics, forecasting,
+   bootstrap, evaluation, simulation, and results.
 4. Validate dimensions and assumptions before numerical work.
 5. Treat conditional estimation as a baseline, not exact likelihood.
 6. Add reference fixtures before claiming cross-language equivalence.
 7. Make matrix orientation explicit whenever non-symmetric weights matter.
 8. Keep transformed-scale inference distinct from original-scale reconstruction.
-9. Use observed history only for the initial conditions of bootstrap inversion;
-   reconstruct later pseudo-observations from their own pseudo-history.
-10. Resample complete innovation vectors rather than independent location cells.
-11. Propagate complete stochastic paths before inverse-differencing quantiles.
-12. Label innovation-only and parameter-aware intervals separately.
-13. Never silently return fewer successful bootstrap replications than requested.
-14. Keep future sparse, parallel, and state-space acceleration behind stable interfaces.
+9. Use fresh estimators and origin-limited histories for out-of-sample evaluation.
+10. Report calibration and sharpness together.
+11. Preserve complete stochastic paths before inverse-differencing quantiles.
+12. Keep origin-specific random streams reproducible without reusing one seed.
+13. Do not hide failed bootstrap replications or incomplete forecast horizons.
+14. Keep future sparse, parallel, and state-space acceleration behind stable APIs.
 
-## Final validation for 0.0.6
+## Validation status for 0.0.7
 
-GitHub Actions CI run #137 completed successfully on the documented branch head:
+Core CI validation before the final documentation pass established:
 
-- 61 tests passed;
-- branch coverage: 89.57%, above the configured 80% threshold;
+- 69 tests passed in the platform jobs;
+- coverage remained above the configured 80% threshold;
 - Black passed;
 - isort passed;
 - Ruff passed;
@@ -111,20 +111,34 @@ GitHub Actions CI run #137 completed successfully on the documented branch head:
 - strict MkDocs build passed;
 - source distribution and wheel built successfully;
 - Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+- tested Ubuntu and macOS combinations passed, with Windows matrix jobs continuing
+  normally at the checkpoint.
+
+A final authoritative full CI run must be recorded after the documentation and
+handoff updates are complete.
 
 ## Immediate next tasks
 
-1. Keep PR #6 as draft unless the user explicitly requests review or merge.
-2. After merge, begin rolling-origin interval scoring and empirical coverage examples.
-3. Add optional parallel bootstrap execution behind the existing API.
-4. Investigate block, wild, predictive-residual, studentized, and bias-corrected methods.
-5. Implement exact state-space/Kalman maximum likelihood and missing observations.
-6. Add full innovation likelihoods and stationarity/invertibility checks.
-7. Add sparse matrices and NetworkX/libpysal/GeoPandas/OSMnx adapters.
-8. Add automatic order selection and exogenous regressors/interventions.
-9. Add cross-language estimator fixtures.
-10. Prepare the first PyPI pre-release after the next release review.
+1. Complete final CI and update PR #7 with exact validation results.
+2. Keep PR #7 as draft until explicitly requested for review or merge.
+3. Begin exact state-space/Kalman likelihood and missing-observation support.
+4. Add diagonal and full contemporaneous innovation covariance likelihoods.
+5. Add stationarity and invertibility checks with optional constrained fitting.
+6. Add sparse spatial matrices and large-network computation.
+7. Add automatic order selection and exogenous regressors/interventions.
+8. Add NetworkX/libpysal/GeoPandas/OSMnx adapters.
+9. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+10. Add parallel execution and advanced bootstrap schemes as optional extensions.
+
+## Remaining release estimate
+
+- A mature first PyPI pre-release is expected after approximately five additional
+  stages following 0.0.7: state-space/missing data; covariance and constraints;
+  sparse/ecosystem support; selection/exogenous inputs; and reference/release
+  hardening.
+- Completing most advanced roadmap extensions is expected to require roughly
+  eight to ten additional stages after 0.0.7, depending on whether parallel,
+  advanced bootstrap, and generalized time-varying models are separated.
 
 ## Known limitations
 
@@ -134,18 +148,19 @@ GitHub Actions CI run #137 completed successfully on the documented branch head:
 - seasonal standard errors use a local nonlinear least-squares Jacobian;
 - information criteria use a scalar innovation-variance approximation;
 - residual bootstrap assumes complete innovation vectors are exchangeable over time;
-- no block, wild, robust, predictive-residual, studentized, or bias-corrected
-  bootstrap is included yet;
-- model order and spatial weights are fixed across bootstrap replications;
-- bootstrap replications execute serially;
+- bootstrap and rolling-origin refits execute serially;
+- no block, wild, predictive-residual, studentized, or bias-corrected bootstrap;
+- no automatic interval recalibration or uncertainty for empirical score means;
+- overlapping forecast origins can produce dependent forecast errors;
+- model order and spatial weights remain fixed across bootstrap replications;
 - `STARMAResult` for integrated models remains on the transformed scale;
 - dense matrices are used throughout;
-- no missing-value handling, exogenous regressors, or interventions yet.
+- missing values, exogenous regressors, and interventions are unsupported.
 
 ## Handoff instruction
 
 Before every substantial development step, read this file, `docs/model.md`,
-`docs/forecasting.md`, `docs/bootstrap.md`, and
-`docs/development/STEP_06_BOOTSTRAP.md`. After completing a step, update the
-completed, validation, next-task, and limitation sections so another conversation
+`docs/forecasting.md`, `docs/bootstrap.md`, `docs/evaluation.md`, and the latest
+file under `docs/development/`. After completing a step, update the completed,
+validation, next-task, estimate, and limitation sections so another conversation
 can continue without reconstructing project history.
