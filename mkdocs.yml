@@ -9,6 +9,7 @@ nav:
   - Model convention: model.md
   - Ordinary STARIMA: starima.md
   - Seasonal STARIMA: seasonal.md
+  - State-space filtering: state_space.md
   - Forecasting: forecasting.md
   - Bootstrap intervals: bootstrap.md
   - Rolling evaluation: evaluation.md
