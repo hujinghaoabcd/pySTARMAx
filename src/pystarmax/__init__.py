@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -19,6 +19,13 @@ from pystarmax.admissibility import (
     moving_average_diagnostics,
     moving_average_inverse_spectral_radius,
     starma_admissibility,
+)
+from pystarmax.covariance_inference import (
+    InnovationCovarianceInference,
+    InnovationCovarianceTransform,
+    delta_method_covariance,
+    innovation_covariance_delta_inference,
+    innovation_covariance_transform,
 )
 from pystarmax.diagnostics import (
     PortmanteauResult,
@@ -93,6 +100,8 @@ __all__ = [
     "KalmanSTARMAResult",
     "LikelihoodInferenceResult",
     "FiniteDifferenceCurvature",
+    "InnovationCovarianceInference",
+    "InnovationCovarianceTransform",
     "PolynomialAdmissibility",
     "STARMAAdmissibility",
     "PolynomialKind",
@@ -122,6 +131,9 @@ __all__ = [
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",
+    "innovation_covariance_transform",
+    "innovation_covariance_delta_inference",
+    "delta_method_covariance",
     "compose_lag_operators",
     "autoregressive_diagnostics",
     "moving_average_diagnostics",
