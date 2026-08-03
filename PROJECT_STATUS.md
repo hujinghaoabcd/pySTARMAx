@@ -15,8 +15,7 @@ cross-platform CI.
 - `main` is version `0.0.14` at merge commit
   `97e8e202c49c9c613d06a578f71e2945e62d01bd`.
 - Current branch: `agent/integrated-kalman-starima`.
-- Current draft pull request: PR #15, `Add conditional integrated Kalman
-  STARIMA`.
+- Current pull request: PR #15, `Add conditional integrated Kalman STARIMA`.
 - Current development version: `0.0.15`.
 - The current implementation estimates ordinary-integrated models through a
   stationary Gaussian Kalman likelihood on `Delta^d y`, conditional on the
@@ -143,10 +142,10 @@ Tests cover:
 8. constructor, sample-length, dimensionality, infinity, and fitted-state
    validation.
 
-## Core validation for 0.0.15
+## Authoritative validation for 0.0.15
 
-GitHub Actions CI #330, run ID `30856284894`, validated the formatted numerical
-core before the final documentation expansion:
+GitHub Actions CI #339, run ID `30856825182`, validated the complete
+implementation and documentation head:
 
 - 134 tests passed in the coverage job;
 - total branch coverage was 86.96%, above the required 80%;
@@ -155,14 +154,11 @@ core before the final documentation expansion:
 - independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu and macOS passed on Python 3.11 through 3.14;
-- Windows test steps passed on Python 3.11 through 3.14; one superseded Windows
-  3.12 job was marked cancelled only after its pytest and cleanup steps had
-  already succeeded because later documentation commits started newer runs.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A complete final CI matrix is required on the documentation head before PR #15
-is marked ready and merged. Its run identifier and final result must be recorded
-in this file and the Step 15 handoff.
+A final validation-record-only merge-gate CI is run after this status and the
+Step 15 handoff are updated. No implementation, test, API, example, or method
+document changes are made after CI #339.
 
 ## Design principles
 
@@ -188,14 +184,12 @@ in this file and the Step 15 handoff.
 
 ## Immediate next tasks
 
-1. Complete final documentation synchronization and Step 15 review.
-2. Run the complete CI matrix on the documentation head.
-3. Record the authoritative final run, test count, and coverage.
-4. Update PR #15, mark it ready, and squash-merge it into `main`.
-5. Begin multiplicative seasonal Kalman STARIMA support.
-6. Design an exact diffuse integrated level-state likelihood as a separate API.
-7. Add original-scale Kalman STARIMA forecast intervals.
-8. Add cross-time innovation covariance, simulation smoothing, sparse matrices,
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #15, mark it ready, and squash-merge it into `main`.
+3. Begin multiplicative seasonal Kalman STARIMA support.
+4. Design an exact diffuse integrated level-state likelihood as a separate API.
+5. Add original-scale Kalman STARIMA forecast intervals.
+6. Add cross-time innovation covariance, simulation smoothing, sparse matrices,
    order selection, exogenous inputs, adapters, and cross-language fixtures.
 
 ## Known limitations
