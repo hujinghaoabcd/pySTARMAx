@@ -6,10 +6,11 @@
 - branch: `agent/innovation-disturbance-smoothing`;
 - pull request: PR #14, `Add original innovation disturbance smoothing`;
 - base: version 0.0.13 on `main`;
-- initial numerical validation: 126 tests passed with 87.06% total branch
-  coverage before documentation expansion;
-- final quality, documentation, distribution, coverage, and operating-system
-  matrix results must be recorded before merge.
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #322, run ID `30855134698`;
+- validation result: 126 tests passed and 87.06% total branch coverage;
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+  macOS Python 3.11--3.14 all passed.
 
 ## Delivered API
 
@@ -155,6 +156,17 @@ Tests include:
 6. fitted-model smoothing of a new incomplete observation matrix;
 7. one-time-point shapes, immutability, and argument validation;
 8. the full inherited package test suite on all supported platforms.
+
+The authoritative CI #322 coverage job reported:
+
+- 126 tests passed in 42.08 seconds;
+- total branch coverage: 87.06%;
+- `src/pystarmax/innovation_smoothing.py`: 80.1%;
+- required coverage threshold: 80%.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives a final merge-gate CI before PR #14 is marked
+ready and merged.
 
 ## Files introduced or changed
 
