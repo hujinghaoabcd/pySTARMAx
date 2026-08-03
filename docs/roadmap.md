@@ -150,12 +150,31 @@
 - covariance and smoothing method guides, runnable example, and Step 12/13
   handoffs.
 
+## Implemented in 0.0.14
+
+- exact conditional-Gaussian transformation from state disturbances
+  `w_t = R eta_t` to original location-level innovations;
+- covariance-weighted map `Q R.T (R Q R.T)+` rather than a naive inverse of
+  the selection matrix;
+- posterior innovation means and marginal covariances;
+- retained unresolved covariance `Var(eta_t | R eta_t)` for non-injective
+  selection maps;
+- stable full-rank solve and positive-eigenspace pseudoinverse policy;
+- process rank and explicit pseudoinverse diagnostics;
+- state-moment support projectors and per-transition mean/covariance support
+  residuals;
+- fitted `KalmanSTARMA.smooth_innovation_disturbances()` for training or new
+  incomplete data;
+- closed-form non-injective, duplicated-selection, scalar AR, and moving-average
+  companion validation cases;
+- immutable result arrays, one-time-point behavior, documentation, example, and
+  Step 14 handoff.
+
 ## Next priorities
 
-1. Original location-level innovation disturbance smoothing using an explicit
-   conditional Gaussian derivation, including posterior covariance and
-   selection-matrix null-space behavior.
-2. Integrated and multiplicative seasonal state-space and Kalman MLE wrappers.
+1. Integrated and multiplicative seasonal state-space and Kalman MLE wrappers.
+2. Cross-time innovation-disturbance covariance and a conditional simulation
+   smoother.
 3. Smooth stationarity/invertibility parameterization for optimization and
    inference.
 4. Sparse spatial weights and sparse state matrices for large networks.
@@ -169,9 +188,10 @@
 
 ## Research safeguards for future work
 
-- Do not call state-equation disturbances original location innovations.
-- Do not recover innovations with a naive pseudoinverse of the selection matrix
-  without deriving conditional covariance and null-space behavior.
+- Distinguish state-equation disturbances from original location innovations.
+- Preserve `Var(eta_t | R eta_t)` when the selection map is non-injective.
+- Do not replace covariance-weighted innovation conditioning with a naive
+  pseudoinverse of the selection matrix.
 - Do not treat feasibility penalties as a smooth parameterization.
 - Do not report singular observed-information inverses without explicit status.
 - Do not silently clip variance interval endpoints or impute missing likelihood
