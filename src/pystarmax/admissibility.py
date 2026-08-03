@@ -167,9 +167,7 @@ class PolynomialAdmissibility:
         if not np.isfinite(distance):
             raise ValueError("distance must be finite")
         expected_radius = (
-            float(np.max(np.abs(eigenvalues), initial=0.0))
-            if eigenvalues.size
-            else 0.0
+            float(np.max(np.abs(eigenvalues), initial=0.0)) if eigenvalues.size else 0.0
         )
         if not np.isclose(radius, expected_radius, rtol=1e-10, atol=1e-12):
             raise ValueError("spectral_radius must match eigenvalues")
@@ -202,7 +200,9 @@ class PolynomialAdmissibility:
 
     def summary(self) -> str:
         """Return a compact text summary."""
-        label = "AR stationarity" if self.kind == "autoregressive" else "MA invertibility"
+        label = (
+            "AR stationarity" if self.kind == "autoregressive" else "MA invertibility"
+        )
         return "\n".join(
             [
                 f"pySTARMAx {label} diagnostic",
