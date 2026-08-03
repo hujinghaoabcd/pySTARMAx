@@ -83,7 +83,9 @@ def test_scalar_ar1_recovers_parameters_with_missing_values() -> None:
     assert result.converged
     assert result.ar_parameters[0, 0] == pytest.approx(0.55, abs=0.10)
     assert result.innovation_covariance[0, 0] == pytest.approx(0.36, abs=0.08)
-    assert result.n_observations == int(np.count_nonzero(np.isfinite(incomplete)))
+    assert result.n_observations == int(
+        np.count_nonzero(np.isfinite(incomplete))
+    )
     assert result.spectral_radius < 1.0
     filtered = model.filter()
     assert filtered is result.filter_result
@@ -150,7 +152,10 @@ def test_multivariate_covariance_parameterizations(
         assert result.innovation_covariance[0, 1] == 0.0
         assert result.n_params == 2
     else:
-        assert result.innovation_covariance[0, 1] == pytest.approx(0.22, abs=0.10)
+        assert result.innovation_covariance[0, 1] == pytest.approx(
+            0.22,
+            abs=0.10,
+        )
         assert result.n_params == 3
     assert np.all(np.linalg.eigvalsh(result.innovation_covariance) > 0.0)
 
