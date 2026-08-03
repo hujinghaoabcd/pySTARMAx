@@ -1,0 +1,138 @@
+name: Record seasonal validation
+
+on:
+  push:
+    branches:
+      - agent/seasonal-kalman-starima
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/seasonal-kalman-starima
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Update validation records
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          status_path = Path("PROJECT_STATUS.md")
+          status = status_path.read_text()
+          start = status.index("## Core validation for 0.0.16")
+          end = status.index("## Design principles")
+          validation = '''## Authoritative validation for 0.0.16
+
+          GitHub Actions CI #360, run ID `30858747303`, validated the complete
+          implementation and documentation head:
+
+          - 143 tests passed in the coverage job;
+          - total branch coverage was 87.04%, above the required 80%;
+          - `src/pystarmax/seasonal_maximum_likelihood.py` coverage was 87.6%;
+          - Black, isort, Ruff, and mypy passed;
+          - independent diagnostic-reference regeneration produced a clean diff;
+          - strict MkDocs passed;
+          - source distribution, wheel, and Twine checks passed;
+          - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+          A final validation-record-only merge-gate CI is run after this status and the
+          Step 16 handoff are updated. No implementation, test, API, example, or method
+          document changes are made after CI #360.
+
+          '''
+          status = status[:start] + validation + status[end:]
+          old_tasks = '''## Immediate next tasks
+
+          1. Run the complete final CI matrix on the documentation head.
+          2. Record the final run identifier, test count, and coverage.
+          3. Update PR #16, mark it ready, and squash-merge it into `main`.
+          4. Add observed-information and natural covariance inference for seasonal factor
+             parameters.
+          5. Add original-scale Gaussian forecast intervals for ordinary and seasonal
+             Kalman STARIMA.
+          6. Design exact diffuse integrated level-state likelihood and smoothing as a
+             separate API.
+          7. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
+             simulation smoothing, order selection, exogenous inputs, adapters, and
+             cross-language fixtures.
+          '''
+          new_tasks = '''## Immediate next tasks
+
+          1. Run the validation-record-only merge-gate CI.
+          2. Update PR #16, mark it ready, and squash-merge it into `main`.
+          3. Add observed-information and natural covariance inference for seasonal factor
+             parameters.
+          4. Add original-scale Gaussian forecast intervals for ordinary and seasonal
+             Kalman STARIMA.
+          5. Design exact diffuse integrated level-state likelihood and smoothing as a
+             separate API.
+          6. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
+             simulation smoothing, order selection, exogenous inputs, adapters, and
+             cross-language fixtures.
+          '''
+          if old_tasks not in status:
+              raise SystemExit("PROJECT_STATUS immediate tasks block not found")
+          status = status.replace(old_tasks, new_tasks, 1)
+          status_path.write_text(status)
+
+          step_path = Path("docs/development/STEP_16_SEASONAL_KALMAN_STARIMA.md")
+          step = step_path.read_text()
+          old_position = '''- core validation: GitHub Actions CI #346, run ID `30858019154`;
+          - core result: 143 tests passed and 87.04% total branch coverage;
+          - `src/pystarmax/seasonal_maximum_likelihood.py` coverage: 87.6%;
+          - a complete final documentation-head CI is required before merge.
+          '''
+          new_position = '''- authoritative implementation/documentation validation: GitHub Actions CI
+            #360, run ID `30858747303`;
+          - validation result: 143 tests passed and 87.04% total branch coverage;
+          - `src/pystarmax/seasonal_maximum_likelihood.py` coverage: 87.6%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+            macOS Python 3.11--3.14 all passed.
+          '''
+          if old_position not in step:
+              raise SystemExit("Step 16 repository position block not found")
+          step = step.replace(old_position, new_position, 1)
+          old_ci = '''Core CI #346 reported:
+
+          - 143 tests passed in 39.66 seconds;
+          - total branch coverage: 87.04%;
+          - seasonal Kalman module coverage: 87.6%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
+            regeneration passed.
+          '''
+          new_ci = '''Authoritative CI #360 reported:
+
+          - 143 tests passed;
+          - total branch coverage: 87.04%;
+          - seasonal Kalman module coverage: 87.6%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
+            regeneration passed;
+          - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+          The validation-record-only head changes only this handoff and
+          `PROJECT_STATUS.md`. It receives a final merge-gate CI before PR #16 is marked
+          ready and merged.
+          '''
+          if old_ci not in step:
+              raise SystemExit("Step 16 validation block not found")
+          step = step.replace(old_ci, new_ci, 1)
+          step_path.write_text(step)
+          PY
+      - name: Commit validation records
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PROJECT_STATUS.md docs/development/STEP_16_SEASONAL_KALMAN_STARIMA.md
+          git commit -m "Record final seasonal Kalman validation"
+          git push
