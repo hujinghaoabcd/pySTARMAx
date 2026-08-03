@@ -22,13 +22,10 @@ def simulate_scalar_ar1(
 ) -> np.ndarray:
     rng = np.random.default_rng(random_state)
     data = np.empty((n_steps, 1), dtype=float)
-    data[0, 0] = rng.normal(
-        scale=standard_deviation / np.sqrt(1.0 - phi**2)
-    )
+    data[0, 0] = rng.normal(scale=standard_deviation / np.sqrt(1.0 - phi**2))
     for time_index in range(1, n_steps):
-        data[time_index, 0] = (
-            phi * data[time_index - 1, 0]
-            + rng.normal(scale=standard_deviation)
+        data[time_index, 0] = phi * data[time_index - 1, 0] + rng.normal(
+            scale=standard_deviation
         )
     return data
 
@@ -83,9 +80,7 @@ def test_scalar_ar1_recovers_parameters_with_missing_values() -> None:
     assert result.converged
     assert result.ar_parameters[0, 0] == pytest.approx(0.55, abs=0.10)
     assert result.innovation_covariance[0, 0] == pytest.approx(0.36, abs=0.08)
-    assert result.n_observations == int(
-        np.count_nonzero(np.isfinite(incomplete))
-    )
+    assert result.n_observations == int(np.count_nonzero(np.isfinite(incomplete)))
     assert result.spectral_radius < 1.0
     filtered = model.filter()
     assert filtered is result.filter_result
