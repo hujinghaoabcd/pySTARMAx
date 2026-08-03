@@ -14,9 +14,7 @@ def main() -> None:
     series = np.empty((n_time, 1), dtype=float)
     series[0, 0] = rng.normal(scale=0.8)
     for time_index in range(1, n_time):
-        series[time_index, 0] = (
-            phi * series[time_index - 1, 0] + rng.normal(scale=0.8)
-        )
+        series[time_index, 0] = phi * series[time_index - 1, 0] + rng.normal(scale=0.8)
 
     weights = SpatialWeights(
         matrices=(np.eye(1, dtype=float),),
