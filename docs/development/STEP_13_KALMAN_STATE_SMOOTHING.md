@@ -6,10 +6,17 @@
 - branch: `agent/kalman-state-smoothing`;
 - pull request: PR #13, `Add Kalman fixed-interval state smoothing`;
 - base: version 0.0.12 on `main`;
-- core validation run: GitHub Actions CI #286;
-- core validation result: 119 tests passed and 87.32% branch coverage;
-- quality, strict documentation, distributions, and the full operating-system
-  matrix are revalidated after final documentation changes before merge.
+- authoritative implementation/documentation validation: GitHub Actions CI #304,
+  run ID `30852463900`;
+- validation result: 119 tests passed and 87.32% branch coverage;
+- Black, isort, Ruff, mypy, independent fixture regeneration, strict MkDocs,
+  source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11 through 3.14;
+- PR surface: 20 formal files and no temporary workflow or diagnostic files.
+
+A final documentation-only commit records these results. Its complete CI run is
+the merge gate and is written into the PR description without creating another
+validation-record commit.
 
 ## Delivered API
 
@@ -113,6 +120,27 @@ Tests include:
 8. immutable arrays and argument validation;
 9. the full inherited package suite, including covariance and likelihood
    inference regression tests.
+
+The authoritative coverage job reported:
+
+- 119 tests passed;
+- total branch coverage: 87.32%;
+- `src/pystarmax/smoothing.py`: 87.1% branch coverage;
+- required coverage threshold: 80%.
+
+## Inherited fixes included in this stage
+
+Two 0.0.12 defects became visible when the restored full CI workflow ran:
+
+1. `infer_kalman_starma()` referenced an undefined `observations` local when
+   setting `n_locations`; the result now uses the fitted innovation covariance
+   dimension.
+2. covariance-element indices were inferred by mypy as a fixed one-element
+   tuple in the scalar branch; an explicit variable-length tuple annotation now
+   covers scalar, diagonal, and full covariance branches.
+
+These fixes are covered by the inherited covariance and likelihood inference
+tests and are documented in the Step 12 handoff.
 
 ## Files changed
 
