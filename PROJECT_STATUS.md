@@ -122,31 +122,27 @@ A signed distance is positive inside the region, zero on the configured limit,
 and negative outside. The public result retains the full eigensystem rather than
 reducing the diagnosis to a Boolean.
 
-## Validation state for 0.0.11
+## Final validation for 0.0.11
 
-Core implementation CI established:
+GitHub Actions CI run #269 completed successfully on the final implementation,
+test, example, and documentation head:
 
-- run #247: 103 tests passed on the numerical implementation;
-- run #247: total branch coverage was 87.48%;
-- run #247: Ubuntu, Windows, and macOS passed on Python 3.11 through 3.14;
-- run #247: source distribution, wheel, and Twine checks passed;
-- the only failure was Black formatting on three new implementation files.
+- 103 tests passed without Python test warnings;
+- total branch coverage was 87.48%, above the configured 80% threshold;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic reference generation produced a clean diff;
+- strict MkDocs construction passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
+- the PR surface contained exactly 20 formal source, test, example,
+  documentation, metadata, and navigation files;
+- `.github/workflows/ci.yml` was absent from the final PR difference;
+- no temporary formatting workflow or diagnostic file remained.
 
-After applying the exact Black 26.5.1 output and restoring the standard workflow:
-
-- run #252: Black passed;
-- run #252: isort passed;
-- run #252: Ruff passed;
-- run #252: mypy passed;
-- run #252: independent diagnostic reference generation produced a clean diff;
-- run #252: strict MkDocs passed;
-- run #252: distributions passed;
-- cross-platform tests continued to pass before documentation commits superseded
-  that head.
-
-The formal README, project-status, Step 11 handoff, and final documentation set
-must be completed, followed by one authoritative complete CI run on the final
-branch head.
+The validation-record edits after run #269 are documentation only. Numerical
+code, tests, examples, public exports, package metadata, and CI configuration are
+unchanged from the fully validated head. One final documentation-head CI repeat
+is required before PR #11 is marked ready and merged.
 
 ## Design principles
 
@@ -166,18 +162,15 @@ branch head.
 
 ## Immediate next tasks
 
-1. Complete README and Step 11 handoff updates.
-2. Fix any strict-documentation issue in the new admissibility guide.
-3. Run the complete final CI matrix for PR #11.
-4. Record the authoritative test count, coverage, and run number.
-5. Mark PR #11 ready and squash-merge it into `main`.
-6. Begin a smooth stability/invertibility parameterization study or, if that
-   cannot be made general and auditable in one stage, implement delta-method
-   innovation-covariance inference first.
-7. Add integrated and multiplicative seasonal maximum-likelihood wrappers.
-8. Add state and disturbance smoothing.
-9. Add sparse matrices, ecosystem adapters, order selection, and exogenous inputs.
-10. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+1. Complete the final documentation-head CI repeat for PR #11.
+2. Mark PR #11 ready and squash-merge it into `main`.
+3. Start delta-method innovation-covariance inference unless a general, auditable
+   matrix-polynomial stability/invertibility parameterization is established
+   first.
+4. Add integrated and multiplicative seasonal maximum-likelihood wrappers.
+5. Add state and disturbance smoothing.
+6. Add sparse matrices, ecosystem adapters, order selection, and exogenous inputs.
+7. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
 
 ## Known limitations
 
