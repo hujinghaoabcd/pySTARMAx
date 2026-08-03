@@ -166,8 +166,8 @@ def innovation_covariance_transform(
     locations = _validate_locations(n_locations)
     codec = _CovarianceCodec(covariance_type, locations)
     raw = np.asarray(raw_parameters, dtype=float)
-    if raw.shape != (codec.count,):
-        raise ValueError(f"raw_parameters must contain exactly {codec.count} values")
+    if raw.shape != (codec.size,):
+        raise ValueError(f"raw_parameters must contain exactly {codec.size} values")
     if not np.all(np.isfinite(raw)):
         raise ValueError("raw_parameters must contain finite values")
     raw = np.ascontiguousarray(raw, dtype=float)
