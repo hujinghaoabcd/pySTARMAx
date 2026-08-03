@@ -162,6 +162,8 @@ def test_rolling_origin_expanding_window_and_seed_reproducibility() -> None:
     assert result_a.shape == (3, 2, 2)
     assert lengths_a == [6, 8, 10]
     assert calls_a == calls_b
+    np.testing.assert_allclose(result_a.observed, result_b.observed)
+    np.testing.assert_allclose(result_a.mean, result_b.mean)
     np.testing.assert_allclose(result_a.observed[0], data[6:8])
     np.testing.assert_allclose(result_a.mean[0], np.repeat(data[5:6], 2, axis=0))
 
@@ -192,7 +194,9 @@ def test_rolling_origin_fixed_window_and_bootstrap_dispatch() -> None:
 
 def test_rolling_origin_rejects_invalid_configuration() -> None:
     data = np.arange(16, dtype=float).reshape(8, 2)
-    factory = lambda: DummyIntervalModel([], [])
+
+    def factory() -> DummyIntervalModel:
+        return DummyIntervalModel([], [])
 
     with pytest.raises(ValueError, match="complete forecast horizon"):
         rolling_origin_evaluate(
