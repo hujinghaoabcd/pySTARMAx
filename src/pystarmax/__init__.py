@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.12"
+__version__ = "0.0.13"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -74,6 +74,7 @@ from pystarmax.simulation import (
     simulate_starima,
     simulate_starma,
 )
+from pystarmax.smoothing import KalmanSmootherResult, kalman_smoother
 from pystarmax.state_space import (
     Initialization,
     KalmanFilterResult,
@@ -98,6 +99,7 @@ __all__ = [
     "KalmanSTARMA",
     "STARMAResult",
     "KalmanSTARMAResult",
+    "KalmanSmootherResult",
     "LikelihoodInferenceResult",
     "FiniteDifferenceCurvature",
     "InnovationCovarianceInference",
@@ -144,6 +146,7 @@ __all__ = [
     "fitted_starma_state_space",
     "kalman_filter",
     "kalman_loglikelihood",
+    "kalman_smoother",
     "LagOperator",
     "expand_multiplicative_operators",
     "stcov",
