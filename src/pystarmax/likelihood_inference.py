@@ -6,13 +6,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-from pystarmax._maximum_likelihood_utils import _CovarianceCodec
+from pystarmax._maximum_likelihood_utils import CovarianceType, _CovarianceCodec
 from pystarmax._validation import FloatArray
 from pystarmax.admissibility import (
     autoregressive_spectral_radius,
@@ -23,6 +23,9 @@ from pystarmax.state_space import (
     build_starma_state_space,
     kalman_filter,
 )
+
+if TYPE_CHECKING:
+    from pystarmax.covariance_inference import InnovationCovarianceInference
 
 ScalarFunction = Callable[[FloatArray], float]
 
@@ -221,6 +224,8 @@ class LikelihoodInferenceResult:
     gradient: FloatArray
     steps: FloatArray
     n_dynamic_params: int
+    covariance_type: CovarianceType
+    n_locations: int
     rank: int
     condition_number: float
     positive_definite: bool
@@ -254,6 +259,11 @@ class LikelihoodInferenceResult:
         n_dynamic = int(self.n_dynamic_params)
         if not 0 <= n_dynamic <= n_params:
             raise ValueError("n_dynamic_params is outside the parameter range")
+        if self.covariance_type not in {"scalar", "diagonal", "full"}:
+            raise ValueError("covariance_type must be 'scalar', 'diagonal', or 'full'")
+        n_locations = int(self.n_locations)
+        if n_locations <= 0 or n_locations != self.n_locations:
+            raise ValueError("n_locations must be a positive integer")
         rank = int(self.rank)
         if not 0 <= rank <= n_params:
             raise ValueError("rank is outside the parameter range")
@@ -280,6 +290,7 @@ class LikelihoodInferenceResult:
         object.__setattr__(self, "gradient", arrays[7])
         object.__setattr__(self, "steps", arrays[8])
         object.__setattr__(self, "n_dynamic_params", n_dynamic)
+        object.__setattr__(self, "n_locations", n_locations)
         object.__setattr__(self, "rank", rank)
         object.__setattr__(self, "condition_number", condition)
         object.__setattr__(self, "objective_value", objective)
@@ -359,6 +370,14 @@ class LikelihoodInferenceResult:
             },
             index=pd.Index(self.parameter_names[:stop], name="parameter"),
         )
+
+    def innovation_covariance_inference(self) -> InnovationCovarianceInference:
+        """Return natural-scale innovation covariance delta-method inference."""
+        from pystarmax.covariance_inference import (
+            innovation_covariance_delta_inference,
+        )
+
+        return innovation_covariance_delta_inference(self)
 
     def summary(self) -> str:
         """Return a compact curvature and coefficient summary."""
@@ -515,6 +534,8 @@ def infer_kalman_starma(
         gradient=curvature.gradient,
         steps=curvature.steps,
         n_dynamic_params=model.result_.params.size,
+        covariance_type=model.covariance_type,
+        n_locations=observations.shape[1],
         rank=rank,
         condition_number=condition_number,
         positive_definite=positive_definite,
