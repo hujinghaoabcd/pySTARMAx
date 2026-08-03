@@ -21,9 +21,7 @@ def main() -> None:
         transformed[time_index] = (
             ordinary_ar * transformed[time_index - 1]
             + seasonal_ar * transformed[time_index - seasonal_period]
-            - ordinary_ar
-            * seasonal_ar
-            * transformed[time_index - seasonal_period - 1]
+            - ordinary_ar * seasonal_ar * transformed[time_index - seasonal_period - 1]
             + innovations[time_index]
         )
 
