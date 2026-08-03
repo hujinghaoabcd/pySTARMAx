@@ -21,6 +21,7 @@ engineering conventions established in pyGWRx and pyKDEX.
 - Current draft pull request: PR #7, `Add rolling-origin interval evaluation`.
 - Current development target: version `0.0.7`.
 - Current stage: out-of-sample interval calibration and sharpness diagnostics.
+- Authoritative validation: GitHub Actions CI run #155 completed successfully.
 
 ## Completed baseline through 0.0.6
 
@@ -59,8 +60,8 @@ engineering conventions established in pyGWRx and pyKDEX.
   `steps`, `level`, and `random_state`;
 - added focused tests for scores, validation, aggregation, dispatch, windows,
   reproducibility, and unsupported model interfaces;
-- added a runnable rolling-origin example and a complete evaluation guide;
-- updated package exports and version metadata to 0.0.7.
+- added a runnable rolling-origin example and complete evaluation documentation;
+- updated package exports, documentation navigation, and citation metadata to 0.0.7.
 
 ## Statistical interpretation
 
@@ -97,12 +98,12 @@ conformalize, rescale, or otherwise alter interval endpoints.
 13. Do not hide failed bootstrap replications or incomplete forecast horizons.
 14. Keep future sparse, parallel, and state-space acceleration behind stable APIs.
 
-## Validation status for 0.0.7
+## Final validation for 0.0.7
 
-Core CI validation before the final documentation pass established:
+GitHub Actions CI run #155 completed successfully on the documented branch head:
 
-- 69 tests passed in the platform jobs;
-- coverage remained above the configured 80% threshold;
+- 69 tests passed;
+- total branch coverage: 89.33%, above the configured 80% threshold;
 - Black passed;
 - isort passed;
 - Ruff passed;
@@ -111,24 +112,20 @@ Core CI validation before the final documentation pass established:
 - strict MkDocs build passed;
 - source distribution and wheel built successfully;
 - Twine checks passed;
-- tested Ubuntu and macOS combinations passed, with Windows matrix jobs continuing
-  normally at the checkpoint.
-
-A final authoritative full CI run must be recorded after the documentation and
-handoff updates are complete.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
 ## Immediate next tasks
 
-1. Complete final CI and update PR #7 with exact validation results.
-2. Keep PR #7 as draft until explicitly requested for review or merge.
-3. Begin exact state-space/Kalman likelihood and missing-observation support.
-4. Add diagonal and full contemporaneous innovation covariance likelihoods.
-5. Add stationarity and invertibility checks with optional constrained fitting.
-6. Add sparse spatial matrices and large-network computation.
-7. Add automatic order selection and exogenous regressors/interventions.
-8. Add NetworkX/libpysal/GeoPandas/OSMnx adapters.
-9. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
-10. Add parallel execution and advanced bootstrap schemes as optional extensions.
+1. Keep PR #7 as draft until explicitly requested for review or merge.
+2. Begin exact state-space/Kalman likelihood and missing-observation support.
+3. Add diagonal and full contemporaneous innovation covariance likelihoods.
+4. Add stationarity and invertibility checks with optional constrained fitting.
+5. Add sparse spatial matrices and large-network computation.
+6. Add automatic order selection and exogenous regressors/interventions.
+7. Add NetworkX/libpysal/GeoPandas/OSMnx adapters.
+8. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+9. Add parallel execution and advanced bootstrap schemes as optional extensions.
+10. Add calibrated or conformal interval post-processing after benchmark evidence.
 
 ## Remaining release estimate
 
@@ -138,7 +135,7 @@ handoff updates are complete.
   hardening.
 - Completing most advanced roadmap extensions is expected to require roughly
   eight to ten additional stages after 0.0.7, depending on whether parallel,
-  advanced bootstrap, and generalized time-varying models are separated.
+  advanced bootstrap, calibration, and generalized time-varying models are split.
 
 ## Known limitations
 
