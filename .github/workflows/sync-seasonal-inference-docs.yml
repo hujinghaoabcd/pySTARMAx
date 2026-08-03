@@ -1,0 +1,217 @@
+name: Sync seasonal inference documentation
+
+on:
+  push:
+    branches:
+      - agent/seasonal-likelihood-inference
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/seasonal-likelihood-inference
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Synchronize documentation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          mkdocs = Path("mkdocs.yml")
+          text = mkdocs.read_text()
+          needle = "  - Seasonal Kalman STARIMA: seasonal_maximum_likelihood.md\n"
+          addition = needle + "  - Seasonal likelihood inference: seasonal_likelihood_inference.md\n"
+          if "seasonal_likelihood_inference.md" not in text:
+              text = text.replace(needle, addition, 1)
+          mkdocs.write_text(text)
+
+          readme = Path("README.md")
+          text = readme.read_text()
+          start = text.index("> **Status —")
+          end = text.index("\n\n## Installation", start)
+          status = '''> **Status — 0.0.17:** stationary, ordinary-integrated, and
+          > multiplicative seasonal Gaussian Kalman STARMA/STARIMA estimation;
+          > expanded AR stationarity and positive-sign MA invertibility diagnostics;
+          > observed-information Hessian inference for stationary and seasonal factor
+          > models; natural innovation covariance delta-method inference; missing-data
+          > filtering; RTS state and original innovation smoothing; original-scale
+          > reconstruction; conditional/bootstrap intervals; and rolling evaluation.
+          > Exact diffuse integrated likelihood, original-scale Kalman intervals, sparse
+          > computation, exogenous regressors, and time-varying extensions remain planned.'''
+          text = text[:start] + status + text[end:]
+          seasonal_anchor = "See [`docs/seasonal.md`](docs/seasonal.md) and\n[`docs/seasonal_maximum_likelihood.md`](docs/seasonal_maximum_likelihood.md).\n"
+          inference_text = seasonal_anchor + '''
+
+          Seasonal factor observed-information inference is available directly:
+
+          ```python
+          seasonal_inference = seasonal_mle.infer(relative_step=1e-4)
+          print(seasonal_inference.coefficient_table)
+          print(seasonal_inference.confidence_intervals())
+          print(seasonal_inference.innovation_covariance_inference().element_table)
+          ```
+
+          Every finite-difference point is reconstructed through the complete
+          multiplicative matrix expansion. Points entering an enabled expanded
+          stationarity or invertibility penalty region are rejected rather than treated
+          as likelihood curvature. See
+          [`docs/seasonal_likelihood_inference.md`](docs/seasonal_likelihood_inference.md).
+          '''
+          if "seasonal_likelihood_inference.md" not in text:
+              text = text.replace(seasonal_anchor, inference_text, 1)
+          text = text.replace(
+              "- seasonal-factor observed-information and natural covariance inference are not yet exposed;\n",
+              "- seasonal likelihood-Hessian inference uses finite differences and can be costly or step sensitive;\n",
+          )
+          readme.write_text(text)
+
+          index = Path("docs/index.md")
+          text = index.read_text()
+          anchor = "[Seasonal STARIMA](seasonal.md) compares the conditional and Gaussian seasonal\nroutes."
+          if "seasonal_likelihood_inference.md" not in text:
+              insert = '''[Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
+          observed-information result contract for ordinary and seasonal factor parameters,
+          rejects expanded-boundary stencil points, and enables natural innovation covariance
+          delta-method inference with factor/covariance cross uncertainty.
+
+          '''
+              text = text.replace(anchor, insert + anchor, 1)
+          index.write_text(text)
+
+          seasonal_doc = Path("docs/seasonal_maximum_likelihood.md")
+          text = seasonal_doc.read_text()
+          if "## Observed-information inference" not in text:
+              marker = "## Validation references\n"
+              section = '''## Observed-information inference
+
+          ```python
+          inference = model.infer(
+              relative_step=1e-4,
+              absolute_step=1e-6,
+              rcond=1e-10,
+          )
+          ```
+
+          Version 0.0.17 reconstructs every finite-difference point through the complete
+          factor expansion and arbitrary-lag state space. An enabled expanded
+          stationarity/invertibility penalty point invalidates the stencil. The shared
+          `LikelihoodInferenceResult` provides factor and optimizer tables, standard
+          errors, intervals, score and Hessian diagnostics, and natural innovation
+          covariance delta-method inference.
+
+          See [Seasonal likelihood inference](seasonal_likelihood_inference.md).
+
+          '''
+              text = text.replace(marker, section + marker, 1)
+          text = text.replace(
+              "- observed-information Hessian and covariance delta-method inference are not yet\n  exposed for the seasonal factor optimizer;\n",
+              "- observed-information inference uses central finite differences and can be\n  expensive or step sensitive for large seasonal/full-covariance models;\n",
+          )
+          seasonal_doc.write_text(text)
+
+          roadmap = Path("docs/roadmap.md")
+          text = roadmap.read_text()
+          if "## Implemented in 0.0.17" not in text:
+              marker = "## Next priorities\n"
+              section = '''## Implemented in 0.0.17: seasonal likelihood-Hessian inference
+
+          - package-root seasonal inference facade and low-level
+            `infer_seasonal_kalman_starima()`;
+          - central finite-difference score and observed-information Hessian for ordinary
+            and seasonal factor parameters plus covariance optimizer coordinates;
+          - objective reconstruction through the complete multiplicative matrix expansion
+            and arbitrary-lag state space at every stencil point;
+          - rejection of expanded AR-stationarity and positive-sign MA-invertibility
+            penalty points;
+          - shared immutable coefficient/optimizer tables, covariance, standard errors,
+            normal tests, intervals, correlation, score, rank, eigenvalue, condition, and
+            boundary diagnostics;
+          - strict full-rank positive-definite Hessian policy and explicit diagnostic
+            positive-eigenspace generalized inverse;
+          - scalar, diagonal, and full natural innovation covariance delta-method inference
+            with seasonal factor/covariance cross uncertainty;
+          - zero-seasonal equivalence, pure seasonal factor, penalty, singular-Hessian,
+            and validation tests;
+          - method guide, example, navigation, README, status, and Step 17 handoff.
+
+          '''
+              text = text.replace(marker, section + marker, 1)
+          text = text.replace(
+              "1. Observed-information Hessian and natural innovation covariance inference for\n   `SeasonalKalmanSTARIMA` factor parameters.\n2. Original-scale Gaussian forecast intervals",
+              "1. Original-scale Gaussian forecast intervals",
+              1,
+          )
+          roadmap.write_text(text)
+
+          status_path = Path("PROJECT_STATUS.md")
+          text = status_path.read_text()
+          text = text.replace(
+              "- PR #1 through PR #15 have been squash-merged into `main`.\n- `main` is version `0.0.15`",
+              "- PR #1 through PR #16 have been squash-merged into `main`.\n- `main` is version `0.0.16`",
+              1,
+          )
+          branch_start = text.index("- Current branch:")
+          branch_end = text.index("\n\n## Completed baseline", branch_start)
+          branch_block = '''- Current branch: `agent/seasonal-likelihood-inference`.
+          - Current draft pull request: PR #17, `Add seasonal likelihood-Hessian
+            inference`.
+          - Current development version: `0.0.17`.
+          - The current stage adds observed-information inference for multiplicative
+            ordinary and seasonal factor parameters and covariance optimizer coordinates.
+          - Every stencil point uses the complete expanded recursion and rejects enabled
+            feasibility-penalty regions.'''
+          text = text[:branch_start] + branch_block + text[branch_end:]
+          validation_marker = "## Authoritative validation for 0.0.16"
+          if "## Completed in 0.0.17" not in text:
+              position = text.index(validation_marker)
+              section = '''## Completed in 0.0.17
+
+          - added `infer_seasonal_kalman_starima()` and
+            `SeasonalKalmanSTARIMA.infer()`;
+          - reused central finite-difference curvature and immutable
+            `LikelihoodInferenceResult`;
+          - reconstructed factor expansion, covariance, state space, and Gaussian
+            likelihood at every objective point;
+          - rejected enabled expanded stationarity/invertibility penalty points;
+          - provided factor and optimizer tables, standard errors, normal tests,
+            confidence intervals, correlation, score, rank, condition, eigenvalues, and
+            boundary distances;
+          - retained strict positive-definite full-rank behavior by default and explicit
+            diagnostic positive-eigenspace pseudoinverse behavior;
+          - enabled natural innovation covariance delta-method inference and seasonal
+            factor/covariance cross covariance;
+          - added equivalence, pure seasonal, penalty, singular-Hessian, and validation
+            tests plus method documentation and example.
+
+          ## Validation status for 0.0.17
+
+          Final test count, branch coverage, quality, strict documentation, distribution,
+          and operating-system/Python matrix results are pending on the formal branch
+          head. These values must be recorded before PR #17 is marked ready and merged.
+
+          '''
+              text = text[:position] + section + text[position:]
+          status_path.write_text(text)
+          PY
+      - name: Remove temporary artifacts and commit
+        shell: bash
+        run: |
+          git rm -f --ignore-unmatch ci-seasonal-inference-diagnostic.txt
+          git rm -f --ignore-unmatch .github/workflows/format-seasonal-inference.yml
+          git rm -f --ignore-unmatch .github/workflows/cleanup-seasonal-inference-format.yml
+          git rm -f --ignore-unmatch .github/workflows/diagnose-seasonal-inference.yml
+          git rm -f --ignore-unmatch .github/workflows/stabilize-seasonal-inference-tests.yml
+          git rm -f --ignore-unmatch .github/workflows/validate-clean-seasonal-inference.yml
+          git rm -f .github/workflows/sync-seasonal-inference-docs.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/index.md docs/seasonal_maximum_likelihood.md docs/roadmap.md mkdocs.yml PROJECT_STATUS.md
+          git commit -m "Document seasonal likelihood inference"
+          git push
