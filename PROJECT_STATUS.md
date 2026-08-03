@@ -1,6 +1,6 @@
 # pySTARMAx project status
 
-Updated: 2026-08-03
+Updated: 2026-08-04
 
 ## Purpose
 
@@ -10,154 +10,127 @@ engineering conventions established in pyGWRx and pyKDEX.
 
 ## Repository state
 
-- PR #1 was squash-merged into `main` as commit `795c7e45`.
-- PR #2 was squash-merged into `main` as commit `689f9927`.
-- PR #3 was squash-merged into `main` as commit `d89fa7ce`.
-- PR #4 was squash-merged into `main` as commit `6bd29a63`.
-- PR #5 was squash-merged into `main` as commit `cc1e8ac7`.
-- PR #6 was squash-merged into `main` as commit `cd7ac0c9` after full quality,
-  coverage, distribution, and Ubuntu/Windows/macOS validation on Python 3.11–3.14.
-- Current branch: `agent/rolling-origin-interval-evaluation`.
-- Current draft pull request: PR #7, `Add rolling-origin interval evaluation`.
-- Current development target: version `0.0.7`.
-- Current stage: out-of-sample interval calibration and sharpness diagnostics.
-- Authoritative validation: GitHub Actions CI run #155 completed successfully.
+- PR #1 through PR #7 were squash-merged into `main`.
+- PR #7, rolling-origin interval evaluation, was merged as `884634b0`.
+- `main` is version `0.0.7`.
+- Current branch: `agent/state-space-kalman-core`.
+- Current draft pull request: PR #8, `Add Kalman state-space filtering and missing observations`.
+- Current development target: version `0.0.8`.
+- Current stage: fixed-parameter Gaussian state-space filtering and missing observations.
 
-## Completed baseline through 0.0.6
+## Completed baseline through 0.0.7
 
-- repository metadata, MIT licence, citation file, contribution and security policies;
-- `src/` package layout and typed public API;
+- typed `src/` package, MIT licence, citation metadata, strict docs, and CI;
 - immutable spatial-weight collections and constructors;
-- STAR ordinary least squares and STARMA conditional least squares;
-- coefficient uncertainty, innovation covariance, likelihood, AIC, and BIC;
-- recursive point forecasts and deterministic simulation;
-- classical STACF, nested Yule–Walker STPACF, and residual portmanteau tests;
-- exact-rational diagnostic reference fixture;
-- ordinary STARIMA differencing and forecast inversion;
-- multiplicative seasonal STARIMA with constrained matrix-polynomial factors;
-- aligned original-scale one-step fitted values;
-- conditional future-innovation intervals with pathwise inverse differencing;
+- STAR ordinary least squares and STARMA iterative conditional least squares;
+- coefficient uncertainty, innovation covariance, approximate likelihood, AIC, and BIC;
+- deterministic simulation and recursive point prediction;
+- classical STACF, Yule-Walker STPACF, and residual portmanteau diagnostics;
+- independent exact-rational diagnostic reference fixture;
+- ordinary STARIMA and multiplicative seasonal STARIMA;
+- reversible ordinary-seasonal differencing and original-scale reconstruction;
+- conditional innovation forecast intervals;
 - residual and Gaussian parametric bootstrap intervals with model refitting;
-- parameter-only and full predictive bootstrap uncertainty;
-- packaging, strict documentation, and multi-platform CI.
+- expanding and fixed-window rolling-origin interval evaluation;
+- empirical coverage, width, Winkler score, MAE, and RMSE summaries.
 
-## Completed in the current 0.0.7 step
+## Completed in the current 0.0.8 step
 
-- added `pystarmax.evaluation` without modifying model estimation cores;
-- added the central Winkler `interval_score()` for arbitrary finite array shapes;
-- added immutable `IntervalMetrics` with nominal and empirical coverage, signed
-  coverage gap, absolute coverage error, average width, mean interval score,
-  point-forecast MAE, RMSE, and forecast count;
-- added immutable `RollingOriginResult` with read-only arrays shaped
-  `(origins, horizon, locations)`;
-- added derived coverage, width, and interval-score arrays;
-- added pooled and horizon-specific metric summaries;
-- added expanding-window rolling-origin evaluation;
-- added fixed-length rolling training windows through `window_size`;
-- added conditional and bootstrap interval dispatch through one public function;
-- added deterministic per-origin seeds derived from one NumPy generator;
-- prevented interval keyword arguments from overriding evaluator-controlled
-  `steps`, `level`, and `random_state`;
-- added focused tests for scores, validation, aggregation, dispatch, windows,
-  reproducibility, and unsupported model interfaces;
-- added a runnable rolling-origin example and complete evaluation documentation;
-- updated package exports, documentation navigation, and citation metadata to 0.0.7.
+- added immutable `StateSpaceModel` and `KalmanFilterResult`;
+- added companion-form construction from temporal-by-spatial AR and MA parameters;
+- preserved explicit matrix orientation for non-symmetric spatial weights;
+- added the state disturbance covariance `R Q R'`;
+- added stationary initialization using the unconditional mean and discrete Lyapunov covariance;
+- added user-supplied known initialization;
+- added explicit approximate diffuse initialization;
+- added Gaussian Kalman filtering and fixed-parameter log likelihood;
+- added partial-location missing-observation updates using reduced measurement matrices;
+- added prediction-only handling for fully missing time rows;
+- retained `NaN` in unobserved innovation and innovation-covariance entries;
+- added scale-aware Cholesky jitter and filtered-covariance stability checks;
+- exposed `to_state_space()` and `filter_state_space()` on stationary `STAR` and `STARMA`;
+- updated public exports and package metadata to 0.0.8;
+- added a scalar AR(1) closed-form likelihood check;
+- added tests for non-symmetric operators, missing patterns, initialization, validation, and fitted-model integration;
+- added state-space documentation and a runnable missing-observation example.
 
 ## Statistical interpretation
 
-`rolling_origin_evaluate()` performs genuine out-of-sample evaluation. At each
-origin it constructs a new model and fits only the observations available before
-that origin. It supports either all prior observations or a fixed-length recent
-window.
+The new Kalman layer evaluates a supplied fixed STARMA parameter set. When used
+through `STAR.to_state_space()` or `STARMA.to_state_space()`, those parameters
+come from the existing conditional estimator. The Kalman likelihood is reported
+separately and does not overwrite the historical `STARMAResult` fields.
 
-Empirical coverage is interpreted jointly with average width and the central
-interval score. High coverage alone is not sufficient evidence of a useful
-interval because arbitrarily wide endpoints can cover nearly all observations.
-MAE and RMSE remain point-forecast diagnostics; interval score and coverage assess
-the probabilistic output.
+For `initialization="stationary"`, the transition spectral radius must be below
+one. `initialization="diffuse"` is a large-variance approximation and is not
+claimed to be exact diffuse likelihood.
 
-Metrics can be pooled across all horizons and locations or reported separately
-by forecast horizon. Version 0.0.7 diagnoses calibration but does not
-conformalize, rescale, or otherwise alter interval endpoints.
+Missing cells are omitted from each measurement update. They are not interpolated,
+mean-filled, or treated as zero. A fully missing row advances the latent state
+without adding a likelihood contribution.
+
+## Validation status
+
+Initial GitHub Actions run #162 established that:
+
+- all new numerical tests run successfully;
+- the coverage job passes the configured 80% branch threshold;
+- source distribution, wheel, and Twine checks pass;
+- the only first-pass quality failure was Black formatting in two new files.
+
+Black 26.5.1 formatting was then applied exactly through a temporary workflow.
+The temporary workflow was deleted and the standard CI workflow restored. Final
+Black, isort, Ruff, mypy, MkDocs, coverage, distributions, and the complete
+Ubuntu/Windows/macOS Python 3.11-3.14 matrix still require confirmation on the
+final documented branch head before PR #8 is ready to merge.
 
 ## Design principles
 
 1. Preserve one explicit `(time, location)` convention.
-2. Keep numerical methods independent and auditable.
-3. Separate transforms, weights, estimation, diagnostics, forecasting,
-   bootstrap, evaluation, simulation, and results.
-4. Validate dimensions and assumptions before numerical work.
-5. Treat conditional estimation as a baseline, not exact likelihood.
-6. Add reference fixtures before claiming cross-language equivalence.
-7. Make matrix orientation explicit whenever non-symmetric weights matter.
-8. Keep transformed-scale inference distinct from original-scale reconstruction.
-9. Use fresh estimators and origin-limited histories for out-of-sample evaluation.
-10. Report calibration and sharpness together.
-11. Preserve complete stochastic paths before inverse-differencing quantiles.
-12. Keep origin-specific random streams reproducible without reusing one seed.
-13. Do not hide failed bootstrap replications or incomplete forecast horizons.
-14. Keep future sparse, parallel, and state-space acceleration behind stable APIs.
-
-## Final validation for 0.0.7
-
-GitHub Actions CI run #155 completed successfully on the documented branch head:
-
-- 69 tests passed;
-- total branch coverage: 89.33%, above the configured 80% threshold;
-- Black passed;
-- isort passed;
-- Ruff passed;
-- mypy passed;
-- exact diagnostic fixture regeneration produced a clean diff;
-- strict MkDocs build passed;
-- source distribution and wheel built successfully;
-- Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+2. Keep conditional estimation and state-space likelihood conceptually separate.
+3. Make every non-symmetric spatial-matrix orientation explicit.
+4. Never impute missing observations inside the Kalman filter.
+5. Use stable linear solves rather than explicit covariance inverses.
+6. Record numerical jitter instead of silently hiding it.
+7. Distinguish stationary, known, approximate diffuse, and future exact diffuse initialization.
+8. Do not call fixed-parameter filtering maximum-likelihood estimation.
+9. Keep transformed-scale inference distinct from original-scale reconstruction.
+10. Add independent numerical references before claiming external equivalence.
+11. Keep future sparse and compiled acceleration behind stable public APIs.
 
 ## Immediate next tasks
 
-1. Keep PR #7 as draft until explicitly requested for review or merge.
-2. Begin exact state-space/Kalman likelihood and missing-observation support.
-3. Add diagonal and full contemporaneous innovation covariance likelihoods.
-4. Add stationarity and invertibility checks with optional constrained fitting.
-5. Add sparse spatial matrices and large-network computation.
-6. Add automatic order selection and exogenous regressors/interventions.
-7. Add NetworkX/libpysal/GeoPandas/OSMnx adapters.
-8. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
-9. Add parallel execution and advanced bootstrap schemes as optional extensions.
-10. Add calibrated or conformal interval post-processing after benchmark evidence.
-
-## Remaining release estimate
-
-- A mature first PyPI pre-release is expected after approximately five additional
-  stages following 0.0.7: state-space/missing data; covariance and constraints;
-  sparse/ecosystem support; selection/exogenous inputs; and reference/release
-  hardening.
-- Completing most advanced roadmap extensions is expected to require roughly
-  eight to ten additional stages after 0.0.7, depending on whether parallel,
-  advanced bootstrap, calibration, and generalized time-varying models are split.
+1. Finish final CI cleanup for PR #8 and keep the final diff free of temporary workflows.
+2. Add direct optimization of the Kalman likelihood.
+3. Add scalar, diagonal, and full innovation-covariance parameterizations.
+4. Add likelihood-Hessian standard errors and optimizer diagnostics.
+5. Add stationarity and invertibility checks with optional constrained fitting.
+6. Add integrated and multiplicative seasonal state-space wrappers.
+7. Add sparse spatial matrices and large-network computation.
+8. Add automatic order selection and exogenous regressors/interventions.
+9. Add NetworkX, libpysal, GeoPandas, and OSMnx adapters.
+10. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
 
 ## Known limitations
 
-- MA estimation is conditional and uses recursively estimated innovations;
+- direct Kalman maximum-likelihood parameter estimation is not yet implemented;
+- exact diffuse initialization and smoothing are not yet implemented;
+- current state-space model integration is limited to stationary `STAR` and `STARMA`;
+- stationarity and invertibility constraints are not imposed during conditional fitting;
+- the conditional estimator still uses recursively estimated innovations;
 - seasonal nonlinear estimation uses zero pre-sample innovations;
-- stationarity and invertibility constraints are not imposed during optimization;
-- seasonal standard errors use a local nonlinear least-squares Jacobian;
-- information criteria use a scalar innovation-variance approximation;
-- residual bootstrap assumes complete innovation vectors are exchangeable over time;
+- historical information criteria still use a scalar innovation-variance approximation;
 - bootstrap and rolling-origin refits execute serially;
-- no block, wild, predictive-residual, studentized, or bias-corrected bootstrap;
-- no automatic interval recalibration or uncertainty for empirical score means;
-- overlapping forecast origins can produce dependent forecast errors;
+- no block, wild, studentized, or bias-corrected bootstrap is included;
 - model order and spatial weights remain fixed across bootstrap replications;
 - `STARMAResult` for integrated models remains on the transformed scale;
 - dense matrices are used throughout;
-- missing values, exogenous regressors, and interventions are unsupported.
+- exogenous regressors and interventions are unsupported.
 
 ## Handoff instruction
 
-Before every substantial development step, read this file, `docs/model.md`,
-`docs/forecasting.md`, `docs/bootstrap.md`, `docs/evaluation.md`, and the latest
-file under `docs/development/`. After completing a step, update the completed,
-validation, next-task, estimate, and limitation sections so another conversation
-can continue without reconstructing project history.
+Before the next substantial step, read this file, `docs/model.md`,
+`docs/state_space.md`, `docs/forecasting.md`, `docs/bootstrap.md`,
+`docs/evaluation.md`, and the latest file under `docs/development/`. After a
+stage is completed, update repository state, validation, next tasks, and known
+limitations so development can continue without reconstructing history.
