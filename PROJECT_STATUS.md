@@ -69,20 +69,27 @@ Missing cells are omitted from each measurement update. They are not interpolate
 mean-filled, or treated as zero. A fully missing row advances the latent state
 without adding a likelihood contribution.
 
-## Validation status
+## Final validation for 0.0.8
 
-Initial GitHub Actions run #162 established that:
+GitHub Actions CI run #179 completed successfully on the clean implementation
+head:
 
-- all new numerical tests run successfully;
-- the coverage job passes the configured 80% branch threshold;
-- source distribution, wheel, and Twine checks pass;
-- the only first-pass quality failure was Black formatting in two new files.
+- 77 tests passed;
+- total branch coverage was 88.25%, above the configured 80% threshold;
+- Black passed;
+- isort passed;
+- Ruff passed;
+- mypy passed with no type errors;
+- exact diagnostic reference regeneration produced a clean diff;
+- strict MkDocs construction passed;
+- source distribution and wheel built successfully;
+- Twine metadata checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
+- the final PR surface contains 14 formal files and no temporary workflow files.
 
-Black 26.5.1 formatting was then applied exactly through a temporary workflow.
-The temporary workflow was deleted and the standard CI workflow restored. Final
-Black, isort, Ruff, mypy, MkDocs, coverage, distributions, and the complete
-Ubuntu/Windows/macOS Python 3.11-3.14 matrix still require confirmation on the
-final documented branch head before PR #8 is ready to merge.
+The final handoff edit changes documentation only; the numerical implementation,
+tests, public API, metadata, and workflow configuration are unchanged from the
+validated implementation head.
 
 ## Design principles
 
@@ -100,16 +107,16 @@ final documented branch head before PR #8 is ready to merge.
 
 ## Immediate next tasks
 
-1. Finish final CI cleanup for PR #8 and keep the final diff free of temporary workflows.
-2. Add direct optimization of the Kalman likelihood.
-3. Add scalar, diagonal, and full innovation-covariance parameterizations.
-4. Add likelihood-Hessian standard errors and optimizer diagnostics.
-5. Add stationarity and invertibility checks with optional constrained fitting.
-6. Add integrated and multiplicative seasonal state-space wrappers.
-7. Add sparse spatial matrices and large-network computation.
-8. Add automatic order selection and exogenous regressors/interventions.
-9. Add NetworkX, libpysal, GeoPandas, and OSMnx adapters.
-10. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+1. Add direct optimization of the Kalman likelihood.
+2. Add scalar, diagonal, and full innovation-covariance parameterizations.
+3. Add likelihood-Hessian standard errors and optimizer diagnostics.
+4. Add stationarity and invertibility checks with optional constrained fitting.
+5. Add integrated and multiplicative seasonal state-space wrappers.
+6. Add sparse spatial matrices and large-network computation.
+7. Add automatic order selection and exogenous regressors/interventions.
+8. Add NetworkX, libpysal, GeoPandas, and OSMnx adapters.
+9. Add cross-language estimator fixtures and prepare the first PyPI pre-release.
+10. Add optional smoothing, advanced bootstrap, and interval calibration extensions.
 
 ## Known limitations
 
