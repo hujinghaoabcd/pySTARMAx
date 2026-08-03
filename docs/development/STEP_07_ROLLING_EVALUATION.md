@@ -5,8 +5,8 @@ Updated: 2026-08-03
 ## Goal
 
 Add an out-of-sample evaluation layer for the conditional and bootstrap
-prediction intervals introduced in versions 0.0.5 and 0.0.6. The layer must
-compare interval methods without changing model estimation or forecast APIs.
+prediction intervals introduced in versions 0.0.5 and 0.0.6. The layer compares
+interval methods without changing model estimation or forecast APIs.
 
 ## Public API
 
@@ -75,6 +75,7 @@ from overriding `steps`, `level`, or `random_state`.
 - `tests/test_evaluation.py`
 - `examples/rolling_origin_evaluation.py`
 - `docs/evaluation.md`
+- `docs/index.md`
 - `src/pystarmax/__init__.py`
 - `mkdocs.yml`
 - `README.md`
@@ -97,10 +98,22 @@ The focused tests cover:
 - reserved keyword rejection;
 - missing interval-method rejection.
 
-The first complete core CI run after formatting and lint corrections passed
-Black, isort, Ruff, mypy, strict MkDocs, coverage, distributions, and the
-available platform matrix. A final full CI run must be recorded after all release
-documentation is present.
+## Final validation
+
+GitHub Actions CI run #155 completed successfully on the complete implementation:
+
+- 69 tests passed;
+- total branch coverage was 89.33%;
+- Black, isort, Ruff, and mypy passed;
+- exact diagnostic fixture regeneration produced a clean diff;
+- strict MkDocs build passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+CI run #157 repeated the full workflow after final documentation and handoff
+updates and also completed successfully. The README status was then mechanically
+updated to 0.0.7 by a self-deleting workflow; the present user-authored handoff
+commit triggers the final branch-head confirmation.
 
 ## Known limitations
 
