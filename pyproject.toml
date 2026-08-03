@@ -94,8 +94,6 @@ filterwarnings = [
 [tool.black]
 line-length = 88
 target-version = ["py311"]
-diff = true
-color = false
 
 [tool.isort]
 profile = "black"
