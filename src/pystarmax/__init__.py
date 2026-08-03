@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.9"
+__version__ = "0.0.10"
 
 from pystarmax.diagnostics import (
     PortmanteauResult,
@@ -35,6 +35,13 @@ from pystarmax.evaluation import (
     rolling_origin_evaluate,
 )
 from pystarmax.forecasting import ForecastInterval
+from pystarmax.likelihood_inference import (
+    FiniteDifferenceCurvature,
+    LikelihoodInferenceResult,
+    finite_difference_curvature,
+    finite_difference_hessian,
+    infer_kalman_starma,
+)
 from pystarmax.maximum_likelihood import (
     CovarianceType,
     KalmanSTARMA,
@@ -73,6 +80,8 @@ __all__ = [
     "KalmanSTARMA",
     "STARMAResult",
     "KalmanSTARMAResult",
+    "LikelihoodInferenceResult",
+    "FiniteDifferenceCurvature",
     "ForecastInterval",
     "IntervalMetrics",
     "RollingOriginResult",
@@ -96,6 +105,9 @@ __all__ = [
     "restore_fitted_values",
     "interval_score",
     "rolling_origin_evaluate",
+    "finite_difference_curvature",
+    "finite_difference_hessian",
+    "infer_kalman_starma",
     "build_starma_state_space",
     "fitted_starma_state_space",
     "kalman_filter",
