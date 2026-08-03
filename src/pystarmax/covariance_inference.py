@@ -170,6 +170,7 @@ def innovation_covariance_transform(
         raise ValueError("raw_parameters must contain finite values")
     raw = np.ascontiguousarray(raw, dtype=float)
     covariance = codec.unpack(raw)
+    indices: tuple[tuple[int, int], ...]
 
     if covariance_type == "scalar":
         variance = float(covariance[0, 0])
