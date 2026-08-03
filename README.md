@@ -9,15 +9,16 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.13:** conditional and Gaussian Kalman maximum-likelihood
+> **Status — 0.0.14:** conditional and Gaussian Kalman maximum-likelihood
 > STARMA estimation, AR stationarity and MA invertibility diagnostics,
 > observed-information inference, natural-scale innovation covariance
 > delta-method inference, missing-observation filtering, Rauch--Tung--Striebel
-> fixed-interval state smoothing, ordinary and multiplicative seasonal STARIMA,
+> fixed-interval state smoothing, conditional-Gaussian original innovation
+> disturbance smoothing, ordinary and multiplicative seasonal STARIMA,
 > conditional and bootstrap forecast intervals, and rolling-origin evaluation.
-> Smooth admissibility parameterization, original-innovation disturbance
-> smoothing, sparse computation, integrated/seasonal Kalman MLE, exogenous
-> regressors, and time-varying extensions remain planned.
+> Smooth admissibility parameterization, sparse computation,
+> integrated/seasonal Kalman MLE, exogenous regressors, and time-varying
+> extensions remain planned.
 
 ## Installation
 
@@ -279,8 +280,9 @@ The returned disturbance arrays describe
 alpha_(t+1) - state_intercept - transition @ alpha_t
 ```
 
-They are **state-equation disturbances**, not automatically the original
-location-level innovations when the state selection matrix is not one-to-one.
+They are **state-equation disturbances**. Version 0.0.14 provides a separate
+conditional-Gaussian transformation to the original location-level
+innovations.
 
 Low-level use:
 
@@ -291,6 +293,59 @@ smoothed = kalman_smoother(filtered, rcond=1e-10)
 ```
 
 See [`docs/smoothing.md`](docs/smoothing.md).
+
+## Original innovation disturbance smoothing
+
+For the state disturbance \(w_t=R\eta_t\), with
+\(\eta_t\sim\mathcal N(0,Q)\), define
+
+\[
+S=RQR^\top,
+\qquad
+A=QR^\top S^+.
+\]
+
+Given RTS posterior state-disturbance moments \((\mu_w,V_w)\), pySTARMAx uses
+
+\[
+E(\eta_t\mid y)=A\mu_w,
+\]
+
+\[
+\operatorname{Var}(\eta_t\mid y)
+=Q-AS A^\top+A V_wA^\top.
+\]
+
+This retains innovation uncertainty that cannot be identified from the state
+disturbance. It is not a naive pseudoinverse of the selection matrix.
+
+```python
+innovation_result = mle.smooth_innovation_disturbances(
+    incomplete,
+    rcond=1e-10,
+)
+
+print(innovation_result.innovation_mean)
+print(innovation_result.innovation_covariance)
+print(innovation_result.unresolved_covariance)
+print(innovation_result.process_rank)
+print(innovation_result.used_pseudoinverse)
+print(innovation_result.mean_support_residual)
+```
+
+Transition index `t` represents the innovation entering state `t + 1`. The
+result therefore contains `T - 1` disturbances for `T` stored state times. The
+initialization disturbance before the first stored state is not reconstructed.
+
+Low-level use:
+
+```python
+from pystarmax import innovation_disturbance_smoother
+
+innovation_result = innovation_disturbance_smoother(smoothed)
+```
+
+See [`docs/innovation_smoothing.md`](docs/innovation_smoothing.md).
 
 ## Ordinary STARIMA
 
@@ -442,7 +497,9 @@ count, coverage, pull request, and next-stage handoff.
 - Kalman MLE is stationary and non-seasonal;
 - exact diffuse likelihood and smoothing are unavailable;
 - smoothing is fixed-parameter and does not propagate parameter uncertainty;
-- original location-level innovation disturbance smoothing is not yet exposed;
+- innovation smoothing currently exposes marginal covariance by transition,
+  not cross-time innovation covariance;
+- the initialization disturbance before the first stored state is unavailable;
 - AR/MA admissibility uses explicit feasibility penalties rather than a smooth
   parameterization;
 - state and spatial matrices are dense;

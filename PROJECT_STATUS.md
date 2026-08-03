@@ -11,17 +11,18 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #12 have been squash-merged into `main`.
-- `main` is version `0.0.12` plus the restored complete CI workflow.
-- Current branch: `agent/kalman-state-smoothing`.
-- Current draft pull request: PR #13, `Add Kalman fixed-interval state smoothing`.
-- Current development version: `0.0.13`.
-- PR #13 contains 20 formal code, test, example, metadata, and documentation
-  files; no temporary workflow or diagnostic files remain.
-- The implementation and documentation head passed the complete CI matrix in
-  GitHub Actions run #304, run ID `30852463900`.
+- PR #1 through PR #13 have been squash-merged into `main`.
+- `main` is version `0.0.13`.
+- Current branch: `agent/innovation-disturbance-smoothing`.
+- Current pull request: PR #14, `Add original innovation disturbance
+  smoothing`.
+- Current development version: `0.0.14`.
+- The implementation maps RTS state disturbances back to original
+  location-level innovations with an exact conditional-Gaussian derivation.
+- No naive selection-matrix inverse is used, and unidentified innovation
+  covariance is retained explicitly.
 
-## Completed baseline through 0.0.11
+## Completed baseline through 0.0.13
 
 - immutable spatial-weight collections and constructors;
 - STAR ordinary least squares and STARMA iterative conditional least squares;
@@ -37,126 +38,112 @@ cross-platform CI.
 - scalar, diagonal, and Cholesky full innovation covariance;
 - AIC, BIC, optimizer, covariance, filtering, and prediction diagnostics;
 - finite-difference likelihood score and observed-information Hessian;
-- coefficient standard errors, normal tests, intervals, rank, condition, score,
-  and boundary diagnostics;
+- natural-scale innovation covariance delta-method inference;
 - reusable AR and inverse-MA companion eigensystem diagnostics;
-- dual stationarity/invertibility start shrinkage, penalties, and final checks.
+- dual stationarity/invertibility start shrinkage, penalties, and final checks;
+- Rauch--Tung--Striebel fixed-interval state smoothing;
+- lag-one state covariance and state-equation disturbance moments;
+- explicit rank and pseudoinverse diagnostics for singular state prediction.
 
-## Completed in 0.0.12
+## Completed in 0.0.14
 
-### Natural covariance transformations
+### Conditional-Gaussian innovation recovery
 
-- scalar shared variance from one log standard deviation;
-- diagonal location variances from location log standard deviations;
-- full covariance lower triangle from log-Cholesky diagonal and unrestricted
-  lower-factor entries;
-- analytic Jacobian for `Sigma = L L.T`;
-- first-order delta covariance `J V J.T`;
-- retained dynamic-coefficient/covariance-element cross covariance;
-- immutable natural estimates, standard errors, correlations, intervals, and
-  symmetric matrix-shaped standard errors;
-- no duplicated scalar variance parameters;
-- no ordinary variance-equals-zero Wald test for a boundary null;
-- no silent clipping of negative lower endpoints from unbounded normal
-  approximations.
-
-### Integration corrections completed during 0.0.13
-
-- `infer_kalman_starma()` now obtains `n_locations` from the fitted innovation
-  covariance instead of an undefined local variable;
-- covariance-element indices have an explicit variable-length tuple type for
-  current mypy versions;
-- the affected covariance and likelihood inference regression tests pass.
-
-## Completed in 0.0.13
-
-### Rauch--Tung--Striebel smoothing
-
-- added immutable `KalmanSmootherResult`;
-- added public `kalman_smoother()`;
-- added fitted `KalmanSTARMA.smooth()` for training or new incomplete data;
-- implemented RTS state mean and covariance recursion;
-- retained every smoothing gain;
-- retained lag-one covariance `Cov(alpha_t, alpha_(t+1) | y_1:T)`;
-- exposed smoothed observation means and covariances;
-- derived state-equation disturbance means and conditional covariances;
-- preserved partial-location and fully missing-row semantics from filtering.
-
-### Rank-deficient prediction policy
-
-- full-rank predicted covariance uses a stable linear solve;
-- rank-deficient prediction uses a positive-eigenspace pseudoinverse;
-- `rcond` defines the retained eigenspace;
-- every transition records numerical prediction rank and pseudoinverse use;
-- covariance matrices are symmetrized and only tiny negative eigenvalues are
-  projected to zero;
-- materially indefinite covariance raises.
-
-### Validation references
-
-- scalar AR(1) one-gap Gaussian bridge with analytic mean and variance;
-- contiguous missing block compared with direct joint-Gaussian conditioning;
-- exact state-disturbance recovery for fully observed scalar AR(1);
-- final smoothed state/covariance equality with the final filtered values;
-- smoothed covariance reduction relative to filtering;
-- explicit rank-deficient prediction path;
-- fitted-model smoothing of a new incomplete matrix;
-- one-time-point edge case, immutability, and validation tests.
-
-## Mathematical convention
-
-The state equation is
+For
 
 \[
-\alpha_{t+1}=d+T\alpha_t+w_{t+1}.
+w_t=R\eta_t,
+\qquad
+\eta_t\sim\mathcal N(0,Q),
 \]
 
-The RTS gain is
+define
 
 \[
-J_t=P_{t|t}T^\top P_{t+1|t}^{+}.
+S=RQR^\top,
+\qquad
+A=QR^\top S^+.
 \]
 
-The smoothed moments are
+Given the RTS posterior moments
 
 \[
-a_{t|T}=a_{t|t}+J_t(a_{t+1|T}-a_{t+1|t}),
+\mu_{w,t}=E(w_t\mid y_{1:T}),
+\qquad
+V_{w,t}=\operatorname{Var}(w_t\mid y_{1:T}),
+\]
+
+the implementation returns
+
+\[
+E(\eta_t\mid y_{1:T})=A\mu_{w,t},
 \]
 
 \[
-P_{t|T}=P_{t|t}+J_t(P_{t+1|T}-P_{t+1|t})J_t^\top.
+\operatorname{Var}(\eta_t\mid y_{1:T})
+=Q-AS A^\top+A V_{w,t}A^\top.
 \]
 
-The stored lag-one covariance is
+### Identifiability and rank policy
 
-\[
-C_{t,t+1|T}=J_tP_{t+1|T}.
-\]
+- `unresolved_covariance = Q - A S A.T` is retained rather than discarded;
+- a full-rank process covariance uses a stable linear solve;
+- a rank-deficient process covariance uses a positive-eigenspace pseudoinverse;
+- `rcond` controls the retained eigenspace;
+- process rank and pseudoinverse use are explicit result fields;
+- materially indefinite process or posterior covariance raises;
+- only numerically tiny negative covariance eigenvalues are projected to zero.
 
-`state_disturbance_mean` describes
-`alpha_(t+1) - d - T @ alpha_t`. It is not automatically the original
-location-level innovation because the state selection matrix may not be
-one-to-one.
+### Support diagnostics
 
-## Authoritative 0.0.13 validation
+Exact state-disturbance moments lie in the range of `S`. The result reports:
 
-GitHub Actions CI run #304, run ID `30852463900`, validated the complete
+- `mean_support_residual[t] = ||mu_w - Pi_S mu_w||_2`;
+- `covariance_support_residual[t] = ||V_w - Pi_S V_w Pi_S||_F`.
+
+These diagnostics expose numerical leakage or inconsistent externally
+constructed state-smoother results. Unsupported state directions are not used to
+fabricate original innovation information.
+
+### Public API
+
+- added immutable `InnovationDisturbanceResult`;
+- added public `innovation_disturbance_smoother()`;
+- added fitted `KalmanSTARMA.smooth_innovation_disturbances()`;
+- supports the training sample or a new incomplete observation matrix;
+- exposes innovation posterior means and marginal covariances, conditioning map,
+  unresolved covariance, process support, rank, and support residuals;
+- all public numerical arrays are defensive read-only copies.
+
+### Time convention
+
+State transition index `t` describes
+
+```text
+alpha_(t+1) - state_intercept - transition @ alpha_t
+```
+
+and therefore innovation result index `t` corresponds to `eta_(t+1)`. A sample
+with `T` stored state times produces `T - 1` innovation disturbances. The
+initialization disturbance before the first stored state is not reconstructed.
+
+## Authoritative validation for 0.0.14
+
+GitHub Actions CI #322, run ID `30855134698`, validated the complete
 implementation and documentation head:
 
-- 119 tests passed;
-- total branch coverage was 87.32%, above the required 80%;
-- `src/pystarmax/smoothing.py` branch coverage was 87.1%;
+- 126 tests passed;
+- total branch coverage was 87.06%, above the required 80%;
+- `src/pystarmax/innovation_smoothing.py` coverage was 80.1%;
 - Black, isort, Ruff, and mypy passed;
-- independent diagnostic reference regeneration produced a clean diff;
+- independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14;
-- no temporary workflows or diagnostic files were present in the validated
-  branch head.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A final documentation-only commit records these results. Its CI run is used as
-the merge gate and is reported in the PR description without rewriting this
-section again.
+A final validation-record-only merge-gate CI is run after this status and the
+Step 14 handoff are updated. No implementation, test, API, or method-document
+content changes are made after CI #322.
 
 ## Design principles
 
@@ -172,27 +159,28 @@ section again.
 9. Use stable solves before explicit inverses.
 10. Record rank-deficient pseudoinverse use rather than hiding it.
 11. Distinguish state disturbances from original location innovations.
-12. Require analytic or independent Gaussian references for new numerical claims.
-13. Keep public numerical arrays immutable.
+12. Preserve innovation uncertainty not identified by the state selection map.
+13. Require analytic or independent Gaussian references for numerical claims.
+14. Keep public numerical arrays immutable.
 
 ## Immediate next tasks
 
-1. Run the final complete CI matrix on this validation-record-only head.
-2. Update PR #13 with the final merge-gate CI identifier.
-3. Mark PR #13 ready and squash-merge it into `main`.
-4. Create `agent/innovation-disturbance-smoothing` from the merge commit.
-5. Derive original location-level innovation disturbance smoothing without using
-   a naive selection-matrix pseudoinverse.
-6. Add integrated and multiplicative seasonal state-space/MLE wrappers.
-7. Add sparse spatial/state matrices, order selection, exogenous inputs,
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #14, mark it ready, and squash-merge it into `main`.
+3. Begin integrated and multiplicative seasonal state-space/Kalman MLE support.
+4. Add cross-time innovation covariance and conditional simulation smoothing.
+5. Add sparse spatial/state matrices, order selection, exogenous inputs,
    ecosystem adapters, and cross-language fixtures.
 
 ## Known limitations
 
-- state smoothing is fixed-parameter and does not propagate parameter
-  uncertainty;
-- state disturbances are not yet mapped to original location innovations;
+- state and innovation smoothing are fixed-parameter and do not propagate
+  estimator uncertainty;
+- innovation smoothing exposes marginal covariance by transition, not cross-time
+  innovation covariance;
+- the initialization disturbance before the first stored state is unavailable;
 - exact diffuse filtering and smoothing are unavailable;
+- simulation smoothing is unavailable;
 - maximum likelihood covers stationary non-seasonal STARMA only;
 - integrated and seasonal wrappers still use conditional estimation;
 - feasibility is enforced by penalties rather than a smooth bijection;
@@ -201,14 +189,13 @@ section again.
 - robust, sandwich, profile-likelihood, likelihood-ratio, and Kalman-MLE
   bootstrap inference are unavailable;
 - bootstrap and rolling refits execute serially;
-- model order and spatial weights remain fixed across bootstrap replications;
 - exogenous regressors and intervention variables are unsupported.
 
 ## Handoff instruction
 
 Before the next substantial step, read this file, `docs/model.md`,
 `docs/admissibility.md`, `docs/state_space.md`, `docs/smoothing.md`,
-`docs/maximum_likelihood.md`, `docs/likelihood_inference.md`,
-`docs/covariance_inference.md`, and the latest development handoff. Update
-repository state, validation, next tasks, and limitations after every completed
-stage.
+`docs/innovation_smoothing.md`, `docs/maximum_likelihood.md`,
+`docs/likelihood_inference.md`, `docs/covariance_inference.md`, and the latest
+development handoff. Update repository state, validation, next tasks, and
+limitations after every completed stage.

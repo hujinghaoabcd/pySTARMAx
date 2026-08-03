@@ -10,6 +10,10 @@ from typing import Any
 from pystarmax._maximum_likelihood_model import KalmanSTARMA as _KalmanSTARMA
 from pystarmax._maximum_likelihood_result import KalmanSTARMAResult
 from pystarmax._maximum_likelihood_utils import CovarianceType
+from pystarmax.innovation_smoothing import (
+    InnovationDisturbanceResult,
+    innovation_disturbance_smoother,
+)
 from pystarmax.likelihood_inference import (
     LikelihoodInferenceResult,
     infer_kalman_starma,
@@ -18,7 +22,7 @@ from pystarmax.smoothing import KalmanSmootherResult, kalman_smoother
 
 
 class KalmanSTARMA(_KalmanSTARMA):
-    """Kalman STARMA estimator with likelihood inference and state smoothing."""
+    """Kalman STARMA estimator with inference and disturbance smoothing."""
 
     def infer(
         self,
@@ -46,9 +50,22 @@ class KalmanSTARMA(_KalmanSTARMA):
         """Smooth training data or a new incomplete observation matrix."""
         return kalman_smoother(self.filter(data), rcond=rcond)
 
+    def smooth_innovation_disturbances(
+        self,
+        data: Any | None = None,
+        *,
+        rcond: float = 1e-10,
+    ) -> InnovationDisturbanceResult:
+        """Smooth original location-level process innovations."""
+        return innovation_disturbance_smoother(
+            self.smooth(data, rcond=rcond),
+            rcond=rcond,
+        )
+
 
 __all__ = [
     "CovarianceType",
+    "InnovationDisturbanceResult",
     "KalmanSTARMA",
     "KalmanSTARMAResult",
     "KalmanSmootherResult",
