@@ -1,0 +1,220 @@
+name: Robust temporary documentation synchronization
+
+on:
+  push:
+    branches:
+      - agent/kalman-state-smoothing
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/kalman-state-smoothing
+          fetch-depth: 0
+      - name: Synchronize versioned documentation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          readme_path = Path('README.md')
+          readme = readme_path.read_text(encoding='utf-8')
+          start = readme.index('> Status:')
+          end = readme.index('\n\n## Installation', start)
+          status = '''> Status: version 0.0.13 implements conditional and Gaussian Kalman
+> maximum-likelihood STARMA estimation, AR stationarity and MA invertibility
+> enforcement, observed-information inference, natural-scale innovation
+> covariance delta-method inference, missing-observation filtering,
+> Rauch--Tung--Striebel fixed-interval state smoothing, ordinary and
+> multiplicative seasonal STARIMA, forecast intervals, bootstrap refitting, and
+> rolling-origin evaluation. Smooth admissibility parameterization, original-
+> innovation disturbance smoothing, sparse computation, and time-varying
+> extensions remain planned.'''
+          readme = readme[:start] + status + readme[end:]
+
+          old_scale = '''Inference is reported on the raw optimizer scale. Intercept, AR, and MA entries
+are already on their natural coefficient scale. Covariance entries remain
+log-standard-deviation or Cholesky-factor parameters; their standard errors are
+not automatically transformed into covariance-element standard errors.
+'''
+          new_scale = '''Likelihood inference is reported on the raw optimizer scale. Intercept, AR, and
+MA entries are already natural coefficients. Covariance entries remain
+log-standard-deviation or Cholesky-factor parameters in `optimizer_table`.
+Use `inference.innovation_covariance_inference()` for analytic delta-method
+standard errors, cross covariance, and intervals on natural variance and
+covariance elements.
+
+See [`docs/covariance_inference.md`](docs/covariance_inference.md).
+'''
+          if old_scale not in readme:
+              raise SystemExit('README optimizer-scale paragraph not found')
+          readme = readme.replace(old_scale, new_scale, 1)
+
+          marker = '## Fixed-parameter state-space filtering\n'
+          smoothing_section = '''## Fixed-interval state smoothing
+
+```python
+smoothed = mle.smooth(incomplete)
+
+print(smoothed.smoothed_observations)
+print(smoothed.smoothed_observation_covariance)
+print(smoothed.state_disturbance_mean)
+print(smoothed.prediction_rank)
+print(smoothed.used_pseudoinverse)
+```
+
+`KalmanSTARMA.smooth()` runs a Rauch--Tung--Striebel backward pass over the
+existing Kalman filter output. It supports partial-location and fully missing
+rows, reports lag-one state covariance, and records when a rank-deficient
+predicted covariance requires a positive-eigenspace pseudoinverse.
+
+The returned disturbance arrays describe the state-equation disturbance
+`alpha_(t+1) - d - T @ alpha_t`. They are not automatically the original
+location-level innovations when the state selection matrix is not one-to-one.
+
+See [`docs/smoothing.md`](docs/smoothing.md).
+
+'''
+          if marker not in readme:
+              raise SystemExit('README filtering marker not found')
+          if '## Fixed-interval state smoothing\n' not in readme:
+              readme = readme.replace(marker, smoothing_section + marker, 1)
+          readme_path.write_text(readme, encoding='utf-8')
+
+          inference_path = Path('docs/likelihood_inference.md')
+          inference = inference_path.read_text(encoding='utf-8')
+          old_parameter = '''Therefore, covariance-parameter standard errors in `optimizer_table` are not
+standard errors of covariance matrix elements. The current implementation
+deliberately does not apply a delta-method transformation to variances,
+correlations, or covariance entries. `coefficient_table` and
+`confidence_intervals()` are restricted to the intercept and dynamic
+coefficients.
+'''
+          new_parameter = '''Therefore, covariance-parameter standard errors in `optimizer_table` are not
+standard errors of covariance matrix elements. Version 0.0.12 adds a separate
+analytic delta-method layer:
+
+```python
+natural_covariance = inference.innovation_covariance_inference()
+print(natural_covariance.element_table)
+print(natural_covariance.standard_error_matrix)
+```
+
+`coefficient_table` and `confidence_intervals()` remain restricted to the
+intercept and dynamic coefficients. Natural variance and covariance inference is
+documented in [Innovation covariance inference](covariance_inference.md).
+'''
+          if old_parameter in inference:
+              inference = inference.replace(old_parameter, new_parameter, 1)
+          scope_start = inference.index('## Statistical scope\n')
+          inference = inference[:scope_start] + '''## Statistical scope
+
+Included through 0.0.13:
+
+- central finite-difference score and Hessian;
+- observed-information covariance;
+- dynamic coefficient standard errors and normal tests;
+- analytic natural-scale scalar, diagonal, and full-Cholesky covariance
+  transformations;
+- rank, definiteness, condition, score, and dual-boundary diagnostics;
+- explicit pseudoinverse diagnostics;
+- complete and partially missing stationary observations through the fitted
+  Kalman likelihood;
+- rejection of AR-stationarity and MA-invertibility penalty points.
+
+Not yet included:
+
+- delta-method uncertainty for correlations, spectral radii, or polynomial
+  roots;
+- robust or sandwich covariance;
+- profile likelihood or likelihood-ratio confidence intervals;
+- bootstrap uncertainty for `KalmanSTARMA`;
+- smooth stationarity/invertibility parameterization;
+- exact diffuse likelihood;
+- integrated and multiplicative seasonal maximum-likelihood inference;
+- sparse or automatic-differentiation Hessians.
+
+These exclusions are explicit. A numerically invertible Hessian alone does not
+establish model adequacy, Gaussian correctness, strong identification, or a safe
+distance from the admissibility boundaries.
+'''
+          inference_path.write_text(inference, encoding='utf-8')
+
+          state_path = Path('docs/state_space.md')
+          state = state_path.read_text(encoding='utf-8')
+          state = state.replace(
+              '- smoothing or disturbance smoothing;',
+              '- original location-level innovation disturbance smoothing;',
+          )
+          sentence = 'Convenience properties return predicted and filtered observation-scale values.\n'
+          addition = sentence + '''
+Fixed-interval backward smoothing is documented separately in
+[Fixed-interval state smoothing](smoothing.md).
+'''
+          if '[Fixed-interval state smoothing](smoothing.md)' not in state:
+              state = state.replace(sentence, addition, 1)
+          state_path.write_text(state, encoding='utf-8')
+
+          roadmap_path = Path('docs/roadmap.md')
+          roadmap = roadmap_path.read_text(encoding='utf-8')
+          prefix = roadmap[:roadmap.index('## Next priorities\n')]
+          roadmap = prefix + '''## Implemented in 0.0.12
+
+- natural-scale scalar shared-variance inference;
+- natural-scale diagonal location-variance inference;
+- analytic full-Cholesky covariance-element Jacobian;
+- first-order delta-method covariance and standard errors;
+- retained dynamic-coefficient/covariance-element cross covariance;
+- immutable covariance-element tables, correlations, intervals, and
+  matrix-shaped standard errors;
+- explicit boundary-null and unbounded-normal-interval policy;
+- analytic, finite-difference, propagation, fitted-model, validation, and
+  immutability tests.
+
+## Implemented in 0.0.13
+
+- Rauch--Tung--Striebel fixed-interval state smoothing;
+- smoothed state and observation moments;
+- lag-one state cross covariance;
+- state-equation disturbance means and conditional covariances;
+- positive-eigenspace pseudoinverse for rank-deficient predictions;
+- per-transition prediction rank and pseudoinverse diagnostics;
+- fitted `KalmanSTARMA.smooth()` for training or new incomplete data;
+- analytic Gaussian bridge and joint-conditioning references;
+- inherited 0.0.12 inference metadata and typing regression fixes;
+- method documentation, runnable example, and Step 12/13 handoffs.
+
+## Next priorities
+
+1. Original location-level innovation disturbance smoothing with an explicit
+   conditional Gaussian derivation.
+2. Integrated and multiplicative seasonal state-space/MLE wrappers.
+3. Smooth stability/invertibility parameterization for optimization and
+   inference.
+4. Sparse spatial and state matrices for large-network computation.
+5. Automatic order selection using STACF/STPACF and information criteria.
+6. Exogenous regressors and intervention variables.
+7. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+8. Cross-language estimator fixtures and a first PyPI pre-release.
+9. Optional parallel bootstrap and rolling-origin execution behind stable APIs.
+10. Advanced bootstrap, profile-likelihood, sandwich, and conformal calibration.
+11. Generalized, location-varying, and time-varying STARMA extensions.
+'''
+          roadmap_path.write_text(roadmap, encoding='utf-8')
+          PY
+      - name: Format and commit documentation synchronization
+        run: |
+          python -m pip install black==26.5.1
+          python -m black examples/state_smoothing.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md docs/likelihood_inference.md docs/state_space.md \
+                  docs/roadmap.md examples/state_smoothing.py
+          git diff --cached --quiet && exit 0
+          git commit -m 'Synchronize documentation for smoothing and covariance inference'
+          git push origin HEAD:agent/kalman-state-smoothing
