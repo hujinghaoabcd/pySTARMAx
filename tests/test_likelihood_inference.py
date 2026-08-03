@@ -127,6 +127,15 @@ def test_white_noise_inference_matches_closed_form_standard_errors() -> None:
     assert inference.n_function_evaluations == 9
     assert inference.coefficient_table.index.tolist() == ["intercept"]
     assert inference.optimizer_table.shape == (2, 4)
+    assert inference.stability_boundary_distance == pytest.approx(
+        fit.stability_boundary_distance
+    )
+    assert inference.invertibility_boundary_distance == pytest.approx(
+        fit.invertibility_boundary_distance
+    )
+    assert inference.minimum_admissibility_distance == pytest.approx(
+        min(fit.stability_boundary_distance, fit.invertibility_boundary_distance)
+    )
     intervals = inference.confidence_intervals(level=0.95)
     assert intervals.loc["intercept", "lower"] < fit.intercept
     assert intervals.loc["intercept", "upper"] > fit.intercept
@@ -160,7 +169,11 @@ def test_ar1_missing_data_inference_reports_stable_curvature() -> None:
     assert inference.stability_boundary_distance == pytest.approx(
         1.0 - model.stability_margin - fit.spectral_radius
     )
+    assert inference.invertibility_boundary_distance == pytest.approx(
+        1.0 - model.invertibility_margin
+    )
     assert inference.stability_boundary_distance > 0.1
+    assert inference.invertibility_boundary_distance > 0.9
     assert inference.condition_number > 1.0
     assert np.all(np.isfinite(inference.correlation))
 
