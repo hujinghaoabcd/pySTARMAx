@@ -30,6 +30,21 @@ The following publications informed the mathematical scope and terminology:
    application to regional unemployment analysis in Italy. *International
    Regional Science Review, 29*(2), 159–198.
    DOI: 10.1177/0160017605279457.
+9. Thombs, L. A., & Schucany, W. R. (1990). Bootstrap prediction intervals
+   for autoregression. *Journal of the American Statistical Association,
+   85*(410), 486–492. DOI: 10.1080/01621459.1990.10476225.
+10. Pascual, L., Romo, J., & Ruiz, E. (2001). Effects of parameter estimation
+    on prediction densities: a bootstrap approach. *International Journal of
+    Forecasting, 17*(1), 83–103.
+    DOI: 10.1016/S0169-2070(00)00069-8.
+11. Pascual, L., Romo, J., & Ruiz, E. (2004). Bootstrap predictive inference
+    for ARIMA processes. *Journal of Time Series Analysis, 25*(4), 449–465.
+    DOI: 10.1111/j.1467-9892.2004.01713.x.
+
+The bootstrap publications motivate the direct pseudo-sample/refit structure and
+the explicit distinction between parameter-only and full predictive paths. The
+space-time extension in pySTARMAx is implemented independently and keeps
+complete location innovation vectors together during residual resampling.
 
 Implementation comparisons and API reconnaissance also considered:
 
@@ -39,7 +54,6 @@ Implementation comparisons and API reconnaissance also considered:
 
 Those projects remain governed by their own licences. No third-party code is
 bundled in pySTARMAx.
-
 
 ## Reference-fixture policy
 
