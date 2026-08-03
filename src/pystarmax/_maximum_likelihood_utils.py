@@ -89,9 +89,7 @@ def _regularize_covariance(covariance: Any, *, n_locations: int) -> FloatArray:
 class _CovarianceCodec:
     def __init__(self, covariance_type: CovarianceType, n_locations: int) -> None:
         if covariance_type not in {"scalar", "diagonal", "full"}:
-            raise ValueError(
-                "covariance_type must be 'scalar', 'diagonal', or 'full'"
-            )
+            raise ValueError("covariance_type must be 'scalar', 'diagonal', or 'full'")
         self.covariance_type = covariance_type
         self.n_locations = n_locations
 
