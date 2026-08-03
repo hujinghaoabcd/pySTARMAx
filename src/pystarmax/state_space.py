@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeAlias, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -16,7 +16,7 @@ from pystarmax._validation import FloatArray, as_float_matrix
 from pystarmax.weights import SpatialWeights, coerce_weights
 
 Initialization = Literal["stationary", "diffuse", "known"]
-BoolArray = npt.NDArray[np.bool_]
+BoolArray: TypeAlias = npt.NDArray[np.bool_]
 
 
 def _freeze_float(value: Any, *, name: str, ndim: int) -> FloatArray:
