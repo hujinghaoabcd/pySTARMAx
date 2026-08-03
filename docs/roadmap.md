@@ -14,7 +14,7 @@
 
 - public space-time covariance with explicit past/future weight orientation;
 - corrected classical STACF for non-symmetric spatial weights;
-- classical nested Yule–Walker STPACF as the default;
+- classical nested Yule-Walker STPACF as the default;
 - retained regression STPACF analogue behind an explicit method option;
 - exact-rational independent reference fixture and regeneration check;
 - singular-system solver policy and additional diagnostic validation tests.
@@ -74,16 +74,33 @@
 - deterministic per-origin random-state derivation;
 - examples and documentation for calibration diagnostics.
 
+## Implemented in 0.0.8
+
+- explicit linear Gaussian state-space representation for stationary STARMA;
+- companion construction from temporal-by-spatial AR and MA coefficients;
+- preservation of non-symmetric spatial-weight orientation;
+- stationary initialization from the unconditional mean and Lyapunov covariance;
+- user-supplied known initialization;
+- explicit approximate diffuse initialization;
+- Gaussian Kalman filtering and fixed-parameter log likelihood;
+- partial-location and fully missing-row observation handling;
+- immutable predicted/filtered state, covariance, innovation, and mask results;
+- numerical Cholesky jitter and covariance-stability safeguards;
+- fitted `STAR` and `STARMA` state-space conversion and filtering methods;
+- scalar closed-form and missing-observation reference tests.
+
 ## Next priorities
 
-1. Exact state-space/Kalman likelihood and missing observations.
-2. Diagonal and full contemporaneous innovation covariance likelihoods.
-3. Stationarity and invertibility checks with constrained parameterization.
-4. Sparse spatial matrices and large-network computation.
-5. Automatic order selection using STACF/STPACF and information criteria.
-6. Exogenous regressors, interventions, and generalized/location-varying STARMA.
-7. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-8. Cross-language estimator fixtures and a first PyPI pre-release.
-9. Optional parallel bootstrap and rolling-origin execution behind stable APIs.
-10. Block, wild, predictive-residual, studentized, and bias-corrected bootstrap methods.
-11. Automated interval recalibration or conformal post-processing after benchmark evidence.
+1. Direct maximum-likelihood optimization over the Kalman likelihood.
+2. Scalar, diagonal, and full innovation-covariance parameterizations.
+3. Likelihood-Hessian uncertainty and optimizer diagnostics.
+4. Stationarity and invertibility checks with constrained parameterization.
+5. Integrated and multiplicative seasonal state-space wrappers.
+6. Sparse spatial matrices and large-network computation.
+7. Automatic order selection using STACF/STPACF and information criteria.
+8. Exogenous regressors, interventions, and generalized/location-varying STARMA.
+9. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+10. Cross-language estimator fixtures and a first PyPI pre-release.
+11. Optional parallel bootstrap and rolling-origin execution behind stable APIs.
+12. Block, wild, predictive-residual, studentized, and bias-corrected bootstrap methods.
+13. Automated interval recalibration or conformal post-processing after benchmark evidence.
