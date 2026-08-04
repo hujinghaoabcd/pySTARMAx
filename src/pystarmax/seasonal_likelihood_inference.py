@@ -18,6 +18,8 @@ from pystarmax.likelihood_inference import (
 )
 from pystarmax.seasonal_maximum_likelihood import (
     SeasonalKalmanSTARIMA as _SeasonalKalmanSTARIMA,
+)
+from pystarmax.seasonal_maximum_likelihood import (
     _companion_radius,
     _operator_state_space,
 )
