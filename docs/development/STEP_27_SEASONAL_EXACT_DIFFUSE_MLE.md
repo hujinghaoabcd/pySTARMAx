@@ -7,8 +7,8 @@
 - pull request: PR #27, `Add seasonal exact diffuse maximum likelihood`;
 - base: version 0.0.26 on `main` at merge commit
   `e626ff330c2e6966d1474883656bf3543f56d84a`;
-- authoritative final validation: pending on the synchronized code and
-  documentation head.
+- implementation validation: CI #576, run ID `30949430144`;
+- final synchronized documentation merge-gate: pending on this head.
 
 ## Delivered API
 
@@ -86,12 +86,34 @@ The test suite covers:
 4. exact `D=0`, `P=Q=0` equivalence with ordinary exact diffuse MLE;
 5. missing initial observations delaying diffuse completion;
 6. fitted state-space identities and original/transformed predictions;
-7. immutable result arrays and validation errors;
+7. immutable result arrays, public exports, and validation errors;
 8. the complete inherited package suite.
 
-The first implementation CI established a 230-test baseline, 87.10% total
-branch coverage, and 82.9% branch coverage for the new module. Final synchronized
-figures must be recorded before merge.
+## Authoritative implementation validation
+
+GitHub Actions CI #576, run ID `30949430144`, validated exact implementation
+head `246b2bcf38789adc4caf6b43b7db312d602991c7`.
+
+Results:
+
+- 231 tests passed;
+- total branch coverage was 87.10%, above the required 80%;
+- `src/pystarmax/seasonal_exact_diffuse_mle.py` branch coverage was 82.9%;
+- the closed-form seasonal-random-walk MLE reference passed;
+- combined ordinary-seasonal integration passed;
+- factor counting and deterministic cross-lag expansion passed;
+- exact ordinary-model reduction passed;
+- missing-data diffuse-rank behavior passed;
+- public API and immutable-result contracts passed;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+All changes after that exact implementation head are documentation and status
+synchronization only. A final merge-gate CI must pass before Ready and squash
+merge.
 
 ## Deliberate boundaries
 
@@ -117,7 +139,7 @@ The next core stages are seasonal exact diffuse posterior operations:
 3. original-level and transformed-scale forecasts, paths, and intervals.
 
 After Step 27, the inventory contains six major technical workstreams, nine
-numbered core milestones, and approximately 14--18 separately reviewable
+numbered core milestones, and approximately 14–18 separately reviewable
 projects after ecosystem tasks are split.
 
 ## Merge checklist
@@ -125,14 +147,12 @@ projects after ecosystem tasks are split.
 Before marking PR #27 ready:
 
 1. pass complete CI on the final synchronized head;
-2. record run number, run ID, test count, total branch coverage, and new-module
-   coverage;
-3. confirm the closed-form seasonal random-walk and ordinary-equivalence tests
+2. confirm the closed-form seasonal random-walk and ordinary-equivalence tests
    pass on every supported platform;
-4. confirm public exports, metadata, README, documentation home, roadmap,
+3. confirm public exports, metadata, README, documentation home, roadmap,
    project status, remaining-work inventory, method guide, navigation, example,
    and this handoff are synchronized;
-5. confirm no temporary workflow or generated artifact remains;
-6. confirm no unresolved review thread or review submission remains;
-7. mark ready and squash-merge;
-8. begin seasonal exact diffuse smoothing from the resulting `main`.
+4. confirm no temporary workflow or generated artifact remains;
+5. confirm no unresolved review thread or review submission remains;
+6. mark ready and squash-merge;
+7. begin seasonal exact diffuse smoothing from the resulting `main`.
