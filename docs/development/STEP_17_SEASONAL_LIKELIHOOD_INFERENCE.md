@@ -118,6 +118,12 @@ stationary Kalman STARMA apply because the covariance optimizer codec is shared.
 `dynamic_cross_covariance` now relates ordinary/seasonal factor coordinates to
 natural innovation variance and covariance elements.
 
+The public result accessors are `natural.parameter_names`, `natural.estimates`,
+`natural.table`, and `natural.confidence_intervals()`. The lower-level
+`element_names` and `element_table` metadata belong to `natural.transform`; code
+and examples should not treat them as direct `InnovationCovarianceInference`
+attributes.
+
 ## Validation references
 
 Tests include:
