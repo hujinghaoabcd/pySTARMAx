@@ -7,12 +7,13 @@
 - pull request: PR #22, `Add exact diffuse disturbance smoothing`;
 - base: version 0.0.21 on `main` at merge commit
   `b6e9b167a012191590aae2abef0218f25482d00b`;
-- core validation: GitHub Actions CI #472, run ID `30891197678`;
-- core result: 193 tests passed and 87.19% total branch coverage;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #483, run ID `30892932606`;
+- validation result: 193 tests passed and 87.19% total branch coverage;
 - `src/pystarmax/exact_diffuse_disturbance_smoothing.py` coverage: 88.1%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
-  macOS Python 3.11–3.14 passed;
-- a complete final documentation-head CI is required before merge.
+  macOS Python 3.11–3.14 all passed;
+- a validation-record-only merge-gate CI is required before merge.
 
 ## Delivered API
 
@@ -144,9 +145,9 @@ Tests include:
 9. fitted-model smoothing for retained training data and newly initialized data;
 10. the complete inherited package test suite.
 
-Core CI #472 reported:
+Authoritative CI #483 reported:
 
-- 193 tests passed in 43.21 seconds in the coverage job;
+- 193 tests passed in 74.40 seconds in the coverage job;
 - total branch coverage: 87.19%;
 - exact diffuse disturbance smoothing module coverage: 88.1%;
 - exact diffuse state smoothing module coverage: 91.6%;
@@ -156,6 +157,10 @@ Core CI #472 reported:
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
   regeneration passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #22 is
+marked ready and merged.
 
 ## Files introduced or changed
 
