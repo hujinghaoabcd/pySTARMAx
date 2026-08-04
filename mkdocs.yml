@@ -12,6 +12,7 @@ nav:
   - Conditional Kalman STARIMA: integrated_maximum_likelihood.md
   - Exact diffuse filtering: exact_diffuse.md
   - Exact diffuse STARIMA MLE: exact_diffuse_mle.md
+  - Exact diffuse smoothing: exact_diffuse_smoothing.md
   - Seasonal STARIMA: seasonal.md
   - Seasonal Kalman STARIMA: seasonal_maximum_likelihood.md
   - Seasonal likelihood inference: seasonal_likelihood_inference.md
