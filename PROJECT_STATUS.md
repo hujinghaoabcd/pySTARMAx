@@ -2,14 +2,12 @@
 
 ## Repository position
 
-- `main` is version `0.0.27` at merge commit
-  `66fc0442b561ce257f2653e54bbecfd635c78f09`.
-- Active branch: `agent/seasonal-exact-diffuse-smoothing`.
-- Active pull request: PR #28, `Add seasonal exact diffuse smoothing`.
-- Development version: `0.0.28`.
-- PR #1 through PR #27 have been squash-merged.
-- Synchronized merge-gate CI #599, run ID `30952280713`, passed on
-  `e3d9ac6155847bc3dbb8289452953bf54e95189e`.
+- `main` is version `0.0.28` at merge commit
+  `83656043b916395b95c7a1135625cb223e8a43ce`.
+- Active branch: `agent/seasonal-exact-diffuse-inference`.
+- Active pull request: PR #29, `Add seasonal exact diffuse likelihood inference`.
+- Development version: `0.0.29`.
+- PR #1 through PR #28 have been squash-merged.
 
 ## Public model families
 
@@ -25,11 +23,13 @@ The package exposes:
 - optimizer-facing original-level seasonal exact-diffuse MLE through
   `SeasonalExactDiffuseKalmanSTARIMA`;
 - seasonal exact-diffuse fixed-interval state and primitive/state-disturbance
-  smoothing through the 0.0.28 fitted facade.
+  smoothing;
+- seasonal exact-diffuse observed-information and natural innovation-covariance
+  inference through the 0.0.29 fitted facade.
 
 Conditional transformed-data likelihoods and original-level exact-diffuse
-likelihoods are separate contracts. Their likelihoods, AIC, and BIC are not
-interchangeable.
+likelihoods are separate contracts. Their likelihoods, AIC, BIC, Hessians, and
+parameter covariance estimates are not interchangeable.
 
 ## Completed numerical foundations
 
@@ -53,14 +53,15 @@ interchangeable.
 - missing and partially observed measurement rows;
 - expanded AR stationarity and positive-sign inverse-MA invertibility checks.
 
-### Posterior operations
+### Posterior operations and uncertainty
 
 - ordinary Kalman fixed-interval smoothing;
 - ordinary and seasonal exact-diffuse fixed-interval smoothing;
 - ordinary and seasonal primitive innovation/state-disturbance smoothing;
 - ordinary Gaussian and exact-diffuse forecast intervals;
 - dense ordinary exact-diffuse conditional simulation smoothing;
-- observed-information inference for established fitted families;
+- observed-information inference for stationary, integrated, conditional-
+  seasonal, ordinary exact-diffuse, and seasonal exact-diffuse fitted models;
 - natural innovation-covariance delta-method inference.
 
 ### Diagnostics and evaluation
@@ -72,80 +73,98 @@ interchangeable.
 - interval scoring and coverage diagnostics;
 - bootstrap prediction workflows.
 
-## Completed in 0.0.28
+## Completed in 0.0.29
 
-### Seasonal exact-diffuse state smoothing
+### Seasonal original-level exact-diffuse curvature
 
-The fitted seasonal exact-diffuse estimator now exposes:
-
-```python
-model.smooth()
-model.smooth(new_data)
-```
-
-The facade reuses the generic exact-diffuse backward information recursion. The
-0.0.26 seasonal augmented state is already a general linear Gaussian state-space
-model, so no seasonal copy of the recursion and no finite large-variance
-initialization are required.
-
-The immutable result retains:
-
-- smoothed state means and covariances;
-- smoothed original-level observations and marginal covariances;
-- finite and diffuse backward information arrays;
-- reconstruction, symmetry, rank, and pseudoinverse diagnostics;
-- the exact filter result used by the posterior calculation.
-
-Passing new data starts a fresh exact-diffuse initialization under the fitted
-parameters. It does not continue from the terminal training posterior.
-
-### Seasonal primitive innovation smoothing
-
-The fitted facade also exposes:
+The fitted estimator now exposes:
 
 ```python
-model.smooth_innovation_disturbances()
-model.smooth_innovation_disturbances(new_data)
+inference = model.likelihood_inference()
 ```
 
-The primitive innovation posterior uses the full seasonal augmented-state
-selection matrix. It therefore maps each innovation consistently into the
-original-level lag companion and stationary transformed state. The result
-includes primitive innovation moments, state-equation disturbance moments,
-process-rank diagnostics, unresolved covariance, and support residuals.
+The equivalent functional API is:
+
+```python
+from pystarmax import infer_seasonal_exact_diffuse_kalman_starima
+
+inference = infer_seasonal_exact_diffuse_kalman_starima(model)
+```
+
+Every finite-difference candidate performs the complete fitted-model
+construction again:
+
+1. decode ordinary and seasonal AR/MA factor coordinates;
+2. expand the ordered multiplicative matrix polynomials;
+3. decode the fitted scalar, diagonal, or full-Cholesky covariance coordinates;
+4. build the stationary transformed state-space model;
+5. build the original-level `(1-B)^d(1-B^s)^D` exact-diffuse state;
+6. evaluate the original observation mask with the exact-diffuse filter.
+
+The resulting score and observed-information Hessian therefore use the same
+original-level likelihood scope as fitting. Expanded cross-lag operators remain
+deterministic and do not become additional inference parameters.
+
+### Rank and boundary policy
+
+By default the Hessian must be positive definite and full rank. Singular or
+indefinite curvature raises `numpy.linalg.LinAlgError` instead of silently
+reporting ordinary standard errors.
+
+Generalized-inverse inference requires an explicit opt-in:
+
+```python
+inference = model.likelihood_inference(allow_singular=True)
+```
+
+Only positive eigenvalue directions above the `rcond` threshold contribute to
+the covariance. The immutable result retains Hessian rank, eigenvalues,
+condition number, positive-definite status, pseudoinverse use, score,
+finite-difference steps, evaluation count, and fitted AR/inverse-MA boundary
+distances.
+
+### Natural innovation covariance
+
+The existing delta-method contract converts optimizer covariance coordinates to
+natural lower-triangular covariance elements:
+
+```python
+natural = inference.innovation_covariance_inference()
+```
+
+The result includes natural estimates, standard errors, Wald statistics,
+correlations, and dynamic-parameter cross covariance for scalar, diagonal, and
+full-Cholesky covariance models.
 
 ### Independent references
 
-The 0.0.28 tests cover:
+The 0.0.29 suite covers:
 
-- a period-two seasonal random walk decomposed into two exact Gaussian bridges;
-- closed-form missing-level means and variances;
-- closed-form primitive innovation means and variances, including the unresolved
-  first diffuse transition;
-- multivariate partial-location observation masks;
-- training and fresh-data fitted facade behavior;
-- immutable results and tolerance validation;
-- exact reduction to ordinary exact-diffuse state and innovation smoothing when
-  all seasonal orders are zero.
+- closed-form intercept information `n/q` for a period-two seasonal random walk;
+- closed-form raw log-standard-deviation information `2n`;
+- natural scalar variance standard error `q * sqrt(2/n)`;
+- exact reduction to ordinary exact-diffuse estimates, Hessian, and covariance
+  when seasonal orders are zero;
+- missing-data candidate filtering and immutable results;
+- full-Cholesky natural covariance transformation and factor-based parameter
+  counting;
+- explicit singular-Hessian failure and generalized-inverse behavior;
+- public functional and fitted-method exports.
 
-## Authoritative validation
+## Validation status
 
-Implementation CI #589, run ID `30951765063`, validated implementation head
-`50a80b5cca2fbca188631bed5beffc8925deaf97`. Synchronized merge-gate CI #599,
-run ID `30952280713`, validated final implementation and documentation head
-`e3d9ac6155847bc3dbb8289452953bf54e95189e`.
+Initial implementation CI #603, run ID `30957031201`, passed the complete
+cross-platform numerical test matrix and coverage job. Its only failure was
+Black formatting for the two newly added Python files.
 
-Results:
+A temporary read-only Black 26.5.1 diagnostic workflow printed the exact two
+formatting changes. Those changes were applied and the diagnostic workflow was
+removed. It is not part of the formal PR diff.
 
-- 238 tests passed;
-- total branch coverage: 87.16%;
-- the new fitted facade was fully covered;
-- `src/pystarmax/seasonal_exact_diffuse_mle.py` branch coverage: 83.9%;
-- Black, isort, Ruff, and mypy passed;
-- independent diagnostic-reference regeneration produced a clean diff;
-- strict MkDocs passed;
-- source distribution, wheel, and Twine checks passed;
-- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+A fully synchronized authoritative CI run is required after the 0.0.29 public
+API, documentation, status, roadmap, example, and handoff are complete. The
+final test count, total coverage, and new-module coverage will be recorded here
+before merge.
 
 ## Numerical and research safeguards
 
@@ -154,58 +173,66 @@ Results:
 - missing observations are skipped, not silently imputed;
 - non-symmetric spatial operators retain orientation;
 - expanded multiplicative cross terms are deterministic, not extra parameters;
-- covariance parameters and natural covariance elements remain distinct;
+- every seasonal exact-diffuse curvature candidate rebuilds the complete state
+  and filter;
+- covariance optimizer coordinates and natural covariance elements remain
+  distinct;
+- singular-curvature inference is explicit rather than silent;
 - result arrays are immutable;
 - likelihood-scope boundaries are documented and tested;
-- seasonal smoothing reuses the common state/filter contracts;
 - dense implementations are moderate-sample references, not large-data claims.
 
 ## Current limitations
 
-Version 0.0.28 does not yet provide seasonal exact-diffuse:
+Version 0.0.29 does not yet provide seasonal exact-diffuse:
 
-- lag-one state covariance during a nontrivial diffuse phase;
-- cross-time disturbance covariance;
-- observed-information likelihood inference;
-- natural innovation-covariance inference;
-- forecast paths and intervals;
+- original-level or transformed-scale forecast intervals;
 - conditional simulation smoothing;
-- parameter-uncertainty propagation;
+- diffuse lag-one state covariance during a nontrivial diffuse phase;
+- cross-time disturbance covariance;
+- robust or sandwich covariance;
+- profile-likelihood intervals;
+- parameter-uncertainty propagation into forecasts or smoother summaries;
+- analytic score or Hessian recursions;
 - sparse or parallel numerical execution.
 
 The diffuse `L2` recursion remains a separate research task.
 
 ## Remaining plan
 
-After Step 28, the delivery inventory contains:
+After Step 29, the delivery inventory contains:
 
 - 6 major technical workstreams;
-- 8 numbered core milestones;
-- approximately 13–17 independently reviewable projects.
+- 7 numbered core milestones;
+- approximately 12–16 independently reviewable projects.
 
-The next implementation stage is seasonal exact-diffuse likelihood inference
-and natural innovation-covariance inference. Forecast paths and intervals should
-remain a later independent stage.
+The next implementation stage is seasonal exact-diffuse forecasting
+uncertainty. Original-level and transformed-scale paths must use the terminal
+exact-diffuse posterior, require resolved diffuse rank, and restore levels
+pathwise before computing original-scale quantiles.
 
-## PR #28 merge readiness
+## Merge checklist for PR #29
 
-- implementation CI #589 passed;
-- synchronized merge-gate CI #599 passed;
-- bridge, disturbance, partial-observation, and ordinary-reduction tests passed
-  on all supported platforms;
-- the formal diff contains no workflow helper or generated artifact;
-- no submitted review or unresolved review thread remains;
-- PR #28 is ready for squash merge after the validation-record-only gate.
+1. Complete the synchronized README, documentation home, method guide, example,
+   navigation, citation metadata, roadmap, remaining-work inventory, project
+   status, and Step 29 handoff.
+2. Pass complete CI on the exact final head.
+3. Record final run number, run ID, test count, total coverage, and new-module
+   coverage.
+4. Confirm the formal diff contains no temporary workflow or generated artifact.
+5. Confirm no submitted review or unresolved review thread remains.
+6. Mark PR #29 ready and squash-merge version 0.0.29.
+7. Create the seasonal exact-diffuse forecasting branch from the new `main`.
 
 ## Handoff documents
 
 Read these before the next stage:
 
+- `docs/development/STEP_29_SEASONAL_EXACT_DIFFUSE_INFERENCE.md`;
+- `docs/seasonal_exact_diffuse_inference.md`;
 - `docs/development/STEP_28_SEASONAL_EXACT_DIFFUSE_SMOOTHING.md`;
 - `docs/seasonal_exact_diffuse_smoothing.md`;
 - `docs/development/STEP_27_SEASONAL_EXACT_DIFFUSE_MLE.md`;
 - `docs/seasonal_exact_diffuse_mle.md`;
-- `docs/development/STEP_26_SEASONAL_EXACT_DIFFUSE_STATE_SPACE.md`;
-- `docs/exact_seasonal_integrated.md`;
 - `docs/development/REMAINING_WORK.md`;
 - `docs/roadmap.md`.
