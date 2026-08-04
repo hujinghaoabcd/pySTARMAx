@@ -1,7 +1,11 @@
 # SPDX-FileCopyrightText: 2026 Jinghao Hu
 # SPDX-License-Identifier: MIT
 
-"""Exact diffuse state and primitive innovation disturbance smoothing."""
+"""Exact diffuse state and primitive innovation disturbance smoothing.
+
+The routine uses backward information quantities directly and deliberately does
+not construct unavailable lag-one exact diffuse state autocovariances.
+"""
 
 from __future__ import annotations
 
