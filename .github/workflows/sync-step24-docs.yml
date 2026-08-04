@@ -1,0 +1,390 @@
+name: Sync Step 24 documentation
+
+on:
+  push:
+    branches:
+      - agent/exact-diffuse-forecast-intervals
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/exact-diffuse-forecast-intervals
+          fetch-depth: 0
+      - name: Synchronize public documentation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path: str) -> str:
+              return Path(path).read_text(encoding="utf-8")
+
+          def write(path: str, text: str) -> None:
+              Path(path).write_text(text, encoding="utf-8")
+
+          def insert_before(path: str, marker: str, block: str, heading: str) -> None:
+              text = read(path)
+              if heading in text:
+                  return
+              if marker not in text:
+                  raise RuntimeError(f"missing marker in {path}: {marker}")
+              write(path, text.replace(marker, block.rstrip() + "\n\n" + marker, 1))
+
+          readme = read("README.md")
+          readme, count = re.subn(
+              r"> \*\*Status — 0\.0\.23:\*\*.*?\n\n## Installation",
+              "> **Status — 0.0.24:** stationary, conditional ordinary-integrated,\n"
+              "> exact-diffuse ordinary-integrated, and multiplicative seasonal Gaussian\n"
+              "> Kalman STARMA/STARIMA estimation; expanded AR stationarity and positive-sign\n"
+              "> MA invertibility diagnostics; observed-information Hessian and natural\n"
+              "> covariance inference for stationary, conditional integrated, seasonal, and\n"
+              "> original-level exact diffuse likelihoods; missing-data filtering; ordinary\n"
+              "> RTS and exact diffuse fixed-interval state smoothing; ordinary and exact\n"
+              "> diffuse primitive innovation/state-disturbance smoothing; fixed-parameter\n"
+              "> Gaussian forecast intervals for stationary, conditional integrated, seasonal,\n"
+              "> and resolved exact diffuse terminal posteriors. Exact diffuse lag-one\n"
+              "> autocovariance, simulation smoothing, seasonal diffuse augmentation, sparse\n"
+              "> computation, exogenous regressors, and time-varying extensions remain planned.\n\n"
+              "## Installation",
+              readme,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise RuntimeError("README status block was not replaced exactly once")
+
+          anchor = "exact_natural = exact_inference.innovation_covariance_inference()\n"
+          if "exact_interval = exact_mle.predict_interval(" not in readme:
+              if anchor not in readme:
+                  raise RuntimeError("README exact inference anchor missing")
+              readme = readme.replace(
+                  anchor,
+                  anchor
+                  + "exact_interval = exact_mle.predict_interval(\n"
+                  + "    steps=6,\n"
+                  + "    n_simulations=5000,\n"
+                  + "    random_state=42,\n"
+                  + ")\n"
+                  + "exact_differenced_interval = exact_mle.predict_differenced_interval(\n"
+                  + "    steps=6,\n"
+                  + "    n_simulations=5000,\n"
+                  + "    random_state=42,\n"
+                  + ")\n",
+                  1,
+              )
+          print_anchor = "print(exact_natural.table)\n"
+          if "print(exact_interval.lower, exact_interval.upper)" not in readme:
+              if print_anchor not in readme:
+                  raise RuntimeError("README exact output anchor missing")
+              readme = readme.replace(
+                  print_anchor,
+                  print_anchor
+                  + "print(exact_interval.lower, exact_interval.upper)\n"
+                  + "print(\n"
+                  + "    exact_differenced_interval.lower,\n"
+                  + "    exact_differenced_interval.upper,\n"
+                  + ")\n",
+                  1,
+              )
+          link_anchor = "[`docs/exact_diffuse_disturbance_smoothing.md`](docs/exact_diffuse_disturbance_smoothing.md)."
+          if "docs/exact_diffuse_forecast_intervals.md" not in readme:
+              if link_anchor not in readme:
+                  raise RuntimeError("README exact documentation link anchor missing")
+              readme = readme.replace(
+                  link_anchor,
+                  "[`docs/exact_diffuse_disturbance_smoothing.md`](docs/exact_diffuse_disturbance_smoothing.md), and\n"
+                  "[`docs/exact_diffuse_forecast_intervals.md`](docs/exact_diffuse_forecast_intervals.md).",
+                  1,
+              )
+          if "## Exact diffuse forecast intervals" not in readme:
+              marker = "## Observed-information inference"
+              if marker not in readme:
+                  raise RuntimeError("README inference heading missing")
+              block = """## Exact diffuse forecast intervals
+
+Version 0.0.24 samples the proper finite Gaussian terminal posterior produced by
+the exact diffuse filter and then propagates future process innovations through
+the original-level augmented state:
+
+```python
+exact_interval = exact_mle.predict_interval(
+    steps=12,
+    level=0.95,
+    n_simulations=5000,
+    random_state=2026,
+)
+exact_differenced_interval = exact_mle.predict_differenced_interval(
+    steps=12,
+    level=0.95,
+    n_simulations=5000,
+    random_state=2026,
+)
+```
+
+Original-level paths are projected directly from the augmented integrated state;
+no post-hoc inverse differencing is needed. Highest ordinary-difference paths
+use the transformed-state subblock of the same draws. Forecasting raises when
+the final diffuse rank is nonzero instead of substituting an arbitrary large
+variance. Bounds include final finite filtered-state uncertainty and future
+innovations, but condition on fitted parameters. See
+[`docs/exact_diffuse_forecast_intervals.md`](docs/exact_diffuse_forecast_intervals.md).
+"""
+              readme = readme.replace(marker, block.rstrip() + "\n\n" + marker, 1)
+          readme = readme.replace(
+              "- Kalman forecast intervals condition on fitted parameters;",
+              "- Gaussian Kalman and exact diffuse forecast intervals condition on fitted\n"
+              "  parameters;",
+              1,
+          )
+          write("README.md", readme)
+
+          exact_filter_block = """## Forecast intervals after diffuse resolution
+
+Version 0.0.24 can simulate future paths from an `ExactDiffuseFilterResult`
+only when `final_diffuse_rank == 0`. The terminal state is then a proper finite
+Gaussian posterior, so simulation draws its finite covariance and propagates
+future primitive innovations through the original-level augmented transition.
+A remaining diffuse direction raises rather than receiving a large finite
+variance. See [Exact diffuse forecast intervals](exact_diffuse_forecast_intervals.md).
+"""
+          insert_before(
+              "docs/exact_diffuse.md",
+              "## Validation references",
+              exact_filter_block,
+              "## Forecast intervals after diffuse resolution",
+          )
+
+          exact_mle_block = """## Fixed-parameter forecast intervals
+
+Version 0.0.24 adds original-level and highest ordinary-difference intervals:
+
+```python
+original_interval = model.predict_interval(
+    steps=12,
+    n_simulations=5000,
+    random_state=2026,
+)
+differenced_interval = model.predict_differenced_interval(
+    steps=12,
+    n_simulations=5000,
+    random_state=2026,
+)
+```
+
+Both start from the final finite filtered posterior and propagate future process
+innovations through the augmented exact state. The final diffuse rank must be
+zero. Original-level paths require no separate inverse-differencing step because
+the fitted state already contains levels and lower differences. These intervals
+condition on fitted parameters. See
+[Exact diffuse forecast intervals](exact_diffuse_forecast_intervals.md).
+"""
+          insert_before(
+              "docs/exact_diffuse_mle.md",
+              "## Missing observations",
+              exact_mle_block,
+              "## Fixed-parameter forecast intervals",
+          )
+          mle_doc = read("docs/exact_diffuse_mle.md")
+          mle_doc = mle_doc.replace(
+              "- forecast intervals are not yet exposed from this estimator;",
+              "- forecast intervals condition on fitted parameters and require zero final\n"
+              "  diffuse rank;",
+              1,
+          )
+          write("docs/exact_diffuse_mle.md", mle_doc)
+
+          roadmap_block = """## Implemented in 0.0.24: exact diffuse forecast intervals
+
+- terminal-state draws from the final finite exact diffuse filtered covariance;
+- explicit refusal when the final diffuse rank is nonzero;
+- future primitive process innovations propagated through the augmented
+  original-level transition;
+- original-level `ExactDiffuseKalmanSTARIMA.predict_interval()`;
+- highest ordinary-difference `predict_differenced_interval()` through an
+  explicit transformed-state projection;
+- deterministic recursive point forecasts retained as interval means;
+- positive-semidefinite terminal covariance factorization without diagonal
+  jitter or a finite diffuse scale;
+- reproducible low-level path simulation and immutable `ForecastInterval`
+  results;
+- analytic state-variance, random-walk variance-growth, stationary `d=0`
+  equivalence, second-order integration, unresolved-rank, and validation tests;
+- method guide, runnable example, navigation, README, status, and Step 24
+  handoff.
+"""
+          insert_before(
+              "docs/roadmap.md",
+              "## Next priorities",
+              roadmap_block,
+              "## Implemented in 0.0.24: exact diffuse forecast intervals",
+          )
+          roadmap = read("docs/roadmap.md")
+          roadmap, count = re.subn(
+              r"## Next priorities\n\n.*?\n\n## Research safeguards for future work",
+              "## Next priorities\n\n"
+              "1. Exact diffuse simulation smoothing.\n"
+              "2. Seasonal ordinary-seasonal diffuse state augmentation, smoothing, and\n"
+              "   inference.\n"
+              "3. Research the nontrivial diffuse `L2` recursion required for lag-one state\n"
+              "   autocovariance and cross-time disturbance covariance.\n"
+              "4. Robust, profile-likelihood, and parameter-uncertainty propagation for exact\n"
+              "   diffuse inference and forecasting.\n"
+              "5. Parameter-aware paths, sparse state matrices, and cross-time innovation\n"
+              "   covariance.\n"
+              "6. Smooth admissibility parameterization and automatic order selection.\n"
+              "7. Exogenous regressors, GIS adapters, cross-language fixtures, PyPI release,\n"
+              "   parallel execution, robust inference, and time-varying extensions.\n\n"
+              "## Research safeguards for future work",
+              roadmap,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise RuntimeError("roadmap priorities block was not replaced")
+          safeguard = (
+              "- Require zero final diffuse rank before sampling an exact diffuse terminal\n"
+              "  posterior; never replace unresolved directions with a finite scale.\n"
+          )
+          if safeguard not in roadmap:
+              anchor = "- Distinguish final filtered-state uncertainty, future innovation uncertainty,\n  and parameter uncertainty.\n"
+              if anchor not in roadmap:
+                  raise RuntimeError("roadmap uncertainty safeguard anchor missing")
+              roadmap = roadmap.replace(anchor, anchor + safeguard, 1)
+          write("docs/roadmap.md", roadmap)
+
+          status = read("PROJECT_STATUS.md")
+          status, count = re.subn(
+              r"## Repository state\n\n.*?\n\n## Completed baseline through 0\.0\.18",
+              "## Repository state\n\n"
+              "- PR #1 through PR #23 have been squash-merged into `main`.\n"
+              "- `main` is version `0.0.23` at merge commit\n"
+              "  `b7bd9e3b55e856ba43e5da9cb82e8616bd6c132f`.\n"
+              "- Current branch: `agent/exact-diffuse-forecast-intervals`.\n"
+              "- Current draft pull request: PR #24, `Add exact diffuse forecast intervals`.\n"
+              "- Current development version: `0.0.24`.\n"
+              "- The branch adds original-level and highest ordinary-difference Gaussian\n"
+              "  intervals from a resolved exact diffuse terminal posterior.\n"
+              "- Parameter uncertainty, exact diffuse simulation smoothing, seasonal diffuse\n"
+              "  augmentation, and lag-one diffuse autocovariance remain outside this stage.\n\n"
+              "## Completed baseline through 0.0.18",
+              status,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise RuntimeError("PROJECT_STATUS repository state was not replaced")
+
+          status_block = """## Completed in 0.0.24
+
+### Exact diffuse forecast paths and intervals
+
+- requires a proper terminal posterior with `final_diffuse_rank == 0`;
+- draws the final finite filtered-state covariance without a large diffuse scale;
+- propagates future primitive innovations through the augmented integrated
+  transition and selection matrix;
+- projects original-level observations directly from the augmented state;
+- projects the highest ordinary difference from the transformed-state subblock;
+- exposes `simulate_exact_diffuse_forecast_paths()` and
+  `exact_diffuse_forecast_interval()`;
+- integrates as `ExactDiffuseKalmanSTARIMA.predict_interval()` and
+  `predict_differenced_interval()`;
+- preserves deterministic recursive point forecasts as interval means;
+- reports immutable interval arrays and deterministic seeded reproducibility;
+- conditions on fitted parameters.
+
+### Validation scope
+
+Tests cover analytic state means and variances, linear random-walk variance
+growth, exact `d=0` path equality with ordinary stationary Kalman simulation,
+second-order differenced projection, fitted point-forecast equality,
+reproducibility, unresolved diffuse-rank refusal, positive-semidefinite terminal
+covariance, immutable results, and argument validation.
+
+### Deliberate boundary
+
+Version 0.0.24 does not add parameter draws, parametric refitting, simulation
+smoothing, seasonal exact diffuse augmentation, or public cross-time forecast
+covariance. A nonzero terminal diffuse rank is an inferential refusal, not a
+numerical case to regularize.
+
+## Core validation for 0.0.24
+
+GitHub Actions CI #518, run ID `30941761879`, validated the numerical core,
+public exports, fitted facade, example, method guide, packaging, and complete
+cross-platform matrix:
+
+- 207 tests passed in the coverage job;
+- total branch coverage was 87.30%, above the required 80%;
+- `src/pystarmax/exact_diffuse_forecasting.py` coverage was 87.8%;
+- `src/pystarmax/exact_diffuse_inference.py` coverage was 88.8%;
+- `src/pystarmax/exact_diffuse_disturbance_smoothing.py` coverage was 88.1%;
+- `src/pystarmax/exact_diffuse_smoothing.py` coverage was 91.6%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+A complete final CI is required on the synchronized README, filtering/MLE
+guides, roadmap, project status, and Step 24 documentation head. The
+authoritative final run must be recorded before merge.
+"""
+          if "## Completed in 0.0.24" not in status:
+              marker = "## Core validation for 0.0.23"
+              if marker not in status:
+                  raise RuntimeError("PROJECT_STATUS 0.0.23 validation marker missing")
+              status = status.replace(marker, status_block.rstrip() + "\n\n" + marker, 1)
+
+          status, count = re.subn(
+              r"## Immediate next tasks\n\n.*?\n\n## Known limitations",
+              "## Immediate next tasks\n\n"
+              "1. Run complete CI on the synchronized 0.0.24 documentation head.\n"
+              "2. Record the authoritative final run identifier, test count, and coverage.\n"
+              "3. Update PR #24, mark it ready, and squash-merge it into `main`.\n"
+              "4. Add exact diffuse simulation smoothing.\n"
+              "5. Add seasonal ordinary-seasonal diffuse augmentation, smoothing, and\n"
+              "   inference.\n"
+              "6. Research the nontrivial diffuse `L2` autocovariance recursion separately.\n"
+              "7. Add robust inference, parameter-aware paths, sparse state matrices,\n"
+              "   cross-time innovation covariance, order selection, exogenous inputs, GIS\n"
+              "   adapters, and cross-language fixtures.\n\n"
+              "## Known limitations",
+              status,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise RuntimeError("PROJECT_STATUS immediate tasks were not replaced")
+          status = status.replace(
+              "- forecast intervals are not exposed from `ExactDiffuseKalmanSTARIMA`;",
+              "- exact diffuse forecast intervals are implemented, but require zero final\n"
+              "  diffuse rank and condition on fitted parameters;",
+              1,
+          )
+          handoff_anchor = "`docs/exact_diffuse_inference.md`,\n"
+          if "`docs/exact_diffuse_forecast_intervals.md`," not in status:
+              if handoff_anchor not in status:
+                  raise RuntimeError("PROJECT_STATUS handoff anchor missing")
+              status = status.replace(
+                  handoff_anchor,
+                  "`docs/exact_diffuse_forecast_intervals.md`,\n" + handoff_anchor,
+                  1,
+              )
+          write("PROJECT_STATUS.md", status)
+          PY
+      - name: Commit synchronized documentation and remove workflow
+        shell: bash
+        run: |
+          git rm .github/workflows/sync-step24-docs.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md PROJECT_STATUS.md docs/exact_diffuse.md docs/exact_diffuse_mle.md docs/roadmap.md
+          git commit -m "Synchronize Step 24 documentation"
+          git push origin HEAD:agent/exact-diffuse-forecast-intervals
