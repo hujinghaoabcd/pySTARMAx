@@ -9,7 +9,8 @@ invertibility diagnostics, observed-likelihood Hessian inference, natural-scale
 innovation covariance inference, missing-observation filtering, fixed-interval
 state smoothing, original location-level innovation disturbance smoothing,
 combined differencing, original-scale forecast reconstruction, fixed-parameter
-Gaussian Kalman forecast intervals, conditional and bootstrap intervals, and
+Gaussian Kalman forecast intervals, a separate exact diffuse filter and ordinary
+integrated level-state likelihood, conditional and bootstrap intervals, and
 rolling-origin calibration diagnostics.
 
 ```python
@@ -125,6 +126,12 @@ transformation to natural variance and covariance elements.
 documents ordinary differencing before the stationary likelihood, conditioning
 on the first `d` level rows, missing-value propagation, and the separation
 between transformed and recursively restored original scales.
+
+[Exact diffuse filtering](exact_diffuse.md) documents the separate
+`P_* + kappa P_inf` covariance decomposition, sequential diffuse updates,
+missing-observation rank behavior, deterministic measurements, and fixed-
+parameter ordinary integrated level-state construction. It does not silently
+reinterpret the conditional `KalmanSTARIMA.fit()` likelihood.
 
 [Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
 observed-information result contract for ordinary and seasonal factor

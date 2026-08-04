@@ -9,17 +9,16 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.18:** stationary, ordinary-integrated, and
+> **Status — 0.0.19:** stationary, conditional ordinary-integrated, and
 > multiplicative seasonal Gaussian Kalman STARMA/STARIMA estimation;
 > expanded AR stationarity and positive-sign MA invertibility diagnostics;
-> observed-information Hessian inference for stationary and seasonal factor
-> models; natural innovation covariance delta-method inference; missing-data
+> observed-information Hessian and natural covariance inference; missing-data
 > filtering; RTS state and original innovation smoothing; fixed-parameter
-> Gaussian forecast intervals with filtered-state and future-innovation
-> uncertainty; pathwise original-scale ordinary/seasonal reconstruction;
-> conditional/bootstrap intervals; and rolling evaluation. Exact diffuse
-> integrated likelihood, parameter-aware Kalman intervals, sparse computation,
-> exogenous regressors, and time-varying extensions remain planned.
+> Gaussian forecast intervals with pathwise ordinary/seasonal reconstruction;
+> and a separate exact diffuse filter with ordinary integrated level-state
+> construction and fixed-parameter likelihood. Optimizer-facing exact diffuse
+> MLE, exact diffuse smoothing, seasonal diffuse augmentation, sparse
+> computation, exogenous regressors, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -238,6 +237,36 @@ lower-difference anchor, differenced-scale methods remain available but
 
 See [`docs/integrated_maximum_likelihood.md`](docs/integrated_maximum_likelihood.md).
 
+## Exact diffuse filtering and level-state likelihood
+
+Version 0.0.19 adds a separate exact diffuse route without changing the
+conditional estimator or the existing approximate `initialization="diffuse"`:
+
+```python
+from pystarmax import build_exact_integrated_state_space
+
+exact_specification = build_exact_integrated_state_space(
+    transformed_state_space,
+    integration_order=1,
+)
+exact_result = exact_specification.filter(level_series)
+
+print(exact_result.log_likelihood)
+print(exact_result.filtered_diffuse_rank)
+print(exact_result.diffuse_end_time)
+```
+
+The exact filter stores finite covariance `P_*` and diffuse covariance
+`P_inf` separately, uses sequential `K0`/`K1` updates, supports missing and
+partially observed rows, and switches to ordinary Gaussian updates after the
+diffuse rank reaches zero. The ordinary integrated constructor augments a
+stationary transformed state with explicit level/difference states and assigns
+diffuse covariance only to the integration directions.
+
+This stage exposes filtering and fixed-parameter level likelihoods. It does
+not yet replace `KalmanSTARIMA.fit()` with an optimizer-facing exact diffuse
+estimator. See [`docs/exact_diffuse.md`](docs/exact_diffuse.md).
+
 ## Observed-information inference
 
 ```python
@@ -327,9 +356,12 @@ filtered = kalman_filter(incomplete, state_space)
 smoothed = kalman_smoother(filtered)
 ```
 
-Initialization options are stationary, user-supplied known moments, and an
-explicit approximate diffuse initialization. The diffuse option is a
-large-variance approximation, not an exact diffuse likelihood.
+Initialization options in `kalman_filter()` are stationary, user-supplied
+known moments, and an explicit approximate diffuse initialization. That diffuse
+option remains a large-variance approximation. Exact diffuse filtering is
+available separately through `exact_diffuse_filter()` and
+`build_exact_integrated_state_space()` so the two likelihood conventions are
+never silently conflated.
 
 The RTS smoother retains state means and covariances, smoothing gains, lag-one
 cross covariance, state-equation disturbance moments, prediction ranks, and
@@ -584,11 +616,13 @@ coverage, pull request, and next-stage handoff.
 
 ## Current limitations
 
-- `KalmanSTARIMA` uses a conditional differenced likelihood rather than exact
-  diffuse integration on the level process;
-- seasonal likelihood-Hessian inference uses finite differences and can be costly or step sensitive;
-- original-scale ordinary and seasonal Kalman STARIMA forecast intervals are not yet exposed;
-- exact diffuse filtering and smoothing are unavailable;
+- `KalmanSTARIMA.fit()` still uses a conditional differenced likelihood;
+- exact diffuse filtering and fixed-parameter ordinary level likelihood are
+  available separately, but optimizer-facing exact diffuse MLE is not;
+- exact diffuse smoothing and seasonal diffuse augmentation are unavailable;
+- seasonal likelihood-Hessian inference uses finite differences and can be
+  costly or step sensitive;
+- Kalman forecast intervals condition on fitted parameters;
 - state and innovation smoothing treat parameters as fixed;
 - innovation smoothing returns marginal covariance by transition, not
   cross-time innovation covariance;

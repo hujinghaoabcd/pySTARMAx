@@ -6,8 +6,9 @@ fitted conditional or maximum-likelihood estimator.
 
 Version 0.0.8 introduced fixed-parameter filtering with incomplete observation
 matrices. Version 0.0.9 added direct Gaussian Kalman maximum likelihood. Version
-0.0.13 adds a separate fixed-interval smoothing layer documented in
-[Fixed-interval state smoothing](smoothing.md).
+0.0.13 added fixed-interval smoothing. Version 0.0.19 adds a separate exact
+diffuse kernel and ordinary integrated level-state constructor documented in
+[Exact diffuse filtering](exact_diffuse.md).
 
 ## Model convention
 
@@ -196,6 +197,11 @@ This uses zero initial mean and a large diagonal covariance. It is an explicit
 large-variance approximation, not an exact diffuse likelihood. The chosen scale
 can affect early likelihood contributions and should be reported.
 
+For exact initialization, use `exact_diffuse_filter()` with separate finite and
+diffuse covariance components, or `build_exact_integrated_state_space()` for an
+ordinary integrated level process. The exact route reports diffuse-rank paths and
+contains no arbitrary `diffuse_scale`.
+
 ## Filter result
 
 `KalmanFilterResult` stores immutable read-only arrays:
@@ -243,25 +249,25 @@ per-transition numerical rank diagnostics. See
 
 ## Current scope
 
-Included through 0.0.13:
+Included through 0.0.19:
 
-- auditable stationary STARMA companion construction;
+- auditable stationary and arbitrary-lag STARMA state-space construction;
 - stationary, known, and approximate diffuse initialization;
-- fixed-parameter Gaussian filtering and likelihood;
-- direct Gaussian Kalman maximum-likelihood estimation;
-- partial-location and fully missing rows;
-- scalar, diagonal, and full location innovation covariance;
-- RTS fixed-interval state smoothing;
-- lag-one state covariance;
-- state-equation disturbance conditional moments;
-- explicit rank-deficient prediction diagnostics.
+- separate exact diffuse filtering with finite/diffuse covariance components;
+- fixed-parameter Gaussian filtering and likelihood with partial-location and
+  fully missing rows;
+- stationary, ordinary-integrated, and multiplicative seasonal Kalman wrappers;
+- RTS fixed-interval state smoothing and original innovation smoothing;
+- exact diffuse ordinary integrated level-state construction for fixed
+  transformed parameters;
+- Gaussian forecast paths and pathwise original-scale intervals;
+- rank, pseudoinverse, support, and diffuse-phase diagnostics.
 
 Not included:
 
-- exact diffuse filtering or smoothing;
-- original location-level innovation disturbance smoothing when the selection
-  mapping is not one-to-one;
-- parameter-uncertainty propagation into state estimates;
-- integrated and multiplicative seasonal Kalman wrappers;
-- simulation smoothing;
+- optimizer-facing exact diffuse STARIMA maximum likelihood;
+- exact diffuse smoothing;
+- seasonal diffuse state augmentation;
+- parameter-uncertainty propagation into filtering, smoothing, or Kalman paths;
+- cross-time original innovation covariance and simulation smoothing;
 - sparse state matrices for large location systems.

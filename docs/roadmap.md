@@ -155,26 +155,44 @@
 - method guide, runnable example, navigation, README, status, and Step 18
   handoff.
 
+## Implemented in 0.0.19: exact diffuse filtering and ordinary level states
+
+- separate exact diffuse filtering without changing approximate
+  `initialization="diffuse"` semantics;
+- initial covariance decomposition `P_* + kappa P_inf`;
+- sequential scalar diffuse and ordinary Gaussian updates;
+- immutable finite/diffuse covariance, innovation, mask, likelihood, and rank
+  diagnostics;
+- missing and partial-location observations without artificial rank reduction;
+- deterministic zero-variance agreement and contradiction handling;
+- ordinary integrated augmentation `[y, Delta y, ..., Delta^(d-1)y, beta]`;
+- stationary finite initialization for the transformed STARMA state and diffuse
+  initialization only for integration directions;
+- first- and second-order analytic integrated likelihood references;
+- large-variance-limit, `d=0`, matrix-orientation, missing-data, and
+  cross-platform validation;
+- mathematical guide, runnable example, navigation, README, status, and Step 19
+  handoff.
+
 ## Next priorities
 
-1. Exact diffuse integrated level-state likelihood and smoothing as a separate
-   API from the conditional transformed likelihoods.
-2. Parameter-aware Kalman forecast paths using observed-information or bootstrap
+1. Optimizer-facing exact diffuse ordinary STARIMA maximum likelihood.
+2. Exact diffuse fixed-interval smoothing and disturbance smoothing.
+3. Seasonal ordinary-seasonal diffuse state augmentation.
+4. Parameter-aware Kalman forecast paths using observed-information or bootstrap
    parameter draws.
-3. Sparse spatial weights and sparse arbitrary-lag state matrices for large
+5. Sparse spatial weights and sparse arbitrary-lag state matrices for large
    seasonal periods and networks.
-4. Cross-time innovation-disturbance covariance and conditional simulation
+6. Cross-time innovation-disturbance covariance and conditional simulation
    smoothing.
-5. Smooth stationarity/invertibility parameterization for optimization and
+7. Smooth stationarity/invertibility parameterization for optimization and
    inference.
-6. Automatic ordinary and seasonal order selection using diagnostics and
+8. Automatic ordinary and seasonal order selection using diagnostics and
    information criteria.
-7. Exogenous regressors and intervention variables.
-8. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-9. Cross-language estimator fixtures and the first PyPI pre-release.
-10. Optional parallel bootstrap, forecast-path, and rolling-origin execution.
-11. Profile likelihood, sandwich, conformal, generalized, location-varying, and
-    time-varying extensions.
+9. Exogenous regressors and intervention variables.
+10. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+11. Cross-language estimator fixtures, PyPI pre-release, parallel execution,
+    profile likelihood, sandwich, conformal, and time-varying extensions.
 
 ## Research safeguards for future work
 
