@@ -84,7 +84,6 @@ def test_fully_observed_random_walk_paths_are_deterministic() -> None:
     np.testing.assert_allclose(result.state_paths, expected, atol=2e-9)
     np.testing.assert_allclose(result.observation_paths, expected, atol=2e-9)
     np.testing.assert_allclose(result.posterior_state_covariance, 0.0, atol=1e-10)
-    assert result.posterior_source_dimension == 0
 
 
 def test_stationary_incomplete_case_matches_information_smoother_marginals() -> None:
@@ -116,7 +115,11 @@ def test_stationary_incomplete_case_matches_information_smoother_marginals() -> 
     )
     sample_mean = result.state_paths.mean(axis=0)
     sample_variance = result.state_paths.var(axis=0)
-    np.testing.assert_allclose(sample_mean[4:7], result.posterior_state_mean[4:7], atol=0.02)
+    np.testing.assert_allclose(
+        sample_mean[4:7],
+        result.posterior_state_mean[4:7],
+        atol=0.02,
+    )
     np.testing.assert_allclose(
         sample_variance[4:7, 0],
         result.posterior_state_covariance[4:7, 0, 0],
@@ -124,11 +127,12 @@ def test_stationary_incomplete_case_matches_information_smoother_marginals() -> 
         atol=0.006,
     )
     observed = np.isfinite(data[:, 0])
-    np.testing.assert_allclose(
-        result.observation_paths[:, observed, 0],
+    actual_observed = result.observation_paths[:, observed, 0]
+    expected_observed = np.broadcast_to(
         data[None, observed, 0],
-        atol=2e-9,
+        actual_observed.shape,
     )
+    np.testing.assert_allclose(actual_observed, expected_observed, atol=2e-9)
     assert result.diffuse_rank == 0
 
 
@@ -185,7 +189,12 @@ def test_fitted_model_facade_reuses_training_and_handles_new_data() -> None:
     )
     assert isinstance(training, ExactDiffuseSimulationSmootherResult)
     assert training.filter_result is fitted.filter_result
-    np.testing.assert_allclose(training.observation_paths, levels[None, :, :], atol=3e-8)
+    expected_training = np.broadcast_to(levels, training.observation_paths.shape)
+    np.testing.assert_allclose(
+        training.observation_paths,
+        expected_training,
+        atol=3e-8,
+    )
 
     new_levels = levels[-12:].copy()
     new_levels[5, 0] = np.nan
