@@ -1,0 +1,59 @@
+name: Clean Step 26 status
+
+on:
+  push:
+    branches:
+      - agent/seasonal-exact-diffuse-state-space
+
+permissions:
+  contents: write
+
+jobs:
+  clean:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/seasonal-exact-diffuse-state-space
+          fetch-depth: 0
+      - name: Remove superseded release-candidate wording
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("PROJECT_STATUS.md")
+          text = path.read_text(encoding="utf-8")
+          stale = """This status record is the only repository-content change after CI #536. A
+          validation-record-only merge-gate CI must pass before PR #25 is marked ready and
+          squash-merged.
+
+          """.replace("          ", "")
+          replacement = """PR #25 subsequently passed final synchronized CI #540 and was
+          squash-merged as version 0.0.25 at
+          `ac7c049e16889046391e8b324970dbc8d9e8798b`.
+
+          """.replace("          ", "")
+          if stale not in text:
+              raise RuntimeError("superseded PR #25 wording not found")
+          text = text.replace(stale, replacement, 1)
+          model_marker = "- original-level exact diffuse `ExactDiffuseKalmanSTARIMA(p,d,q)`.\n"
+          addition = (
+              model_marker
+              + "- fixed-parameter seasonal exact diffuse state specification through\n"
+              + "  `ExactSeasonalIntegratedStateSpace`.\n"
+          )
+          if "`ExactSeasonalIntegratedStateSpace`" not in text:
+              if model_marker not in text:
+                  raise RuntimeError("public model marker not found")
+              text = text.replace(model_marker, addition, 1)
+          path.write_text(text, encoding="utf-8")
+          PY
+      - name: Commit cleanup and remove helper workflow
+        run: |
+          git rm .github/workflows/clean-step26-status.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PROJECT_STATUS.md
+          git commit -m "Clean superseded Step 25 status wording"
+          git push origin HEAD:agent/seasonal-exact-diffuse-state-space
