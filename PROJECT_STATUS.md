@@ -16,16 +16,17 @@ extended STARMA models with:
 
 ## Repository state
 
-- PR #1 through PR #24 have been squash-merged into `main`.
-- `main` is version `0.0.24` at merge commit
-  `0639f4bd932aa86020215b50b6ef9867bb5ad566`.
-- Current branch: `agent/exact-diffuse-simulation-smoothing`.
-- Current pull request: PR #25, `Add exact diffuse simulation smoothing`.
-- Current development version: `0.0.25`.
-- PR #25 is a release candidate after authoritative implementation CI #536.
-- This status update is validation-record-only. No implementation, test, public
-  API, example, README, or method-guide change follows CI #536.
-- No temporary workflow or generated artifact is intended to remain in the PR.
+- PR #1 through PR #25 have been squash-merged into `main`.
+- `main` is version `0.0.25` at merge commit
+  `ac7c049e16889046391e8b324970dbc8d9e8798b`.
+- Current branch: `agent/seasonal-exact-diffuse-state-space`.
+- Current draft pull request: PR #26,
+  `Add seasonal exact diffuse state-space foundation`.
+- Current development version: `0.0.26`.
+- PR #26 adds the fixed-parameter original-level state augmentation, exact
+  diffuse filter, and likelihood for `(1-B)^d(1-B^s)^D`.
+- Optimizer-facing seasonal exact diffuse MLE and seasonal posterior operations
+  remain outside this stage.
 
 ## Public model families
 
@@ -382,6 +383,27 @@ This status record is the only repository-content change after CI #536. A
 validation-record-only merge-gate CI must pass before PR #25 is marked ready and
 squash-merged.
 
+## Completed in 0.0.26
+
+### Seasonal exact diffuse state-space foundation
+
+- constructs the original-level state for the complete combined polynomial
+  `(1-B)^d(1-B^s)^D`;
+- stores an auditable level-lag companion for positive seasonal order;
+- initializes all `(d+Ds)n` integration coordinates as exact diffuse;
+- initializes the transformed STARMA subsystem from its stationary finite
+  distribution;
+- exposes exact diffuse filtering and original-level likelihood routes;
+- delegates exactly to the ordinary integrated constructor when `D=0`;
+- preserves missing-observation and immutable-result contracts;
+- includes analytic seasonal-random-walk and direct matrix references.
+
+### Deliberate boundary
+
+Version 0.0.26 does not include optimizer-facing seasonal exact diffuse MLE,
+seasonal exact diffuse smoothing, inference, forecasting, parameter-aware
+paths, or sparse execution.
+
 ## Numerical and research safeguards
 
 1. Distinguish conditional transformed likelihoods from exact diffuse
@@ -423,8 +445,9 @@ squash-merged.
   unavailable;
 - exact diffuse simulation smoothing does not yet return primitive innovation
   or state-disturbance paths;
-- seasonal ordinary-seasonal exact diffuse augmentation, likelihood, smoothing,
-  inference, forecasting, and simulation are unavailable;
+- seasonal exact diffuse fixed-parameter augmentation, filtering, and
+  original-level likelihood are available, but optimizer-facing MLE, smoothing,
+  inference, forecasting, and simulation facades are unavailable;
 - robust covariance, profile likelihood, analytic exact diffuse derivatives,
   and parameter-uncertainty propagation are unavailable;
 - Gaussian forecast intervals and simulation smoothing condition on fitted
@@ -450,20 +473,18 @@ squash-merged.
 
 ## Immediate next tasks
 
-1. Run the validation-record-only merge-gate CI for PR #25.
-2. Confirm no temporary workflow, generated artifact, unresolved review thread,
-   or unaddressed comment remains.
-3. Mark PR #25 ready and squash-merge it into `main`.
-4. Begin seasonal exact diffuse state augmentation and original-level
-   likelihood as the next independent implementation stage.
-5. Add seasonal exact diffuse smoothing, inference, forecasting, and simulation
-   only after the foundation is independently validated.
-6. Research the nontrivial diffuse `L2` recursion for lag-one state
-   autocovariance and cross-time disturbance covariance separately.
-7. Add robust and parameter-aware uncertainty paths.
-8. Add sparse and memory-aware numerical execution.
-9. Continue model/ecosystem work listed in
-   `docs/development/REMAINING_WORK.md`.
+1. Complete cross-platform validation of PR #26 and record test and coverage
+   results.
+2. Confirm no temporary workflow, generated artifact, review thread, or
+   unaddressed comment remains.
+3. Mark PR #26 ready and squash-merge version 0.0.26 into `main`.
+4. Start optimizer-facing seasonal exact diffuse MLE from the merged state
+   contract.
+5. Add seasonal smoothing, inference, and forecasting only after the fitted
+   model contract is independently validated.
+6. Research the diffuse `L2` lag-one covariance recursion separately.
+7. Continue robust inference, parameter-aware paths, sparse execution, model
+   selection, and ecosystem work listed in the remaining-work inventory.
 
 ## Handoff instruction
 
@@ -471,6 +492,8 @@ Before the next substantial stage, read:
 
 - this file;
 - `docs/development/REMAINING_WORK.md`;
+- `docs/development/STEP_26_SEASONAL_EXACT_DIFFUSE_STATE_SPACE.md`;
+- `docs/exact_seasonal_integrated.md`;
 - `docs/development/STEP_25_EXACT_DIFFUSE_SIMULATION_SMOOTHING.md`;
 - `docs/exact_diffuse_simulation_smoothing.md`;
 - `docs/exact_diffuse_forecast_intervals.md`;

@@ -277,22 +277,37 @@
 - method guide, runnable example, navigation, remaining-work inventory, and
   Step 25 handoff.
 
+## Implemented in 0.0.26: seasonal exact diffuse state-space foundation
+
+- fixed-parameter original-level augmentation for
+  `(1-B)^d(1-B^s)^D` integration;
+- explicit combined differencing polynomial and auditable original-level lag
+  companion state;
+- exact diffuse covariance on all `(d+Ds)n` integration coordinates;
+- stationary finite initialization for the transformed STARMA state;
+- exact diffuse filtering and original-level Gaussian likelihood;
+- exact delegation to the ordinary integrated constructor when `D=0`;
+- closed-form seasonal random-walk likelihood reference;
+- explicit `(1-B)(1-B^2)` matrix and transformed-residual references;
+- missing-observation diffuse-rank tests and immutable initialization arrays;
+- public exports, method guide, runnable example, navigation, status inventory,
+  and Step 26 handoff.
+
 ## Next priorities
 
-1. Seasonal ordinary-seasonal exact diffuse state augmentation,
-   likelihood, smoothing, inference, and forecasting.
-2. Research and implement the diffuse `L2` recursion required for lag-one
+1. Optimizer-facing seasonal exact diffuse MLE with multiplicative factor
+   parameter counting and expanded admissibility checks.
+2. Seasonal exact diffuse smoothing, likelihood inference, and original-level
+   forecasting built on the common 0.0.26 state contract.
+3. Research and implement the diffuse `L2` recursion required for lag-one
    state autocovariance and cross-time disturbance covariance.
-3. Robust, profile-likelihood, analytic-derivative, and parameter-uncertainty
-   propagation for exact diffuse inference.
-4. Parameter-aware paths, sparse state matrices, memory-aware execution, and
-   cross-time innovation covariance.
-5. Smooth admissibility parameterization and automatic order/spatial-lag
+4. Robust/profile-likelihood and parameter-uncertainty propagation.
+5. Sparse state matrices, memory-aware execution, and reproducible parallel
+   paths.
+6. Smooth admissibility parameterization and automatic order/spatial-lag
    selection.
-6. Exogenous regressors, intervention variables, GIS adapters,
-   cross-language fixtures, and public PyPI release automation.
-7. Parallel execution, reproducible chunking, and explicitly time-varying
-   state-space extensions.
+7. Exogenous regressors, intervention variables, GIS adapters,
+   cross-language fixtures, public PyPI automation, and time-varying models.
 
 ## Research safeguards for future work
 
