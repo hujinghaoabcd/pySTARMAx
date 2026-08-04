@@ -92,9 +92,7 @@ def _negative_seasonal_exact_diffuse_log_likelihood(
                 squared_excess += (ma_radius - result.invertibility_limit) ** 2
             if squared_excess > 0.0:
                 return float(
-                    invalid_base
-                    + invalid_base * squared_excess
-                    + 1e-8 * (raw @ raw)
+                    invalid_base + invalid_base * squared_excess + 1e-8 * (raw @ raw)
                 )
             filtered = integrated.filter(
                 observations,
