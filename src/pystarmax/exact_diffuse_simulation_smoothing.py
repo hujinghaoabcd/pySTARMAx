@@ -99,9 +99,7 @@ def _reconstruct_observations(
             diffuse_scale = float(np.linalg.norm(diffuse, ord=2)) * float(
                 design @ design
             )
-            finite_scale = float(np.linalg.norm(finite, ord=2)) * float(
-                design @ design
-            )
+            finite_scale = float(np.linalg.norm(finite, ord=2)) * float(design @ design)
             if diffuse_value > tolerance * max(1.0, diffuse_scale):
                 gain_zero = diffuse_cross / diffuse_value
                 gain_one = (
@@ -161,7 +159,9 @@ def _source_loadings(
     process_loading = model.selection @ innovation_factor
 
     for time_index in range(1, n_time):
-        base[time_index] = model.state_intercept + model.transition @ base[time_index - 1]
+        base[time_index] = (
+            model.state_intercept + model.transition @ base[time_index - 1]
+        )
         diffuse[time_index] = model.transition @ diffuse[time_index - 1]
         proper[time_index] = model.transition @ proper[time_index - 1]
         start = n_finite + (time_index - 1) * innovation_rank
@@ -194,10 +194,7 @@ def _full_column_pseudoinverse(
         raise RuntimeError(
             "observations do not identify every initial diffuse direction"
         )
-    inverse = (
-        right_t[:rank].T
-        * (1.0 / singular_values[:rank])
-    ) @ left[:, :rank].T
+    inverse = (right_t[:rank].T * (1.0 / singular_values[:rank])) @ left[:, :rank].T
     left_null = left[:, rank:].T
     return (
         cast(FloatArray, np.ascontiguousarray(inverse, dtype=float)),
@@ -423,8 +420,7 @@ def exact_diffuse_simulation_smoother(
         diffuse_design[row_index] = design @ diffuse_loading[time_index]
         proper_design[row_index] = design @ proper_loading[time_index]
         target[row_index] = (
-            observations[time_index, location_index]
-            - design @ base[time_index]
+            observations[time_index, location_index] - design @ base[time_index]
         )
 
     diffuse_inverse, left_null, identified_rank = _full_column_pseudoinverse(
@@ -446,9 +442,7 @@ def exact_diffuse_simulation_smoother(
     flat_diffuse = diffuse_loading.reshape(n_time * state_dim, diffuse_rank)
     flat_proper = proper_loading.reshape(n_time * state_dim, proper_dimension)
     diffuse_offset = diffuse_inverse @ target
-    effective_loading = (
-        flat_proper - flat_diffuse @ diffuse_inverse @ proper_design
-    )
+    effective_loading = flat_proper - flat_diffuse @ diffuse_inverse @ proper_design
     posterior_mean_flat = (
         flat_base + flat_diffuse @ diffuse_offset + effective_loading @ proper_mean
     )
@@ -469,9 +463,7 @@ def exact_diffuse_simulation_smoother(
         if isinstance(random_state, np.random.Generator)
         else np.random.default_rng(random_state)
     )
-    standard = generator.standard_normal(
-        (n_simulations, posterior_basis.shape[1])
-    )
+    standard = generator.standard_normal((n_simulations, posterior_basis.shape[1]))
     state_paths = (
         posterior_mean_flat[None, :] + standard @ posterior_loading.T
     ).reshape(n_simulations, n_time, state_dim)
