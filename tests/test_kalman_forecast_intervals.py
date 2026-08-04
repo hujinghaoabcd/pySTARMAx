@@ -153,7 +153,7 @@ def test_ordinary_integrated_interval_is_inverted_pathwise() -> None:
         levels[-1] + transformed.upper[0],
     )
     assert float((original.upper[-1] - original.lower[-1])[0]) > float(
-        original.upper[0] - original.lower[0]
+        (original.upper[0] - original.lower[0])[0]
     )
 
 
@@ -203,7 +203,7 @@ def test_seasonal_interval_uses_rolling_cycle_pathwise() -> None:
             levels[-period + horizon] + transformed.upper[horizon],
         )
     assert float((original.upper[-1] - original.lower[-1])[0]) > float(
-        original.upper[0] - original.lower[0]
+        (original.upper[0] - original.lower[0])[0]
     )
 
 
