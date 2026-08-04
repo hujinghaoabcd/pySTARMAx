@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.22"
+__version__ = "0.0.23"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -60,6 +60,9 @@ from pystarmax.exact_diffuse import (
 from pystarmax.exact_diffuse_disturbance_smoothing import (
     ExactDiffuseDisturbanceResult,
     exact_diffuse_disturbance_smoother,
+)
+from pystarmax.exact_diffuse_inference import (
+    infer_exact_diffuse_kalman_starima,
 )
 from pystarmax.exact_diffuse_model import (
     ExactDiffuseKalmanSTARIMA,
@@ -191,6 +194,7 @@ __all__ = [
     "exact_diffuse_loglikelihood",
     "exact_diffuse_smoother",
     "exact_diffuse_disturbance_smoother",
+    "infer_exact_diffuse_kalman_starima",
     "build_exact_integrated_state_space",
     "exact_integrated_filter",
     "exact_integrated_loglikelihood",
