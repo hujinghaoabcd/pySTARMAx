@@ -11,7 +11,6 @@ from pystarmax import (
     exact_diffuse_smoother,
 )
 
-
 state_space = StateSpaceModel(
     transition=np.array([[1.0]]),
     design=np.array([[1.0]]),
