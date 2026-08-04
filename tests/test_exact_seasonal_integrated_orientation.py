@@ -36,7 +36,10 @@ def test_seasonal_exact_diffuse_preserves_matrix_orientation() -> None:
         np.block([[np.zeros((2, 2)), np.eye(2)]]),
     )
     np.testing.assert_allclose(model.transition[:2, 4:], design @ transition)
-    np.testing.assert_allclose(model.transition[2:4, :4], np.block([[np.eye(2), np.zeros((2, 2))]]))
+    np.testing.assert_allclose(
+        model.transition[2:4, :4],
+        np.block([[np.eye(2), np.zeros((2, 2))]]),
+    )
     np.testing.assert_allclose(model.transition[4:, 4:], transition)
     np.testing.assert_allclose(model.selection[:2], design @ selection)
     np.testing.assert_allclose(model.selection[4:], selection)
