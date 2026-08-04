@@ -1,0 +1,142 @@
+name: Record exact diffuse disturbance validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    if: github.event.pull_request.head.ref == 'agent/exact-diffuse-disturbance-smoothing'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/exact-diffuse-disturbance-smoothing
+      - name: Record authoritative validation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path: str, old: str, new: str, label: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              if old not in text:
+                  raise SystemExit(f"{label} not found in {path}")
+              file.write_text(text.replace(old, new, 1))
+
+          replace(
+              "docs/development/STEP_22_EXACT_DIFFUSE_DISTURBANCE_SMOOTHING.md",
+              '''- core validation: GitHub Actions CI #472, run ID `30891197678`;
+          - core result: 193 tests passed and 87.19% total branch coverage;
+          - `src/pystarmax/exact_diffuse_disturbance_smoothing.py` coverage: 88.1%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+            macOS Python 3.11–3.14 passed;
+          - a complete final documentation-head CI is required before merge.
+          ''',
+              '''- authoritative implementation/documentation validation: GitHub Actions CI
+            #483, run ID `30892932606`;
+          - validation result: 193 tests passed and 87.19% total branch coverage;
+          - `src/pystarmax/exact_diffuse_disturbance_smoothing.py` coverage: 88.1%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+            macOS Python 3.11–3.14 all passed;
+          - a validation-record-only merge-gate CI is required before merge.
+          ''',
+              "Step 22 repository validation",
+          )
+          replace(
+              "docs/development/STEP_22_EXACT_DIFFUSE_DISTURBANCE_SMOOTHING.md",
+              '''Core CI #472 reported:
+          
+          - 193 tests passed in 43.21 seconds in the coverage job;
+          ''',
+              '''Authoritative CI #483 reported:
+          
+          - 193 tests passed in 74.40 seconds in the coverage job;
+          ''',
+              "Step 22 authoritative run",
+          )
+          replace(
+              "docs/development/STEP_22_EXACT_DIFFUSE_DISTURBANCE_SMOOTHING.md",
+              '''- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+          
+          ## Files introduced or changed
+          ''',
+              '''- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+          
+          The validation-record-only head changes only this handoff and
+          `PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #22 is
+          marked ready and merged.
+          
+          ## Files introduced or changed
+          ''',
+              "Step 22 merge gate note",
+          )
+
+          replace(
+              "PROJECT_STATUS.md",
+              '''## Core validation for 0.0.22
+          
+          GitHub Actions CI #472, run ID `30891197678`, validated the numerical core,
+          public exports, model facade, packaging, and full cross-platform matrix:
+          ''',
+              '''## Authoritative validation for 0.0.22
+          
+          GitHub Actions CI #483, run ID `30892932606`, validated the complete
+          implementation, tests, example, metadata, README, documentation home,
+          navigation, exact diffuse filtering/MLE/state-smoothing/disturbance-smoothing
+          guides, roadmap, project status, and Step 22 documentation head:
+          ''',
+              "PROJECT_STATUS authoritative heading",
+          )
+          replace(
+              "PROJECT_STATUS.md",
+              '''A complete final CI is required on the synchronized documentation head. The
+          authoritative final run must be recorded before merge.
+          ''',
+              '''A validation-record-only merge-gate CI is required after this status and the
+          Step 22 handoff are updated. No implementation, test, API, example, README, or
+          method-guide changes are made after CI #483.
+          ''',
+              "PROJECT_STATUS merge gate policy",
+          )
+          replace(
+              "PROJECT_STATUS.md",
+              '''## Immediate next tasks
+          
+          1. Run complete CI on the synchronized 0.0.22 documentation head.
+          2. Record the authoritative final run identifier, test count, and coverage.
+          3. Update PR #22, mark it ready, and squash-merge it into `main`.
+          4. Add exact diffuse observed-information and natural covariance inference.
+          5. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
+          6. Research the nontrivial diffuse `L2` autocovariance recursion separately.
+          7. Add forecast intervals, sparse state matrices, parameter-aware paths,
+             cross-time innovation covariance, order selection, exogenous inputs, GIS
+             adapters, and cross-language fixtures.
+          ''',
+              '''## Immediate next tasks
+          
+          1. Run the validation-record-only merge-gate CI.
+          2. Update PR #22, mark it ready, and squash-merge it into `main`.
+          3. Add exact diffuse observed-information and natural covariance inference.
+          4. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
+          5. Research the nontrivial diffuse `L2` autocovariance recursion separately.
+          6. Add forecast intervals, sparse state matrices, parameter-aware paths,
+             cross-time innovation covariance, order selection, exogenous inputs, GIS
+             adapters, and cross-language fixtures.
+          ''',
+              "PROJECT_STATUS immediate tasks",
+          )
+
+          Path(".github/workflows/record-exact-diffuse-disturbance-validation.yml").unlink()
+          PY
+      - name: Commit validation record
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Record authoritative 0.0.22 validation"
+          git push origin HEAD:agent/exact-diffuse-disturbance-smoothing
