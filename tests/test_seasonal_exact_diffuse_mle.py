@@ -50,8 +50,8 @@ def test_seasonal_random_walk_mle_matches_increment_closed_form() -> None:
     expected_drift = float(np.mean(observed))
     expected_variance = float(np.mean((observed - expected_drift) ** 2))
     expected_log_likelihood = -0.5 * period * np.log(2.0 * np.pi)
-    expected_log_likelihood -= 0.5 * observed.size * (
-        np.log(2.0 * np.pi) + np.log(expected_variance) + 1.0
+    expected_log_likelihood -= (
+        0.5 * observed.size * (np.log(2.0 * np.pi) + np.log(expected_variance) + 1.0)
     )
 
     assert isinstance(result, SeasonalExactDiffuseKalmanSTARIMAResult)
@@ -156,8 +156,7 @@ def test_factor_parameter_count_and_cross_lag_expansion() -> None:
     assert result.raw_optimizer_params.size == 3
     np.testing.assert_allclose(
         result.ar_matrices[2, 0, 0],
-        -result.ar_parameters[0, 0]
-        * result.seasonal_ar_parameters[0, 0],
+        -result.ar_parameters[0, 0] * result.seasonal_ar_parameters[0, 0],
     )
     assert result.stationary
     assert result.admissible
@@ -267,7 +266,9 @@ def test_state_spaces_predictions_and_result_immutability() -> None:
         rtol=3e-5,
         atol=3e-5,
     )
-    np.testing.assert_allclose(model.fitted_original(), result.filter_result.predicted_observations)
+    np.testing.assert_allclose(
+        model.fitted_original(), result.filter_result.predicted_observations
+    )
     assert model.admissibility().admissible
     assert not result.params.flags.writeable
     assert not result.ar_matrices.flags.writeable

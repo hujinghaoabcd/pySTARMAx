@@ -130,8 +130,7 @@ class SeasonalExactDiffuseKalmanSTARIMAResult:
             ExactSeasonalIntegratedStateSpace,
         ):
             raise TypeError(
-                "integrated_state_space must be an "
-                "ExactSeasonalIntegratedStateSpace"
+                "integrated_state_space must be an " "ExactSeasonalIntegratedStateSpace"
             )
         covariance = _freeze_covariance(
             self.innovation_covariance,
@@ -168,15 +167,9 @@ class SeasonalExactDiffuseKalmanSTARIMAResult:
             raise ValueError(
                 "integrated_state_space must reference transformed_state_space"
             )
-        if (
-            self.integrated_state_space.ordinary_integration_order
-            != ordinary_order
-        ):
+        if self.integrated_state_space.ordinary_integration_order != ordinary_order:
             raise ValueError("ordinary integration orders must agree")
-        if (
-            self.integrated_state_space.seasonal_integration_order
-            != seasonal_order
-        ):
+        if self.integrated_state_space.seasonal_integration_order != seasonal_order:
             raise ValueError("seasonal integration orders must agree")
         if self.integrated_state_space.seasonal_period != period:
             raise ValueError("seasonal periods must agree")
@@ -336,8 +329,7 @@ class SeasonalExactDiffuseKalmanSTARIMAResult:
             f"Converged: {self.converged}",
             f"Function evaluations: {self.n_function_evaluations}",
             f"AR spectral radius: {self.ar_spectral_radius:.6f}",
-            f"Inverse-MA spectral radius: "
-            f"{self.ma_inverse_spectral_radius:.6f}",
+            f"Inverse-MA spectral radius: " f"{self.ma_inverse_spectral_radius:.6f}",
             f"Log likelihood: {self.log_likelihood:.6f}",
             f"AIC: {self.aic:.6f}",
             f"BIC: {self.bic:.6f}",
@@ -505,9 +497,7 @@ class SeasonalExactDiffuseKalmanSTARIMA:
             observations.shape[1],
         )
         coefficient_size = int(coefficient_start.size)
-        raw_start = np.concatenate(
-            [coefficient_start, codec.pack(covariance_start)]
-        )
+        raw_start = np.concatenate([coefficient_start, codec.pack(covariance_start)])
         coefficient_names = self.core_model._coefficient_names(resolved_weights)
         optimizer_names = coefficient_names + codec.names
         bounds = [(None, None)] * coefficient_size + codec.bounds
@@ -573,16 +563,12 @@ class SeasonalExactDiffuseKalmanSTARIMA:
                         self.core_model.enforce_stationarity
                         and decoded.ar_radius >= stability_limit
                     ):
-                        squared_excess += (
-                            decoded.ar_radius - stability_limit
-                        ) ** 2
+                        squared_excess += (decoded.ar_radius - stability_limit) ** 2
                     if (
                         self.core_model.enforce_invertibility
                         and decoded.ma_radius >= invertibility_limit
                     ):
-                        squared_excess += (
-                            decoded.ma_radius - invertibility_limit
-                        ) ** 2
+                        squared_excess += (decoded.ma_radius - invertibility_limit) ** 2
                     if squared_excess > 0.0:
                         return float(
                             invalid_base
@@ -671,9 +657,7 @@ class SeasonalExactDiffuseKalmanSTARIMA:
             stationarity_enforced=self.core_model.enforce_stationarity,
             invertibility_enforced=self.core_model.enforce_invertibility,
             n_original_rows=observations.shape[0],
-            original_missing_cells=int(
-                np.count_nonzero(~np.isfinite(observations))
-            ),
+            original_missing_cells=int(np.count_nonzero(~np.isfinite(observations))),
             filter_result=filtered,
             transformed_state_space=decoded.transformed,
             integrated_state_space=decoded.integrated,
@@ -736,7 +720,9 @@ class SeasonalExactDiffuseKalmanSTARIMA:
         state = filtered.filtered_state[-1].copy()
         forecasts = np.empty((steps, integrated.model.n_locations), dtype=float)
         for step_index in range(steps):
-            state = integrated.model.state_intercept + integrated.model.transition @ state
+            state = (
+                integrated.model.state_intercept + integrated.model.transition @ state
+            )
             forecasts[step_index] = integrated.model.design @ state
         return cast(FloatArray, forecasts)
 
