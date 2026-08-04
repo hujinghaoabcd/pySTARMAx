@@ -10,9 +10,12 @@
 - package exports, version metadata, README, documentation home, roadmap,
   project status, remaining-work inventory, method guide, example, and MkDocs
   navigation are synchronized through 0.0.26;
-- one-shot formatting and status-maintenance workflows have self-deleted and are
-  absent from the formal PR diff;
-- authoritative validation: pending on this ordinary synchronized head.
+- temporary formatting and status-maintenance workflows are absent from the
+  formal PR diff;
+- authoritative implementation validation: CI #560, run ID `30946774528`, on
+  exact implementation and synchronized documentation head
+  `a29e2538c12ca2b7e33a5e556dc37d080afacb72`;
+- final validation-record-only merge gate: pending on this handoff update.
 
 ## Delivered API
 
@@ -88,11 +91,37 @@ The validation suite covers:
 2. explicit `(1-B)(1-B^2)` polynomial and companion matrices;
 3. direct recovery of the complete combined-difference residual series;
 4. exact `D=0` equivalence with ordinary integration;
-5. delayed diffuse completion under missing observations;
-6. rejection of a nonstationary transformed subsystem;
-7. immutable polynomial and initialization arrays;
-8. argument validation;
-9. the complete inherited package suite.
+5. a non-symmetric two-location orientation reference for `Z @ T`, `Z @ R`,
+   and `Z @ c`;
+6. delayed diffuse completion under missing observations;
+7. rejection of a nonstationary transformed subsystem;
+8. immutable polynomial and initialization arrays;
+9. argument validation;
+10. the complete inherited package suite.
+
+## Authoritative validation
+
+GitHub Actions CI #560, run ID `30946774528`, passed on exact head
+`a29e2538c12ca2b7e33a5e556dc37d080afacb72`:
+
+- 223 tests passed;
+- total branch coverage was 87.25%;
+- `src/pystarmax/exact_seasonal_integrated.py` branch coverage was 87.2%;
+- the closed-form seasonal-random-walk likelihood reference passed;
+- the explicit `(1-B)(1-B^2)` matrix reference passed;
+- direct combined-difference residual recovery passed;
+- exact `D=0` ordinary-integration equivalence passed;
+- non-symmetric matrix-orientation tests passed;
+- missing-observation diffuse-rank and immutable-array contracts passed;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+No implementation, test, public API, example, README, method-guide, roadmap, or
+remaining-work change follows CI #560. This document-only commit records those
+results and triggers the final merge gate.
 
 ## Deliberate boundaries
 
@@ -123,15 +152,11 @@ split.
 
 Before marking PR #26 ready:
 
-1. pass complete CI on the final code and documentation head;
-2. record run number, run ID, test count, total branch coverage, and new-module
-   coverage;
-3. confirm analytic seasonal-random-walk and ordinary-equivalence tests pass on
-   every supported platform;
-4. confirm package exports, version metadata, README, documentation home,
+1. pass the final validation-record-only CI on this document head;
+2. confirm package exports, version metadata, README, documentation home,
    roadmap, project status, remaining-work inventory, navigation, and example
-   are synchronized;
-5. confirm no temporary workflow or generated artifact remains;
-6. confirm no unresolved review thread remains;
-7. mark ready and squash-merge;
-8. start optimizer-facing seasonal exact diffuse MLE from the resulting `main`.
+   remain synchronized;
+3. confirm no temporary workflow or generated artifact remains;
+4. confirm no unresolved review thread remains;
+5. mark ready and squash-merge;
+6. start optimizer-facing seasonal exact diffuse MLE from the resulting `main`.
