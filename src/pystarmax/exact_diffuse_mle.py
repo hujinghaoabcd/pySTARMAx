@@ -96,7 +96,9 @@ class ExactDiffuseKalmanSTARIMAResult:
         if not isinstance(self.transformed_state_space, StateSpaceModel):
             raise TypeError("transformed_state_space must be a StateSpaceModel")
         if not isinstance(self.integrated_state_space, ExactIntegratedStateSpace):
-            raise TypeError("integrated_state_space must be an ExactIntegratedStateSpace")
+            raise TypeError(
+                "integrated_state_space must be an ExactIntegratedStateSpace"
+            )
         covariance = _freeze_covariance(
             self.innovation_covariance,
             n_locations=self.filter_result.model.n_locations,
@@ -106,10 +108,15 @@ class ExactDiffuseKalmanSTARIMAResult:
             name="integration_order",
         )
         if self.integrated_state_space.integration_order != integration_order:
-            raise ValueError("integrated_state_space order must match integration_order")
+            raise ValueError(
+                "integrated_state_space order must match integration_order"
+            )
         if self.integrated_state_space.model is not self.filter_result.model:
             raise ValueError("filter_result must use the integrated state-space model")
-        if self.integrated_state_space.transformed_model is not self.transformed_state_space:
+        if (
+            self.integrated_state_space.transformed_model
+            is not self.transformed_state_space
+        ):
             raise ValueError(
                 "integrated_state_space must reference transformed_state_space"
             )
@@ -457,9 +464,7 @@ class ExactDiffuseKalmanSTARIMA:
                         self.core_model.enforce_invertibility
                         and ma_inverse_radius >= invertibility_limit
                     ):
-                        squared_excess += (
-                            ma_inverse_radius - invertibility_limit
-                        ) ** 2
+                        squared_excess += (ma_inverse_radius - invertibility_limit) ** 2
                     if squared_excess > 0.0:
                         return float(
                             invalid_base
@@ -504,10 +509,7 @@ class ExactDiffuseKalmanSTARIMA:
             spectral_radius,
             ma_inverse_radius,
         ) = decode(raw_final)
-        if (
-            self.core_model.enforce_stationarity
-            and spectral_radius >= stability_limit
-        ):
+        if self.core_model.enforce_stationarity and spectral_radius >= stability_limit:
             raise RuntimeError("optimizer returned a non-stationary final candidate")
         if (
             self.core_model.enforce_invertibility
@@ -619,8 +621,7 @@ class ExactDiffuseKalmanSTARIMA:
         forecasts = np.empty((steps, integrated.model.n_locations), dtype=float)
         for step_index in range(steps):
             state = (
-                integrated.model.state_intercept
-                + integrated.model.transition @ state
+                integrated.model.state_intercept + integrated.model.transition @ state
             )
             forecasts[step_index] = integrated.model.design @ state
         return cast(FloatArray, forecasts)

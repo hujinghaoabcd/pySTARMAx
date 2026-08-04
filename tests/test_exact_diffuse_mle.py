@@ -35,9 +35,7 @@ def test_random_walk_mle_matches_increment_closed_form() -> None:
     result = model.fit(levels, identity_weights())
     observed_increments = np.diff(levels[:, 0])
     expected_drift = float(np.mean(observed_increments))
-    expected_variance = float(
-        np.mean((observed_increments - expected_drift) ** 2)
-    )
+    expected_variance = float(np.mean((observed_increments - expected_drift) ** 2))
 
     assert isinstance(result, ExactDiffuseKalmanSTARIMAResult)
     assert result.order == (0, 1, 0)
@@ -49,9 +47,7 @@ def test_random_walk_mle_matches_increment_closed_form() -> None:
     )
     assert result.n_diffuse_observations == 1
     assert result.filter_result.diffuse_end_time == 0
-    assert result.log_likelihood == pytest.approx(
-        result.filter_result.log_likelihood
-    )
+    assert result.log_likelihood == pytest.approx(result.filter_result.log_likelihood)
     assert result.aic == pytest.approx(-2.0 * result.log_likelihood + 4.0)
     assert result.bic == pytest.approx(
         -2.0 * result.log_likelihood + np.log(levels.size) * 2.0
@@ -246,7 +242,7 @@ def test_validation_and_not_fitted_errors() -> None:
     with pytest.raises(RuntimeError, match="fit must be called"):
         model.admissibility()
 
-    with pytest.raises(ValueError, match="smaller than"):
+    with pytest.raises(ValueError, match="at least three"):
         model.fit(np.ones((1, 1)), identity_weights())
     with pytest.raises(ValueError, match="start_params"):
         model.fit(
