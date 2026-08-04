@@ -10,6 +10,7 @@ nav:
   - Stationarity and invertibility: admissibility.md
   - Ordinary STARIMA: starima.md
   - Conditional Kalman STARIMA: integrated_maximum_likelihood.md
+  - Exact diffuse filtering: exact_diffuse.md
   - Seasonal STARIMA: seasonal.md
   - Seasonal Kalman STARIMA: seasonal_maximum_likelihood.md
   - Seasonal likelihood inference: seasonal_likelihood_inference.md
