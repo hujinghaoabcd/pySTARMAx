@@ -6,7 +6,6 @@ import numpy as np
 
 from pystarmax import ExactDiffuseKalmanSTARIMA, SpatialWeights
 
-
 rng = np.random.default_rng(2026)
 increments = 0.15 + rng.normal(scale=0.45, size=180)
 levels = np.cumsum(increments)[:, None]
