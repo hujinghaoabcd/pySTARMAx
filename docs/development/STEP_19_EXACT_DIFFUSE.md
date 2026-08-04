@@ -14,7 +14,8 @@
 - `src/pystarmax/exact_integrated.py` coverage: 86.9%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
   macOS Python 3.11–3.14 all passed;
-- a validation-record-only merge-gate CI is required before merge.
+- the current head changes only validation records relative to CI #422 and is
+  the final merge-gate candidate.
 
 ## Delivered API
 
@@ -218,9 +219,9 @@ Authoritative CI #422 reported:
   regeneration passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-The validation-record-only head changes only this handoff and
-`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #19 is
-marked ready and merged.
+No implementation, test, API, example, README, or method-guide changes are made
+after CI #422. The current validation-record-only head receives one final
+merge-gate CI before PR #19 is marked ready and merged.
 
 ## Files introduced or changed
 
