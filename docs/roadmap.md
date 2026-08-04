@@ -247,21 +247,52 @@
 - method guide, analytic example, navigation, README, status, and Step 23
   handoff.
 
+## Implemented in 0.0.24: exact diffuse forecast intervals
+
+- original-level and highest ordinary-difference fixed-parameter forecast
+  intervals for `ExactDiffuseKalmanSTARIMA`;
+- terminal exact diffuse rank-zero requirement and explicit refusal of an
+  improper terminal posterior;
+- direct augmented-state path simulation with terminal filtered-state and
+  future process-innovation uncertainty;
+- deterministic recursive point forecasts retained as interval centers;
+- analytic state-variance, random-walk, second-order integration,
+  reproducibility, validation, and immutable-result tests;
+- method guide, runnable example, navigation, citation metadata, and Step 24
+  handoff.
+
+## Implemented in 0.0.25: exact diffuse simulation smoothing
+
+- dense conditional simulation of complete latent state and observation paths;
+- explicit flat diffuse coordinates and proper finite Gaussian source
+  coordinates;
+- analytic diffuse-coordinate elimination and left-null-space conditioning;
+- no large finite diffuse variance and no dependence on unavailable diffuse
+  lag-one covariance;
+- deterministic posterior marginal mean and covariance agreement with the
+  exact diffuse information smoother;
+- random-walk bridge, deterministic fully observed path, stationary
+  zero-diffuse, partial-location, fitted-route, reproducibility, immutability,
+  and unresolved-rank tests;
+- method guide, runnable example, navigation, remaining-work inventory, and
+  Step 25 handoff.
+
 ## Next priorities
 
-1. Forecast intervals for the exact diffuse estimator.
-2. Exact diffuse simulation smoothing.
-3. Seasonal ordinary-seasonal diffuse state augmentation, smoothing, and
-   inference.
-4. Research the nontrivial diffuse `L2` recursion required for lag-one state
-   autocovariance and cross-time disturbance covariance.
-5. Robust, profile-likelihood, and parameter-uncertainty propagation for exact
-   diffuse inference.
-6. Parameter-aware paths, sparse state matrices, and cross-time innovation
-   covariance.
-7. Smooth admissibility parameterization and automatic order selection.
-8. Exogenous regressors, GIS adapters, cross-language fixtures, PyPI release,
-   parallel execution, robust inference, and time-varying extensions.
+1. Seasonal ordinary-seasonal exact diffuse state augmentation,
+   likelihood, smoothing, inference, and forecasting.
+2. Research and implement the diffuse `L2` recursion required for lag-one
+   state autocovariance and cross-time disturbance covariance.
+3. Robust, profile-likelihood, analytic-derivative, and parameter-uncertainty
+   propagation for exact diffuse inference.
+4. Parameter-aware paths, sparse state matrices, memory-aware execution, and
+   cross-time innovation covariance.
+5. Smooth admissibility parameterization and automatic order/spatial-lag
+   selection.
+6. Exogenous regressors, intervention variables, GIS adapters,
+   cross-language fixtures, and public PyPI release automation.
+7. Parallel execution, reproducible chunking, and explicitly time-varying
+   state-space extensions.
 
 ## Research safeguards for future work
 

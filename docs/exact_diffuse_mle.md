@@ -243,8 +243,12 @@ Highest-difference means use the terminal transformed-state block:
 transformed_forecast = model.predict_differenced(steps=12)
 ```
 
-These are fixed-parameter point forecasts. Forecast interval simulation from
-the exact diffuse estimator is not yet exposed.
+Version 0.0.24 adds fixed-parameter original-level and highest-
+difference forecast intervals through `predict_interval()` and
+`predict_differenced_interval()`. They require a resolved terminal diffuse
+rank and propagate terminal finite-state uncertainty plus future process
+innovations. See
+[Exact diffuse forecast intervals](exact_diffuse_forecast_intervals.md).
 
 ## Fixed-interval state smoothing
 
@@ -275,6 +279,24 @@ equations `Q R.T r_t` and `Q - Q R.T N_t R Q`. The route preserves
 selection-nullspace uncertainty and does not require unavailable diffuse
 lag-one state autocovariance. See
 [Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md).
+
+## Conditional simulation smoothing
+
+Version 0.0.25 adds:
+
+```python
+paths = model.simulate_smoothing_paths(
+    n_simulations=2000,
+    random_state=2026,
+)
+```
+
+Flat diffuse coordinates are eliminated analytically and the remaining proper
+Gaussian source coordinates are conditioned on all observed cells. The dense
+route returns complete state and observation paths and checks its deterministic
+marginal means and covariances against the exact information smoother. It does
+not use a large finite diffuse scale. See
+[Exact diffuse simulation smoothing](exact_diffuse_simulation_smoothing.md).
 
 ## Observed-information and natural covariance inference
 
@@ -381,10 +403,12 @@ The test suite checks:
   inference are implemented, but analytic derivatives, robust covariance, and
   parameter uncertainty propagated into forecasts or smoothers are not;
 - exact diffuse marginal state and primitive innovation/state-disturbance
-  smoothing are available, but lag-one state autocovariance and cross-time
-  disturbance covariance are not;
+  smoothing plus dense conditional state/observation path simulation are
+  available, but primitive innovation paths, lag-one state autocovariance, and
+  cross-time disturbance covariance are not;
 - seasonal diffuse state augmentation and smoothing are not implemented;
-- forecast intervals are not yet exposed from this estimator;
+- forecast intervals are fixed-parameter and do not include estimation
+  uncertainty;
 - the current observation equation has no separate measurement-noise covariance;
 - exact filtering processes locations sequentially;
 - finite-difference rank decisions use `diffuse_tolerance`;

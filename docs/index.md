@@ -13,7 +13,8 @@ disturbance smoothing, combined differencing, original-scale forecast
 reconstruction, fixed-parameter Gaussian Kalman and exact diffuse forecast
 intervals, a separate exact diffuse filter and ordinary integrated level-state
 likelihood, exact diffuse fixed-interval state and primitive
-innovation/state-disturbance smoothing, conditional and bootstrap intervals,
+innovation/state-disturbance smoothing, dense exact diffuse conditional
+simulation of complete latent state paths, conditional and bootstrap intervals,
 and rolling-origin calibration diagnostics.
 
 ```python
@@ -94,6 +95,10 @@ exact_differenced_interval = exact_integrated_mle.predict_differenced_interval(
 )
 exact_smoothed = exact_integrated_mle.smooth()
 exact_disturbances = exact_integrated_mle.smooth_innovation_disturbances()
+exact_paths = exact_integrated_mle.simulate_smoothing_paths(
+    n_simulations=2000,
+    random_state=42,
+)
 exact_inference = exact_integrated_mle.likelihood_inference()
 exact_natural = exact_inference.innovation_covariance_inference()
 print(exact_integrated_result.summary())
@@ -102,6 +107,7 @@ print(exact_interval.lower, exact_interval.upper)
 print(exact_differenced_interval.lower, exact_differenced_interval.upper)
 print(exact_smoothed.smoothed_observations)
 print(exact_disturbances.innovation_mean)
+print(exact_paths.state_paths.shape)
 print(exact_inference.optimizer_table)
 print(exact_natural.table)
 
@@ -176,8 +182,11 @@ documents original-level finite-difference curvature, strict singular-Hessian
 handling, and natural covariance delta inference. [Exact diffuse forecast
 intervals](exact_diffuse_forecast_intervals.md) documents terminal diffuse-rank
 resolution, direct augmented-state path simulation, original-level and highest-
-difference projections, and refusal of improper terminal posteriors. The
-conditional `KalmanSTARIMA` likelihood remains a separate API.
+difference projections, and refusal of improper terminal posteriors. [Exact
+diffuse simulation smoothing](exact_diffuse_simulation_smoothing.md) documents
+flat diffuse-coordinate elimination, conditional Gaussian source sampling,
+complete state-path draws, and deterministic agreement with the information
+smoother. The conditional `KalmanSTARIMA` likelihood remains a separate API.
 
 [Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
 observed-information result contract for ordinary and seasonal factor

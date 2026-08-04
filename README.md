@@ -9,7 +9,7 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.23:** stationary, conditional ordinary-integrated,
+> **Status — 0.0.25:** stationary, conditional ordinary-integrated,
 > exact-diffuse ordinary-integrated, and multiplicative seasonal Gaussian
 > Kalman STARMA/STARIMA estimation; expanded AR stationarity and positive-sign
 > MA invertibility diagnostics; observed-information Hessian and natural
@@ -17,10 +17,11 @@ and public numerical result arrays are immutable.
 > original-level exact diffuse likelihoods; missing-data filtering; ordinary
 > RTS and exact diffuse fixed-interval state smoothing; ordinary and exact
 > diffuse primitive innovation/state-disturbance smoothing; fixed-parameter
-> Gaussian forecast intervals; and optimizer-facing exact diffuse ordinary
-> STARIMA likelihood. Exact diffuse lag-one autocovariance, simulation
-> smoothing, seasonal diffuse augmentation, sparse computation, exogenous
-> regressors, and time-varying extensions remain planned.
+> Gaussian and exact diffuse forecast intervals; and dense exact diffuse
+> conditional simulation of complete state and observation paths. Exact
+> diffuse lag-one autocovariance, seasonal diffuse augmentation, parameter-
+> aware paths, sparse computation, exogenous regressors, and time-varying
+> extensions remain planned.
 
 ## Installation
 
