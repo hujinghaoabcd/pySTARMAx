@@ -43,10 +43,7 @@ def main() -> None:
         max_iter=500,
     )
     model.fit(series[:, None], weights)
-    inference = model.infer(
-        relative_step=2e-4,
-        absolute_step=1e-6,
-    )
+    inference = model.infer(relative_step=2e-4, absolute_step=1e-6)
     natural = inference.innovation_covariance_inference()
 
     print(inference.coefficient_table)
@@ -54,8 +51,11 @@ def main() -> None:
     print(inference.confidence_intervals(level=0.95))
     print("Hessian eigenvalues:", inference.eigenvalues)
     print("Condition number:", inference.condition_number)
-    print("Minimum admissibility distance:", inference.minimum_admissibility_distance)
-    print(natural.element_table)
+    print(
+        "Minimum admissibility distance:",
+        inference.minimum_admissibility_distance,
+    )
+    print(natural.table)
     print("Factor/covariance cross covariance:")
     print(natural.dynamic_cross_covariance)
 
