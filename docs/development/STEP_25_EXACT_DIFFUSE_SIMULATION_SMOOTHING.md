@@ -9,9 +9,12 @@
   `0639f4bd932aa86020215b50b6ef9867bb5ad566`;
 - README, roadmap, root project status, exact diffuse MLE cross-links,
   documentation home, and MkDocs navigation are synchronized through 0.0.25;
-- the temporary formatting and status-patching workflows have self-deleted and
-  are absent from the final PR diff;
-- final validation: pending on the ordinary post-cleanup merge-gate CI head.
+- temporary formatting and status-patching workflows are absent from the final
+  PR diff;
+- authoritative implementation and documentation validation: CI #536, run ID
+  `30944093465`, on cleanup head
+  `ca58bdee2e1c391e2915b4789e7421d536c4b7dc`;
+- final validation-record-only merge gate: pending on this handoff update.
 
 ## Delivered API
 
@@ -67,7 +70,7 @@ The validation suite includes:
 9. argument validation;
 10. the complete inherited package suite.
 
-## First CI findings
+## Initial CI findings
 
 Initial CI #521, run ID `30943099910`, found three test-contract issues and one
 formatting issue:
@@ -86,6 +89,27 @@ actual inferential contract: deterministic state paths and zero posterior state
 covariance. The analytic mean/covariance comparisons had already passed at
 floating-point precision, so these findings did not indicate a defect in the
 simulation posterior.
+
+## Authoritative validation
+
+CI #536, run ID `30944093465`, passed on Ubuntu, Windows, and macOS with Python
+3.11--3.14:
+
+- **214 tests passed**;
+- **87.25% total branch coverage**;
+- **86.2% branch coverage** for
+  `src/pystarmax/exact_diffuse_simulation_smoothing.py`;
+- Black, isort, Ruff, and mypy;
+- independent classic-diagnostic reference regeneration with no diff;
+- strict MkDocs construction;
+- source distribution and wheel construction;
+- Twine package checks.
+
+The deterministic dense posterior reconstruction agreed with the existing
+exact diffuse information smoother within the configured floating-point
+consistency tolerances. Observed-cell support, unresolved diffuse rank,
+rank-deficient covariance, missing data, reproducibility, and immutable result
+contracts are covered by the validation suite.
 
 ## Deliberate boundaries
 
@@ -114,20 +138,19 @@ The major remaining workstreams are:
 7. exogenous/intervention inputs, GIS adapters, cross-language fixtures, PyPI
    release, parallel execution, and time-varying extensions.
 
-These represent seven major technical workstreams, or roughly 17--21 separately
-reviewable subprojects depending on how seasonal and release engineering are
-split.
+These represent seven major technical workstreams, twelve numbered core
+milestones in the retained delivery inventory, and roughly 17--21 separately
+reviewable projects when the later ecosystem work is split into individual
+PRs.
 
 ## Merge checklist
 
 Before marking PR #25 ready:
 
-1. pass complete CI on the final code and documentation head;
-2. record run number, run ID, test count, total branch coverage, and new-module
-   coverage;
-3. confirm README, documentation home, roadmap, project status, exact diffuse
+1. pass the final validation-record-only CI on this handoff head;
+2. confirm README, documentation home, roadmap, project status, exact diffuse
    MLE cross-links, and MkDocs navigation remain synchronized;
-4. confirm no temporary workflow or generated artifact remains;
-5. confirm no unresolved review thread remains;
-6. mark ready and squash-merge;
-7. start the seasonal exact diffuse design stage from the resulting `main`.
+3. confirm no temporary workflow or generated artifact remains;
+4. confirm no unresolved review thread remains;
+5. mark ready and squash-merge;
+6. start the seasonal exact diffuse design stage from the resulting `main`.
