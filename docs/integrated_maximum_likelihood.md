@@ -63,12 +63,13 @@ transformation. They do not receive a separate probability model. Therefore:
 This distinction is exposed in the result summary rather than hidden behind the
 word “integrated.”
 
-Version 0.0.19 adds a separate fixed-parameter exact diffuse level-state route.
-Given a stationary transformed `StateSpaceModel`,
-`build_exact_integrated_state_space()` augments explicit level and lower-
-difference states and evaluates the original-level exact diffuse likelihood.
-It does not yet optimize STARMA parameters and therefore does not replace this
-conditional estimator. See [Exact diffuse filtering](exact_diffuse.md).
+Version 0.0.19 added the separate fixed-parameter exact diffuse
+level-state route. Version 0.0.20 adds `ExactDiffuseKalmanSTARIMA`, which
+optimizes STARMA parameters against the original-level exact diffuse
+likelihood. It remains a separate estimator because this page's
+`KalmanSTARIMA` intentionally reports a conditional differenced likelihood.
+See [Exact diffuse filtering](exact_diffuse.md) and
+[Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md).
 
 ## Fitting
 
