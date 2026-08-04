@@ -39,6 +39,13 @@ def _freeze_vector(value: Any, *, name: str) -> FloatArray:
     return cast(FloatArray, frozen)
 
 
+def _freeze_covariance(value: Any, *, name: str) -> FloatArray:
+    array = _positive_semidefinite(value, name=name)
+    frozen = np.ascontiguousarray(array, dtype=float).copy()
+    frozen.setflags(write=False)
+    return cast(FloatArray, frozen)
+
+
 @dataclass(frozen=True, slots=True)
 class ExactSeasonalIntegratedStateSpace:
     """Original-level state space for ordinary and seasonal integration.
@@ -90,11 +97,11 @@ class ExactSeasonalIntegratedStateSpace:
             raise ValueError("polynomial_coefficients must start with one")
 
         state = _freeze_vector(self.initial_state, name="initial_state")
-        finite = _positive_semidefinite(
+        finite = _freeze_covariance(
             self.initial_covariance,
             name="initial_covariance",
         )
-        diffuse = _positive_semidefinite(
+        diffuse = _freeze_covariance(
             self.initial_diffuse_covariance,
             name="initial_diffuse_covariance",
         )
