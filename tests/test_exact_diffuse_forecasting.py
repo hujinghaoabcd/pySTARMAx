@@ -102,7 +102,7 @@ def test_random_walk_forecast_variance_grows_linearly() -> None:
         n_simulations=30000,
         random_state=77,
     )
-    expected_mean = np.repeat(levels[-1], 3, axis=0)
+    expected_mean = np.repeat(levels[-1:], 3, axis=0)
     expected_variance = variance * np.arange(1, 4, dtype=float)
 
     np.testing.assert_allclose(paths.mean(axis=0), expected_mean, atol=0.025)
