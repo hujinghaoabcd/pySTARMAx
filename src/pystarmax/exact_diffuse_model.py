@@ -60,7 +60,7 @@ class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
         rcond: float = 1e-10,
         allow_singular: bool = False,
     ) -> LikelihoodInferenceResult:
-        """Return observed-information inference for the exact diffuse objective."""
+        """Infer curvature from the fitted original-level exact diffuse objective."""
         return infer_exact_diffuse_kalman_starima(
             self,
             relative_step=relative_step,
