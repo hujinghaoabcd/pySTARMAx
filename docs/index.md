@@ -8,13 +8,13 @@ multiplicative seasonal Kalman STARIMA, AR stationarity and positive-sign MA
 invertibility diagnostics, observed-likelihood Hessian and natural-scale
 innovation covariance inference for stationary, conditional integrated,
 seasonal, and original-level exact diffuse likelihoods, missing-observation
-filtering, fixed-interval
-state smoothing, original location-level innovation disturbance smoothing,
-combined differencing, original-scale forecast reconstruction, fixed-parameter
-Gaussian Kalman forecast intervals, a separate exact diffuse filter and ordinary
-integrated level-state likelihood, exact diffuse fixed-interval state and
-primitive innovation/state-disturbance smoothing, conditional and bootstrap
-intervals, and rolling-origin calibration diagnostics.
+filtering, fixed-interval state smoothing, original location-level innovation
+disturbance smoothing, combined differencing, original-scale forecast
+reconstruction, fixed-parameter Gaussian Kalman and exact diffuse forecast
+intervals, a separate exact diffuse filter and ordinary integrated level-state
+likelihood, exact diffuse fixed-interval state and primitive
+innovation/state-disturbance smoothing, conditional and bootstrap intervals,
+and rolling-origin calibration diagnostics.
 
 ```python
 import numpy as np
@@ -82,12 +82,24 @@ exact_integrated_mle = ExactDiffuseKalmanSTARIMA(
     covariance_type="full",
 )
 exact_integrated_result = exact_integrated_mle.fit(level_series, weights)
-print(exact_integrated_result.summary())
-print(exact_integrated_mle.predict(steps=6))
+exact_interval = exact_integrated_mle.predict_interval(
+    steps=6,
+    n_simulations=5000,
+    random_state=42,
+)
+exact_differenced_interval = exact_integrated_mle.predict_differenced_interval(
+    steps=6,
+    n_simulations=5000,
+    random_state=42,
+)
 exact_smoothed = exact_integrated_mle.smooth()
 exact_disturbances = exact_integrated_mle.smooth_innovation_disturbances()
 exact_inference = exact_integrated_mle.likelihood_inference()
 exact_natural = exact_inference.innovation_covariance_inference()
+print(exact_integrated_result.summary())
+print(exact_integrated_mle.predict(steps=6))
+print(exact_interval.lower, exact_interval.upper)
+print(exact_differenced_interval.lower, exact_differenced_interval.upper)
 print(exact_smoothed.smoothed_observations)
 print(exact_disturbances.innovation_mean)
 print(exact_inference.optimizer_table)
@@ -161,8 +173,11 @@ documents primitive innovation and state-equation disturbance posteriors from
 `Q R.T r_t` and `Q - Q R.T N_t R Q`, without fabricating diffuse lag-one
 autocovariance. [Exact diffuse likelihood inference](exact_diffuse_inference.md)
 documents original-level finite-difference curvature, strict singular-Hessian
-handling, and natural covariance delta inference. The conditional
-`KalmanSTARIMA` likelihood remains a separate API.
+handling, and natural covariance delta inference. [Exact diffuse forecast
+intervals](exact_diffuse_forecast_intervals.md) documents terminal diffuse-rank
+resolution, direct augmented-state path simulation, original-level and highest-
+difference projections, and refusal of improper terminal posteriors. The
+conditional `KalmanSTARIMA` likelihood remains a separate API.
 
 [Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
 observed-information result contract for ordinary and seasonal factor
