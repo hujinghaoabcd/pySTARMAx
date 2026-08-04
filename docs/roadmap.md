@@ -2,8 +2,9 @@
 
 ## Current release line
 
-Version 0.0.29 adds seasonal exact-diffuse observed-information inference and
-natural innovation-covariance delta-method inference on original observations.
+Version 0.0.30 adds fixed-parameter seasonal exact-diffuse forecast paths and
+central simulation intervals on original and combined ordinary-seasonal
+transformed scales.
 
 The project follows a common progression:
 
@@ -23,100 +24,96 @@ The project follows a common progression:
 - conditional ordinary-integrated `KalmanSTARIMA`;
 - conditional multiplicative seasonal `SeasonalKalmanSTARIMA`.
 
-### Exact-diffuse ordinary integration
+### Ordinary exact-diffuse integration
 
 - exact diffuse filtering and original-level likelihood;
 - optimizer-facing ordinary STARIMA MLE;
-- fixed-interval state smoothing;
-- primitive innovation and state-disturbance smoothing;
+- state and primitive disturbance smoothing;
 - likelihood and natural covariance inference;
 - original-level and transformed-scale forecast intervals;
 - dense conditional simulation smoothing.
 
-### Seasonal exact-diffuse state, estimation, and smoothing
+### Seasonal exact-diffuse workflow
 
-Versions 0.0.26 through 0.0.28 delivered:
+Versions 0.0.26 through 0.0.30 deliver:
 
 - complete `(1-B)^d(1-B^s)^D` differencing polynomial;
-- auditable original-level lag companion;
-- exact diffuse initialization of all integration coordinates;
-- stationary finite initialization of the transformed subsystem;
-- fixed-parameter filtering and original-level likelihood;
+- auditable original-level lag companion and exact diffuse initialization;
 - optimizer-facing multiplicative seasonal MLE;
 - deterministic factor expansion and factor-based parameter counting;
 - expanded AR stationarity and positive-sign inverse-MA invertibility;
-- original-level and highest-difference point forecasts;
+- original-level and transformed point forecasts;
 - fixed-interval state and observation smoothing;
 - primitive innovation and state-disturbance smoothing;
-- exact ordinary reduction, bridge references, and missing-data validation.
+- observed-information and natural innovation-covariance inference;
+- original-level and transformed forecast paths and intervals;
+- pathwise ordinary-seasonal level restoration;
+- explicit terminal diffuse-rank protection;
+- ordinary reduction, closed-form random-walk references, missing-data behavior,
+  and immutable public results.
 
-### Implemented in 0.0.29
+## Implemented in 0.0.30
 
-Version 0.0.29 delivers:
+The fitted estimator now exposes:
 
-- `SeasonalExactDiffuseKalmanSTARIMA.likelihood_inference()`;
-- public functional inference API;
-- finite-difference score and observed-information Hessian on raw optimizer
-  coordinates;
-- complete factor expansion and exact-diffuse model reconstruction at every
-  stencil point;
-- scalar, diagonal, and full-Cholesky covariance coordinate support;
-- natural innovation-covariance delta-method inference;
-- immutable estimates, Hessian, covariance, standard errors, Wald statistics,
-  correlations, eigenvalues, score, and step diagnostics;
-- explicit full-rank/positive-definite Hessian policy;
-- explicit generalized-inverse opt-in with retained-rank reporting;
-- fitted AR and inverse-MA boundary-distance diagnostics;
-- closed-form seasonal-random-walk information references;
-- ordinary exact-diffuse reduction and missing-data curvature validation;
-- synchronized method guide, example, navigation, status, inventory, and Step
-  29 handoff.
+```python
+model.simulate_forecast_paths(...)
+model.simulate_differenced_forecast_paths(...)
+model.predict_interval(...)
+model.predict_differenced_interval(...)
+```
+
+The functional API accepts a matching exact filter result and
+`ExactSeasonalIntegratedStateSpace`.
+
+Every replication draws from the finite terminal filtered state distribution,
+propagates the complete seasonal augmented state with future fitted innovations,
+and projects either original levels or the stationary transformed state block.
+Original-level quantiles are calculated only after every path has passed through
+the inverse-differencing companion.
+
+The implementation refuses forecasting when `final_diffuse_rank` is nonzero.
+It does not replace unresolved diffuse directions with a large finite variance.
+Parameter uncertainty is deliberately outside the 0.0.30 interval scope.
 
 ## Next priorities
 
-### 1. Seasonal exact-diffuse forecasting uncertainty
+### 1. Seasonal exact-diffuse conditional simulation smoothing
 
-Add original-level and transformed-scale forecast paths and intervals using the
-resolved terminal exact-diffuse posterior. Require explicit behavior when the
-final diffuse rank is nonzero. Restore levels pathwise before computing original-
-scale quantiles.
+Extend complete latent path simulation to the seasonal augmented state. Preserve
+exact conditioning, missing-observation behavior, deterministic observation
+consistency, and the existing state layout. Validate exact reduction to the
+ordinary simulation smoother when seasonal orders are zero.
 
-### 2. Seasonal exact-diffuse conditional simulation smoothing
-
-Extend complete latent path simulation to the seasonal augmented state only
-after the fitted posterior and interval contracts are stable. Preserve exact
-conditioning and deterministic observation consistency without an arbitrary
-finite diffuse variance.
-
-### 3. Diffuse cross-time covariance theory
+### 2. Diffuse cross-time covariance theory
 
 Derive and independently validate the diffuse `L2` recursion required for
 lag-one smoothed state covariance and cross-time disturbance covariance. Do not
 replace exact diffuse initialization with a finite large-variance approximation.
 
-### 4. Stronger uncertainty
+### 3. Stronger uncertainty
 
 Add robust/sandwich covariance, profile likelihood, boundary-aware inference,
-and parameter-uncertainty propagation into forecasts and selected posterior
-summaries. Analytic derivatives may be added only with independent checks
-against the finite-difference objectives.
+and parameter-uncertainty propagation into forecast and selected posterior
+summaries. Analytic derivatives require independent checks against current
+finite-difference objectives.
 
-### 5. Scalable numerical execution
+### 4. Scalable numerical execution
 
-Introduce sparse state matrices, memory-aware filtering/smoothing, and
-reproducible chunked or parallel execution. Dense implementations remain the
-reference path for numerical equivalence.
+Introduce sparse state matrices, memory-aware filtering/smoothing, chunked
+forecast quantiles, and reproducible parallel seed partitioning. Dense
+implementations remain the numerical reference path.
 
-### 6. Model specification automation
+### 5. Model specification automation
 
 Split into independently reviewable stages:
 
 - smooth admissibility parameterization;
 - automatic ordinary and seasonal order selection;
 - automatic spatial-weight and spatial-lag selection;
-- comparable model-selection reporting without mixing likelihood scopes.
+- comparable reporting without mixing likelihood scopes.
 
-### 7. Exogenous inputs and ecosystem work
+### 6. Exogenous inputs and ecosystem work
 
 - exogenous regressors and intervention variables;
 - GIS-oriented data and spatial-weight adapters;
@@ -128,7 +125,7 @@ Split into independently reviewable stages:
 
 Each milestone should provide:
 
-- an explicit mathematical and likelihood-scale contract;
+- an explicit mathematical, scale, and likelihood contract;
 - immutable typed public results;
 - independently constructed numerical references;
 - missing-data and rank-deficiency behavior;
