@@ -11,16 +11,16 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #21 have been squash-merged into `main`.
-- `main` is version `0.0.21` at merge commit
-  `b6e9b167a012191590aae2abef0218f25482d00b`.
-- Current branch: `agent/exact-diffuse-disturbance-smoothing`.
-- Current draft pull request: PR #22, `Add exact diffuse disturbance smoothing`.
-- Current development version: `0.0.22`.
-- The branch adds exact diffuse primitive innovation and state-equation
-  disturbance marginal posterior moments from backward information quantities.
-- Lag-one state autocovariance, cross-time disturbance covariance, and
-  simulation smoothing remain explicitly outside this stage.
+- PR #1 through PR #22 have been squash-merged into `main`.
+- `main` is version `0.0.22` at merge commit
+  `6a9f4cf9d9e19edd54123b22a892f36b7daf7b66`.
+- Current branch: `agent/exact-diffuse-inference`.
+- Current draft pull request: PR #23, `Add exact diffuse likelihood inference`.
+- Current development version: `0.0.23`.
+- The branch adds observed-information and natural innovation covariance
+  inference for the original-level exact diffuse STARIMA likelihood.
+- Analytic derivatives, robust covariance, parameter-uncertainty propagation,
+  and seasonal exact diffuse inference remain explicitly outside this stage.
 
 ## Completed baseline through 0.0.18
 
@@ -305,6 +305,63 @@ Exact diffuse lag-one state autocovariance remains unavailable because the
 diffuse autocovariance recursion requires a nontrivial higher-order `L2` term.
 Cross-time disturbance covariance and simulation smoothing are not claimed.
 
+## Completed in 0.0.23
+
+### Original-level exact diffuse observed information
+
+- rebuilds optimizer coordinates, transformed STARMA state, integrated
+  original-level state, and exact diffuse filter at every curvature candidate;
+- computes central finite-difference gradient and Hessian of the negative exact
+  diffuse likelihood;
+- applies the fitted AR stationarity and positive-sign inverse-MA feasibility
+  boundaries;
+- returns immutable optimizer-coordinate covariance, standard errors, Wald
+  summaries, correlations, eigenvalues, rank, condition number, steps, score,
+  and objective diagnostics;
+- rejects non-positive-definite or rank-deficient Hessians by default;
+- supports an explicitly labelled positive-eigenspace generalized inverse only
+  when `allow_singular=True`;
+- reuses the analytic scalar, diagonal, and full-Cholesky natural covariance
+  Jacobian with dynamic/covariance cross uncertainty;
+- integrates as `ExactDiffuseKalmanSTARIMA.likelihood_inference()` and
+  `infer_exact_diffuse_kalman_starima()`.
+
+### Validation scope
+
+Tests cover a scalar random-walk closed-form Hessian, raw optimizer covariance,
+natural variance delta standard error, fitted-objective identity, missing data,
+immutable arrays, strict singular-Hessian rejection, explicit generalized
+inverse diagnostics, and fit/step/`rcond` validation.
+
+### Deliberate boundary
+
+Version 0.0.23 uses numerical observed information. Analytic derivative
+recursions, robust covariance, profile likelihood, parameter uncertainty in
+forecasts or smoothers, and seasonal exact diffuse inference remain future
+stages.
+
+## Core validation for 0.0.23
+
+GitHub Actions CI #497, run ID `30895807519`, validated the numerical core,
+public exports, model facade, packaging, and full cross-platform matrix:
+
+- 197 tests passed in the coverage job;
+- total branch coverage was 87.27%, above the required 80%;
+- `src/pystarmax/exact_diffuse_inference.py` coverage was 88.8%;
+- `src/pystarmax/exact_diffuse_disturbance_smoothing.py` coverage was 88.1%;
+- `src/pystarmax/exact_diffuse_smoothing.py` coverage was 91.6%;
+- `src/pystarmax/exact_diffuse_mle.py` coverage was 84.3%;
+- `src/pystarmax/exact_diffuse.py` coverage was 87.8%;
+- `src/pystarmax/exact_integrated.py` coverage was 86.9%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+A complete final CI is required on the synchronized documentation head. The
+authoritative final run must be recorded before merge.
+
 ## Authoritative validation for 0.0.22
 
 GitHub Actions CI #483, run ID `30892932606`, validated the complete
@@ -394,19 +451,21 @@ method-guide changes are made after CI #440.
 
 ## Immediate next tasks
 
-1. Run the validation-record-only merge-gate CI.
-2. Update PR #22, mark it ready, and squash-merge it into `main`.
-3. Add exact diffuse observed-information and natural covariance inference.
-4. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
-5. Research the nontrivial diffuse `L2` autocovariance recursion separately.
-6. Add forecast intervals, sparse state matrices, parameter-aware paths,
+1. Run complete CI on the synchronized 0.0.23 documentation head.
+2. Record the authoritative final run identifier, test count, and coverage.
+3. Update PR #23, mark it ready, and squash-merge it into `main`.
+4. Add forecast intervals for the exact diffuse estimator.
+5. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
+6. Research the nontrivial diffuse `L2` autocovariance recursion separately.
+7. Add robust inference, parameter-aware paths, sparse state matrices,
    cross-time innovation covariance, order selection, exogenous inputs, GIS
    adapters, and cross-language fixtures.
 
 ## Known limitations
 
-- exact diffuse observed-information and natural covariance inference are not
-  implemented;
+- exact diffuse observed-information and natural innovation covariance inference
+  are implemented, but analytic derivatives, robust covariance, profile
+  likelihood, and parameter-uncertainty propagation are not;
 - exact diffuse marginal state and primitive innovation/state-disturbance
   smoothing are implemented, but lag-one state autocovariance, cross-time
   disturbance covariance, and simulation smoothing are not;
@@ -426,6 +485,7 @@ method-guide changes are made after CI #440.
 ## Handoff instruction
 
 Before the next substantial stage, read this file,
+`docs/exact_diffuse_inference.md`,
 `docs/exact_diffuse_disturbance_smoothing.md`,
 `docs/exact_diffuse_smoothing.md`, `docs/exact_diffuse_mle.md`,
 `docs/exact_diffuse.md`,

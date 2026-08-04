@@ -276,6 +276,29 @@ selection-nullspace uncertainty and does not require unavailable diffuse
 lag-one state autocovariance. See
 [Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md).
 
+## Observed-information and natural covariance inference
+
+Version 0.0.23 adds:
+
+```python
+inference = model.likelihood_inference(
+    relative_step=1e-4,
+    absolute_step=1e-6,
+    rcond=1e-10,
+)
+natural = inference.innovation_covariance_inference()
+```
+
+Every finite-difference candidate rebuilds the transformed STARMA state,
+integrated original-level state, and exact diffuse filter. The Hessian is
+therefore curvature of the original-level exact diffuse objective rather than
+the conditional differenced likelihood. A non-positive-definite or
+rank-deficient Hessian raises by default; `allow_singular=True` explicitly
+enables a labelled positive-eigenspace diagnostic generalized inverse.
+Scalar, diagonal, and full-Cholesky innovation covariance coordinates use the
+existing analytic natural-covariance Jacobian. See
+[Exact diffuse likelihood inference](exact_diffuse_inference.md).
+
 ## Missing observations
 
 `NaN` cells are allowed.
@@ -354,7 +377,9 @@ The test suite checks:
 
 ## Current limitations
 
-- exact diffuse observed-information inference is not yet implemented;
+- exact diffuse observed-information and natural innovation covariance
+  inference are implemented, but analytic derivatives, robust covariance, and
+  parameter uncertainty propagated into forecasts or smoothers are not;
 - exact diffuse marginal state and primitive innovation/state-disturbance
   smoothing are available, but lag-one state autocovariance and cross-time
   disturbance covariance are not;

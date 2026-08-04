@@ -327,8 +327,12 @@ at every optimizer candidate. Version 0.0.21 adds exact diffuse fixed-interval
 marginal state smoothing through the fitted estimator and low-level
 `exact_diffuse_smoother()`. Version 0.0.22 adds primitive innovation and
 state-equation disturbance marginal smoothing through
-`exact_diffuse_disturbance_smoother()` and the fitted estimator facade. See
+`exact_diffuse_disturbance_smoother()` and the fitted estimator facade.
+Version 0.0.23 adds observed-information and natural innovation covariance
+inference by rebuilding the complete original-level exact diffuse objective at
+every curvature candidate. See
 [Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md),
+[Exact diffuse likelihood inference](exact_diffuse_inference.md),
 [Exact diffuse smoothing](exact_diffuse_smoothing.md), and
 [Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md).
 The conditional `KalmanSTARIMA` estimator remains unchanged.
@@ -354,7 +358,9 @@ Tests cover:
 
 - exact diffuse filtering, fixed-parameter likelihoods, and optimizer-facing
   ordinary STARIMA MLE are available;
-- exact diffuse observed-information inference is not yet implemented;
+- exact diffuse observed-information and natural innovation covariance
+  inference are implemented, but analytic derivatives, robust covariance, and
+  parameter-uncertainty propagation are not;
 - exact diffuse marginal state and primitive innovation/state-disturbance
   smoothing are implemented, but lag-one state autocovariance, cross-time
   disturbance covariance, and simulation smoothing are not;
