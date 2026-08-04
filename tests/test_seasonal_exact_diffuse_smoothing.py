@@ -49,6 +49,23 @@ def seasonal_bridge_data() -> np.ndarray:
     return np.array([[0.0], [10.0], [np.nan], [np.nan], [4.0], [14.0]])
 
 
+def fitted_bridge_data() -> np.ndarray:
+    return np.array(
+        [
+            [0.0],
+            [10.0],
+            [2.0],
+            [12.0],
+            [np.nan],
+            [np.nan],
+            [7.0],
+            [17.0],
+            [9.0],
+            [20.0],
+        ]
+    )
+
+
 def test_seasonal_random_walk_bridge_matches_two_closed_form_bridges() -> None:
     variance = 0.5
     specification = build_exact_seasonal_integrated_state_space(
@@ -152,7 +169,7 @@ def test_fitted_facade_returns_training_state_and_disturbance_posteriors() -> No
         max_iter=200,
     )
     fitted = model.fit(
-        seasonal_bridge_data(),
+        fitted_bridge_data(),
         identity_weights(),
         start_covariance=np.array([[0.5]]),
     )
@@ -166,12 +183,12 @@ def test_fitted_facade_returns_training_state_and_disturbance_posteriors() -> No
     assert disturbances.smoother_result.filter_result is fitted.filter_result
     np.testing.assert_allclose(
         smoothed.smoothed_observations[:, 0],
-        [0.0, 10.0, 2.0, 12.0, 4.0, 14.0],
+        [0.0, 10.0, 2.0, 12.0, 4.5, 14.5, 7.0, 17.0, 9.0, 20.0],
         atol=2e-8,
     )
-    assert disturbances.innovation_mean.shape == (5, 1)
+    assert disturbances.innovation_mean.shape == (9, 1)
     assert disturbances.state_disturbance_mean.shape == (
-        5,
+        9,
         fitted.integrated_state_space.model.state_dim,
     )
 
@@ -287,7 +304,7 @@ def test_facade_requires_fit_and_preserves_immutable_results() -> None:
         model.smooth_innovation_disturbances()
 
     model.fit(
-        seasonal_bridge_data(),
+        fitted_bridge_data(),
         identity_weights(),
         start_covariance=np.array([[0.5]]),
     )
