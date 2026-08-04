@@ -8,8 +8,9 @@ multiplicative seasonal Kalman STARIMA, AR stationarity and positive-sign MA
 invertibility diagnostics, observed-likelihood Hessian inference, natural-scale
 innovation covariance inference, missing-observation filtering, fixed-interval
 state smoothing, original location-level innovation disturbance smoothing,
-combined differencing, original-scale forecast reconstruction, conditional and
-bootstrap intervals, and rolling-origin calibration diagnostics.
+combined differencing, original-scale forecast reconstruction, fixed-parameter
+Gaussian Kalman forecast intervals, conditional and bootstrap intervals, and
+rolling-origin calibration diagnostics.
 
 ```python
 import numpy as np
@@ -41,11 +42,17 @@ mle_result = mle.fit(incomplete, weights)
 likelihood_inference = mle.infer(relative_step=1e-4)
 smoothed = mle.smooth(incomplete)
 innovation_disturbances = mle.smooth_innovation_disturbances(incomplete)
+stationary_interval = mle.predict_interval(
+    steps=6,
+    n_simulations=5000,
+    random_state=42,
+)
 
 print(mle_result.summary())
 print(likelihood_inference.coefficient_table)
 print(smoothed.smoothed_observations[20:24, 1])
 print(innovation_disturbances.innovation_mean)
+print(stationary_interval.lower, stationary_interval.upper)
 
 integrated_mle = KalmanSTARIMA(
     ar_order=1,
@@ -54,8 +61,14 @@ integrated_mle = KalmanSTARIMA(
     covariance_type="full",
 )
 integrated_result = integrated_mle.fit(level_series, weights)
+integrated_interval = integrated_mle.predict_interval(
+    steps=6,
+    n_simulations=5000,
+    random_state=42,
+)
 print(integrated_result.summary())
 print(integrated_mle.predict(steps=6))
+print(integrated_interval.lower, integrated_interval.upper)
 
 seasonal_mle = SeasonalKalmanSTARIMA(
     ar_order=1,
@@ -68,9 +81,15 @@ seasonal_mle = SeasonalKalmanSTARIMA(
     covariance_type="full",
 )
 seasonal_result = seasonal_mle.fit(seasonal_levels, weights)
+seasonal_interval = seasonal_mle.predict_interval(
+    steps=24,
+    n_simulations=5000,
+    random_state=42,
+)
 print(seasonal_result.summary())
 print(seasonal_mle.admissibility().summary())
 print(seasonal_mle.predict(steps=24))
+print(seasonal_interval.lower, seasonal_interval.upper)
 
 evaluation = rolling_origin_evaluate(
     lambda: STARMA(ar_order=1, ma_order=1),
@@ -108,9 +127,10 @@ on the first `d` level rows, missing-value propagation, and the separation
 between transformed and recursively restored original scales.
 
 [Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
-observed-information result contract for ordinary and seasonal factor parameters,
-rejects expanded-boundary stencil points, and enables natural innovation covariance
-delta-method inference with factor/covariance cross uncertainty.
+observed-information result contract for ordinary and seasonal factor
+parameters, rejects expanded-boundary stencil points, and enables natural
+innovation covariance delta-method inference with factor/covariance cross
+uncertainty.
 
 [Seasonal STARIMA](seasonal.md) compares the conditional and Gaussian seasonal
 routes. [Multiplicative seasonal Kalman STARIMA](seasonal_maximum_likelihood.md)
@@ -120,6 +140,13 @@ stationarity/invertibility checks, and missing-data handling. Both likelihood
 wrappers remain conditional on the transformation history and are distinct from
 an exact diffuse integrated level-state likelihood.
 
+[Gaussian Kalman forecast intervals](kalman_forecast_intervals.md) documents
+future-state simulation from the final filtered Gaussian posterior, future
+innovation draws, positive-semidefinite covariance handling, transformed-scale
+intervals, and pathwise ordinary-seasonal inverse differencing before
+original-scale quantiles.
+
 [Forecasting](forecasting.md), [Bootstrap intervals](bootstrap.md), and
-[Rolling evaluation](evaluation.md) cover predictive uncertainty, parameter
-refitting, calibration, sharpness, and point-error assessment.
+[Rolling evaluation](evaluation.md) cover conditional-model predictive
+uncertainty, parameter refitting, calibration, sharpness, and point-error
+assessment.
