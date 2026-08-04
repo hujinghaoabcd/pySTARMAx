@@ -2,33 +2,36 @@
 
 ## Snapshot
 
-This inventory is based on `main` version 0.0.26 at
-`e626ff330c2e6966d1474883656bf3543f56d84a` and PR #27 for development version
-0.0.27.
+This inventory is based on `main` version 0.0.27 at
+`66fc0442b561ce257f2653e54bbecfd635c78f09` and PR #28 for development version
+0.0.28.
 
-After Step 27, the plan contains:
+Step 28 completes seasonal exact-diffuse fixed-interval state and primitive
+innovation/state-disturbance smoothing. After that merge, the plan contains:
 
 - **6 major technical workstreams**;
-- **9 numbered core milestones**;
-- approximately **14–18 independently reviewable projects** after ecosystem
+- **8 numbered core milestones**;
+- approximately **13–17 independently reviewable projects** after ecosystem
   work is split.
 
 This is a delivery inventory, not a claim that every research extension already
 has a production-ready derivation.
 
-## Workstream 1: seasonal exact-diffuse posterior operations
+## Workstream 1: remaining seasonal exact-diffuse posterior operations
 
 Status: next implementation sequence.
 
-12. Extend exact-diffuse fixed-interval state and primitive disturbance
-    smoothing to the seasonal augmented state.
 13. Add seasonal exact-diffuse observed-information inference and natural
     innovation-covariance inference.
 14. Add original-level and transformed-scale seasonal exact-diffuse forecast
     paths and interval contracts.
 
-All three milestones must reuse the 0.0.26 original-level state and the 0.0.27
-fitted-model contract.
+A later independent project may add seasonal conditional simulation smoothing
+after inference and forecasting contracts stabilize.
+
+All operations must reuse the 0.0.26 original-level state, 0.0.27 fitted-model
+contract, and 0.0.28 posterior facade. They must not introduce a second seasonal
+state convention.
 
 ## Workstream 2: diffuse cross-time covariance theory
 
@@ -88,10 +91,11 @@ Status: split into independent future pull requests.
 
 ## Recommended sequence
 
-1. Merge PR #27 after final synchronized CI.
-2. Add seasonal exact-diffuse state and primitive disturbance smoothing.
-3. Add seasonal exact-diffuse likelihood inference.
-4. Add seasonal exact-diffuse forecasting uncertainty.
+1. Merge PR #28 after final synchronized CI.
+2. Add seasonal exact-diffuse likelihood and natural covariance inference.
+3. Add seasonal exact-diffuse forecasting uncertainty.
+4. Add seasonal conditional simulation smoothing only after those contracts are
+   stable.
 5. Run the diffuse `L2` derivation as a separate theory-and-validation project.
 6. Add robust and parameter-aware uncertainty after posterior contracts are
    stable.
