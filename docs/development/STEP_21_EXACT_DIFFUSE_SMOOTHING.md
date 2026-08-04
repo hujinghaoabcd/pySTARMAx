@@ -12,7 +12,9 @@
 - `src/pystarmax/exact_diffuse_smoothing.py` coverage: 91.6%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
   macOS Python 3.11–3.14 passed;
-- a complete final documentation-head CI is required before merge.
+- README, documentation home, exact diffuse guides, navigation, roadmap,
+  project status, example, and this handoff are synchronized on the current
+  documentation-head CI candidate.
 
 ## Delivered API
 
