@@ -9,17 +9,17 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.21:** stationary, conditional ordinary-integrated,
+> **Status — 0.0.22:** stationary, conditional ordinary-integrated,
 > exact-diffuse ordinary-integrated, and multiplicative seasonal Gaussian
 > Kalman STARMA/STARIMA estimation; expanded AR stationarity and positive-sign
 > MA invertibility diagnostics; observed-information Hessian and natural
 > covariance inference; missing-data filtering; ordinary RTS and exact diffuse
-> fixed-interval state smoothing; original innovation smoothing for the
-> ordinary finite-initialization route; fixed-parameter Gaussian forecast
+> fixed-interval state smoothing; ordinary and exact diffuse primitive
+> innovation/state-disturbance smoothing; fixed-parameter Gaussian forecast
 > intervals; and optimizer-facing exact diffuse ordinary STARIMA likelihood.
-> Exact diffuse lag-one/disturbance smoothing and inference, seasonal diffuse
-> augmentation, sparse computation, exogenous regressors, and time-varying
-> extensions remain planned.
+> Exact diffuse lag-one autocovariance, inference, simulation smoothing,
+> seasonal diffuse augmentation, sparse computation, exogenous regressors, and
+> time-varying extensions remain planned.
 
 ## Installation
 
@@ -282,8 +282,11 @@ print(exact_mle_result.summary())
 print(exact_mle_result.filter_result.filtered_diffuse_rank)
 print(exact_mle.predict(steps=6))
 exact_smoothed = exact_mle.smooth()
+exact_disturbances = exact_mle.smooth_innovation_disturbances()
 print(exact_smoothed.smoothed_observations)
 print(exact_smoothed.smoothed_covariance)
+print(exact_disturbances.innovation_mean)
+print(exact_disturbances.innovation_covariance)
 ```
 
 `KalmanSTARIMA` maximizes the conditional differenced likelihood;
@@ -291,8 +294,9 @@ print(exact_smoothed.smoothed_covariance)
 spaces at every candidate and maximizes the original-level exact diffuse
 likelihood. Their likelihoods, AIC, and BIC are not interchangeable. See
 [`docs/exact_diffuse.md`](docs/exact_diffuse.md),
-[`docs/exact_diffuse_mle.md`](docs/exact_diffuse_mle.md), and
-[`docs/exact_diffuse_smoothing.md`](docs/exact_diffuse_smoothing.md).
+[`docs/exact_diffuse_mle.md`](docs/exact_diffuse_mle.md),
+[`docs/exact_diffuse_smoothing.md`](docs/exact_diffuse_smoothing.md), and
+[`docs/exact_diffuse_disturbance_smoothing.md`](docs/exact_diffuse_disturbance_smoothing.md).
 
 ## Observed-information inference
 
@@ -645,8 +649,9 @@ coverage, pull request, and next-stage handoff.
 
 - `KalmanSTARIMA.fit()` and `ExactDiffuseKalmanSTARIMA.fit()` expose
   distinct conditional and exact diffuse likelihood contracts;
-- exact diffuse state marginal smoothing is available, but lag-one state
-  covariance, disturbance smoothing, and simulation smoothing are unavailable;
+- exact diffuse state marginal and primitive innovation/state-disturbance
+  marginal smoothing are available, but lag-one state autocovariance,
+  cross-time disturbance covariance, and simulation smoothing are unavailable;
 - exact diffuse observed-information inference is unavailable;
 - seasonal diffuse augmentation and smoothing are unavailable;
 - seasonal likelihood-Hessian inference uses finite differences and can be

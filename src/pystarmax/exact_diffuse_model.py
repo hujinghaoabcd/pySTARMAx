@@ -1,12 +1,16 @@
 # SPDX-FileCopyrightText: 2026 Jinghao Hu
 # SPDX-License-Identifier: MIT
 
-"""Exact diffuse STARIMA estimator facade with state smoothing."""
+"""Exact diffuse STARIMA estimator facade with smoothing utilities."""
 
 from __future__ import annotations
 
 from typing import Any
 
+from pystarmax.exact_diffuse_disturbance_smoothing import (
+    ExactDiffuseDisturbanceResult,
+    exact_diffuse_disturbance_smoother,
+)
 from pystarmax.exact_diffuse_mle import (
     ExactDiffuseKalmanSTARIMA as _ExactDiffuseKalmanSTARIMA,
 )
@@ -20,7 +24,7 @@ from pystarmax.exact_diffuse_smoothing import (
 
 
 class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
-    """Exact diffuse ordinary STARIMA with fixed-interval state smoothing."""
+    """Exact diffuse ordinary STARIMA with state and disturbance smoothing."""
 
     def smooth(
         self,
@@ -34,8 +38,21 @@ class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
             tolerance=tolerance,
         )
 
+    def smooth_innovation_disturbances(
+        self,
+        data: Any | None = None,
+        *,
+        tolerance: float | None = None,
+    ) -> ExactDiffuseDisturbanceResult:
+        """Smooth primitive process innovations and their state-equation images."""
+        return exact_diffuse_disturbance_smoother(
+            self.smooth(data, tolerance=tolerance),
+            tolerance=tolerance,
+        )
+
 
 __all__ = [
+    "ExactDiffuseDisturbanceResult",
     "ExactDiffuseKalmanSTARIMA",
     "ExactDiffuseKalmanSTARIMAResult",
     "ExactDiffuseSmootherResult",

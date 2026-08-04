@@ -261,6 +261,21 @@ observation moments. Smoothing new data starts a new diffuse initialization;
 it does not continue the training posterior. See
 [Exact diffuse smoothing](exact_diffuse_smoothing.md).
 
+## Primitive innovation and state-disturbance smoothing
+
+Version 0.0.22 adds:
+
+```python
+disturbances = model.smooth_innovation_disturbances()
+new_disturbances = model.smooth_innovation_disturbances(new_level_observations)
+```
+
+Posterior means and marginal covariance use the exact backward information
+equations `Q R.T r_t` and `Q - Q R.T N_t R Q`. The route preserves
+selection-nullspace uncertainty and does not require unavailable diffuse
+lag-one state autocovariance. See
+[Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md).
+
 ## Missing observations
 
 `NaN` cells are allowed.
@@ -340,8 +355,9 @@ The test suite checks:
 ## Current limitations
 
 - exact diffuse observed-information inference is not yet implemented;
-- exact diffuse marginal state smoothing is available, but lag-one state
-  covariance and disturbance smoothing are not;
+- exact diffuse marginal state and primitive innovation/state-disturbance
+  smoothing are available, but lag-one state autocovariance and cross-time
+  disturbance covariance are not;
 - seasonal diffuse state augmentation and smoothing are not implemented;
 - forecast intervals are not yet exposed from this estimator;
 - the current observation equation has no separate measurement-noise covariance;
