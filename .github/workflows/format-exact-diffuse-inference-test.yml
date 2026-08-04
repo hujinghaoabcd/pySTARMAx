@@ -1,0 +1,33 @@
+name: Format exact diffuse inference singular test
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.ref == 'agent/exact-diffuse-inference'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/exact-diffuse-inference
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Format test
+        run: |
+          python -m pip install black==26.5.1 isort==8.0.1
+          python -m black tests/test_exact_diffuse_inference.py
+          python -m isort tests/test_exact_diffuse_inference.py
+          rm .github/workflows/format-exact-diffuse-inference-test.yml
+      - name: Commit formatted test
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Format exact diffuse inference singular test"
+          git push origin HEAD:agent/exact-diffuse-inference
