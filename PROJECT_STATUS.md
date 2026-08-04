@@ -1,6 +1,6 @@
 # pySTARMAx project status
 
-Updated: 2026-08-04
+Updated: 2026-08-05
 
 ## Purpose
 
@@ -11,16 +11,21 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #22 have been squash-merged into `main`.
-- `main` is version `0.0.22` at merge commit
-  `6a9f4cf9d9e19edd54123b22a892f36b7daf7b66`.
-- Current branch: `agent/exact-diffuse-inference`.
-- Current draft pull request: PR #23, `Add exact diffuse likelihood inference`.
-- Current development version: `0.0.23`.
-- The branch adds observed-information and natural innovation covariance
-  inference for the original-level exact diffuse STARIMA likelihood.
-- Analytic derivatives, robust covariance, parameter-uncertainty propagation,
-  and seasonal exact diffuse inference remain explicitly outside this stage.
+- PR #1 through PR #24 have been squash-merged into `main`.
+- `main` is version `0.0.24` at merge commit
+  `0639f4bd932aa86020215b50b6ef9867bb5ad566`.
+- PR #24 added original-level and highest-difference exact diffuse forecast
+  intervals. CI #518 and merge-gate CI #519 passed 207 tests with 87.30%
+  total branch coverage.
+- Current branch: `agent/exact-diffuse-simulation-smoothing`.
+- Current draft pull request: PR #25, `Add exact diffuse simulation smoothing`.
+- Current development version: `0.0.25`.
+- PR #25 adds dense exact diffuse conditional simulation of complete state and
+  observation paths by analytically eliminating flat diffuse coordinates and
+  conditioning a proper Gaussian source vector on observed cells.
+- Lag-one exact diffuse autocovariance, primitive innovation paths, cross-time
+  disturbance covariance, seasonal diffuse augmentation, parameter-aware
+  paths, and sparse execution remain explicitly outside this stage.
 
 ## Completed baseline through 0.0.18
 
