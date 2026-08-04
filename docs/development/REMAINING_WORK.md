@@ -2,145 +2,120 @@
 
 ## Snapshot
 
-This inventory is based on `main` version 0.0.24 at
-`0639f4bd932aa86020215b50b6ef9867bb5ad566` and the active draft PR #25 for
-version 0.0.25.
+This inventory is based on `main` version 0.0.25 at
+`ac7c049e16889046391e8b324970dbc8d9e8798b` and draft PR #26 for version
+0.0.26.
 
-The remaining work is best described as:
+PR #26 completes the fixed-parameter seasonal exact diffuse state augmentation,
+filter, and original-level likelihood foundation. After that merge, the
+remaining plan contains:
 
-- **8 major workstreams** including the active simulation-smoothing stage;
-- **20 independently reviewable milestones** under the current roadmap;
-- **1 active milestone group** in PR #25;
-- **7 later technical workstreams** after PR #25 is merged.
+- **7 major technical workstreams**;
+- **10 numbered core milestones**;
+- roughly **15--19 separately reviewable projects** after ecosystem work is
+  split into independent pull requests.
 
-The count is a delivery plan rather than a claim that every research extension
-has a known final solution. The diffuse lag-one covariance recursion, robust
-boundary inference, and scalable seasonal diffuse implementation still require
-method research before their production scope can be fixed.
+The count is a delivery plan, not a claim that every research extension already
+has a closed-form production solution. In particular, diffuse lag-one
+covariance, boundary-aware robust inference, and scalable seasonal diffuse
+execution still require method research.
 
-## Workstream 1: release and status consistency
+## Workstream 1: seasonal exact diffuse maximum likelihood
 
-Status: active inside PR #25.
+Status: fixed-parameter foundation active in PR #26; optimizer not started.
 
-1. Synchronize README capability and limitation text with versions 0.0.24 and
-   0.0.25.
-2. Add completed 0.0.24 and 0.0.25 sections to the roadmap and remove delivered
-   items from `Next priorities`.
-3. Replace the stale 0.0.23 project-status snapshot with PR #24 and PR #25
-   validation records.
-4. Update exact diffuse MLE cross-links and limitations so forecast intervals
-   and simulation smoothing are not still described as unavailable.
+11. Add optimizer-facing seasonal exact diffuse MLE with multiplicative ordinary
+    and seasonal factor parameters, factor-based parameter counting, original-
+    level AIC/BIC, and expanded admissibility enforcement.
 
-These are documentation defects, not missing numerical capabilities, but they
-must be closed before 0.0.25 is considered complete.
+The optimizer must rebuild the ordered multiplicative operator expansion,
+stationary transformed state, combined original-level seasonal augmentation, and
+exact diffuse filter at every candidate. It must not optimize deterministic
+expanded cross-lag matrices as independent parameters.
 
-## Workstream 2: exact diffuse simulation smoothing
+## Workstream 2: seasonal exact diffuse posterior operations
 
-Status: active in draft PR #25.
-
-5. Complete all-platform validation of the dense flat-diffuse-coordinate
-   simulation smoother.
-6. Finalize public API, immutable diagnostics, method guide, example, and Step
-   25 handoff.
-7. Record test count, total coverage, new-module coverage, and numerical
-   agreement with the exact information smoother.
-8. Remove temporary artifacts, close review threads, and merge version 0.0.25.
-
-The implemented scope draws complete state and observation paths. Primitive
-innovation paths, lag-one covariance, and cross-time disturbance covariance are
-not silently included in this milestone.
-
-## Workstream 3: seasonal exact diffuse foundation
-
-Status: not started.
-
-9. Derive and implement ordinary-seasonal integrated state augmentation for
-   multiplicative seasonal STARIMA without conditioning away the transformed
-   history.
-10. Add exact diffuse filtering and original-level likelihood for the seasonal
-    augmented state.
-11. Add optimizer-facing seasonal exact diffuse MLE with correct factor
-    parameter counting and expanded admissibility checks.
-
-## Workstream 4: seasonal exact diffuse posterior operations
-
-Status: blocked by Workstream 3.
+Status: blocked until Workstream 1 stabilizes the fitted model contract.
 
 12. Extend exact diffuse fixed-interval state and primitive disturbance
     smoothing to the seasonal augmented state.
-13. Add seasonal exact diffuse likelihood inference and natural innovation
-    covariance inference.
-14. Add original-level and transformed-scale seasonal exact diffuse forecasting
-    and interval contracts.
+13. Add seasonal exact diffuse observed-information inference and natural
+    innovation covariance inference.
+14. Add original-level and transformed-scale seasonal exact diffuse forecasts,
+    paths, and interval contracts.
 
-## Workstream 5: diffuse cross-time covariance theory
+All operations should reuse the 0.0.26 original-level state contract rather than
+introducing separate incompatible seasonal augmentations.
+
+## Workstream 3: diffuse cross-time covariance theory
 
 Status: research required.
 
-15. Derive, implement, and independently validate the nontrivial diffuse `L2`
-    recursion needed for lag-one smoothed state autocovariance.
+15. Derive, implement, and independently validate the diffuse `L2` recursion
+    required for lag-one smoothed state autocovariance.
 16. Use that recursion to expose cross-time state-disturbance and primitive
     innovation covariance without large-variance substitution.
 
-This workstream must not be replaced by approximate diffuse initialization while
-being labelled exact.
+This workstream must not replace exact diffuse initialization with an
+approximate large finite covariance while retaining the label “exact”.
 
-## Workstream 6: stronger likelihood and parameter uncertainty
+## Workstream 4: stronger likelihood and parameter uncertainty
 
 Status: not started.
 
-17. Add robust/sandwich and profile-likelihood inference with explicit boundary
-    and singular-curvature policies.
+17. Add robust/sandwich and profile-likelihood inference with explicit boundary,
+    rank-deficiency, and singular-curvature policies.
 18. Propagate parameter uncertainty into forecast paths, intervals, and selected
-    smoother summaries through asymptotic draws or bootstrap refitting.
+    smoother summaries through validated asymptotic draws or bootstrap
+    refitting.
 
-Analytic derivatives can be delivered as part of this workstream if they are
-validated against finite-difference references; they are not a prerequisite for
-calling the existing observed-information implementation correct.
+Analytic derivatives may be delivered here if they are checked against the
+existing finite-difference objective references.
 
-## Workstream 7: scalable numerical execution
+## Workstream 5: scalable numerical execution
 
 Status: not started.
 
 19. Add sparse spatial/state operators and memory-aware filtering, smoothing,
     forecasting, and simulation paths.
-20. Add chunked or parallel execution with reproducibility contracts and dense
-    reference equivalence.
+20. Add chunked or parallel execution with deterministic seed partitioning,
+    reproducibility contracts, and dense-reference equivalence.
 
-The current dense simulation smoother is intentionally a transparent reference,
-not a large-data performance claim.
+The dense exact diffuse implementations remain transparent moderate-sample
+references, not large-data performance claims.
 
-## Workstream 8: model specification and ecosystem integration
+## Workstream 6: model specification automation
 
-Status: not started.
-
-This later workstream contains the next package-level expansion after the 20
-core milestones above:
+Status: not started; split into independent pull requests.
 
 - smooth admissibility parameterization;
-- automatic order and spatial-lag selection;
-- exogenous regressors and intervention variables;
-- GIS-oriented weight/data adapters;
-- cross-language reference fixtures;
-- public PyPI release automation;
-- time-varying and other explicitly extended state-space models.
+- automatic ordinary and seasonal order selection;
+- automatic spatial-lag and weight-set selection;
+- comparable conditional versus exact-diffuse model-selection reporting without
+  mixing likelihood conventions.
 
-These items should be split into separate PRs when activated. They are grouped
-here because their exact sequence depends on results from the seasonal,
-cross-time covariance, and sparse-computation stages.
+## Workstream 7: exogenous inputs and ecosystem integration
+
+Status: not started; split into independent pull requests.
+
+- exogenous regressors and intervention variables;
+- GIS-oriented spatial-weight and data adapters;
+- cross-language numerical reference fixtures;
+- public PyPI release and signed release automation;
+- explicitly time-varying and other extended state-space models.
 
 ## Recommended sequence
 
-1. Finish and merge PR #25.
-2. Close the release/status consistency defects in the same merge.
-3. Implement seasonal exact diffuse state augmentation and filtering before any
-   seasonal smoother facade.
-4. Run the diffuse `L2` derivation as a separately reviewed research stage.
-5. Add robust/parameter-aware inference after the exact posterior contracts are
-   stable.
+1. Finish and merge PR #26.
+2. Implement optimizer-facing seasonal exact diffuse MLE.
+3. Add seasonal smoothing, inference, and forecasting in separate reviewable
+   stages.
+4. Run the diffuse `L2` derivation as an independent theory-and-validation
+   project.
+5. Add robust and parameter-aware inference after posterior contracts stabilize.
 6. Introduce sparse execution before broad GIS adapters or automatic model
-   search, so higher-level features do not hard-code dense assumptions.
-7. Finish ecosystem and release engineering only after public API boundaries
+   search so higher-level APIs do not hard-code dense assumptions.
+7. Complete ecosystem and release engineering after public numerical contracts
    are stable.
 
 ## Completion definition

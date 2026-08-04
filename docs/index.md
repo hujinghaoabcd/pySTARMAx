@@ -14,7 +14,8 @@ reconstruction, fixed-parameter Gaussian Kalman and exact diffuse forecast
 intervals, a separate exact diffuse filter and ordinary integrated level-state
 likelihood, exact diffuse fixed-interval state and primitive
 innovation/state-disturbance smoothing, dense exact diffuse conditional
-simulation of complete latent state paths, conditional and bootstrap intervals,
+simulation of complete latent state paths, a fixed-parameter seasonal exact diffuse
+original-level state/filter/likelihood foundation, conditional and bootstrap intervals,
 and rolling-origin calibration diagnostics.
 
 ```python
