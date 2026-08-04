@@ -253,10 +253,12 @@ Public immutable types:
 - `ExactDiffuseFilterResult`;
 - `ExactIntegratedStateSpace`.
 
-## Core validation for 0.0.19
+## Authoritative validation for 0.0.19
 
-GitHub Actions CI #416, run ID `30879751296`, validated the numerical core and
-the first exact-diffuse method document:
+GitHub Actions CI #422, run ID `30880321271`, validated the complete
+implementation, tests, example, metadata, README, documentation home,
+navigation, state-space guide, conditional-integrated guide, roadmap, project
+status, and Step 19 documentation head:
 
 - 169 tests passed in the coverage job;
 - total branch coverage was 87.12%, above the required 80%;
@@ -268,10 +270,9 @@ the first exact-diffuse method document:
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A complete final CI is required on the synchronized README, documentation home,
-state-space guide, conditional-integrated guide, roadmap, project status,
-example, and Step 19 head. The authoritative final run must be recorded before
-merge.
+A validation-record-only merge-gate CI is required after this status and the
+Step 19 handoff are updated. No implementation, test, API, example, README, or
+method-guide changes are made after CI #422.
 
 ## Validation references
 
@@ -315,13 +316,12 @@ Tests cover:
 
 ## Immediate next tasks
 
-1. Run complete CI on the synchronized documentation head.
-2. Record the authoritative final test count, coverage, and run identifier.
-3. Update PR #19, mark it ready, and squash-merge it into `main`.
-4. Add optimizer-facing exact diffuse ordinary STARIMA maximum likelihood.
-5. Add exact diffuse fixed-interval smoothing and disturbance smoothing.
-6. Add ordinary-seasonal diffuse state augmentation.
-7. Add parameter-aware Kalman paths, sparse state matrices, cross-time
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #19, mark it ready, and squash-merge it into `main`.
+3. Add optimizer-facing exact diffuse ordinary STARIMA maximum likelihood.
+4. Add exact diffuse fixed-interval smoothing and disturbance smoothing.
+5. Add ordinary-seasonal diffuse state augmentation.
+6. Add parameter-aware Kalman paths, sparse state matrices, cross-time
    innovation covariance, simulation smoothing, order selection, exogenous
    inputs, adapters, and cross-language fixtures.
 

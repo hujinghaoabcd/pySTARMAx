@@ -7,11 +7,14 @@
 - pull request: PR #19, `Add exact diffuse Kalman filtering`;
 - base: version 0.0.18 on `main` at merge commit
   `407ced8fec73fd63a4a5357da3b422f62b650e95`;
-- core validation: GitHub Actions CI #416, run ID `30879751296`;
-- core result: 169 tests passed and 87.12% total branch coverage;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #422, run ID `30880321271`;
+- validation result: 169 tests passed and 87.12% total branch coverage;
 - `src/pystarmax/exact_diffuse.py` coverage: 87.8%;
 - `src/pystarmax/exact_integrated.py` coverage: 86.9%;
-- a complete final documentation-head CI is required before merge.
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+  macOS Python 3.11–3.14 all passed;
+- a validation-record-only merge-gate CI is required before merge.
 
 ## Delivered API
 
@@ -205,17 +208,19 @@ Tests include:
 11. rejection of a nonstationary transformed finite state;
 12. the complete inherited package test suite.
 
-Core CI #416 reported:
+Authoritative CI #422 reported:
 
-- 169 tests passed in 48.19 seconds;
+- 169 tests passed in 61.57 seconds in the coverage job;
 - total branch coverage: 87.12%;
 - exact diffuse module coverage: 87.8%;
 - exact integrated module coverage: 86.9%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
   regeneration passed;
-- Ubuntu and macOS passed on Python 3.11 through 3.14;
-- Windows completion is confirmed by the final documentation-head CI before
-  merge.
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #19 is
+marked ready and merged.
 
 ## Files introduced or changed
 
