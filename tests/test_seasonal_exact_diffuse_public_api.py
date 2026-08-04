@@ -73,7 +73,4 @@ def test_seasonal_exact_diffuse_public_exports() -> None:
         in pystarmax.__all__
     )
     assert "seasonal_exact_diffuse_forecast_interval" in pystarmax.__all__
-    assert (
-        "seasonal_exact_diffuse_differenced_forecast_interval"
-        in pystarmax.__all__
-    )
+    assert "seasonal_exact_diffuse_differenced_forecast_interval" in pystarmax.__all__

@@ -27,8 +27,7 @@ def _validate_forecast_inputs(
         raise TypeError("filter_result must be an ExactDiffuseFilterResult")
     if not isinstance(integrated_state_space, ExactSeasonalIntegratedStateSpace):
         raise TypeError(
-            "integrated_state_space must be an "
-            "ExactSeasonalIntegratedStateSpace"
+            "integrated_state_space must be an " "ExactSeasonalIntegratedStateSpace"
         )
     if integrated_state_space.model is not filter_result.model:
         raise ValueError(
