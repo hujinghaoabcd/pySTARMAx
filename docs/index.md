@@ -3,11 +3,10 @@
 pySTARMAx is a typed Python toolkit for classical and extended space-time
 autoregressive moving-average modelling.
 
-Version 0.0.29 supports stationary, integrated, multiplicative seasonal, and
-original-level exact-diffuse workflows, including optimizer-facing seasonal
-exact-diffuse maximum likelihood, fixed-interval state and disturbance
-smoothing, observed-information inference, and natural innovation-covariance
-inference for
+Version 0.0.30 supports stationary, integrated, multiplicative seasonal, and
+original-level exact-diffuse workflows. The seasonal exact-diffuse fitted model
+now includes estimation, state and disturbance smoothing, likelihood inference,
+and original-level plus transformed-scale forecast paths and intervals for
 
 \[
 (1-B)^d(1-B^s)^D y_t.
@@ -38,27 +37,23 @@ from pystarmax import (
 )
 ```
 
-### Stationary Gaussian STARMA
+### Stationary and conditional models
 
-Use `KalmanSTARMA` for stationary Gaussian state-space maximum likelihood with
-scalar, diagonal, or full-Cholesky innovation covariance.
+- `KalmanSTARMA` provides stationary Gaussian state-space maximum likelihood.
+- `KalmanSTARIMA` provides an ordinary-difference conditional likelihood.
+- `SeasonalKalmanSTARIMA` provides a multiplicative seasonal conditional
+  transformed-data likelihood.
 
-See [Maximum likelihood](maximum_likelihood.md).
-
-### Conditional integrated STARIMA
-
-Use `KalmanSTARIMA` when ordinary differencing history is conditioned out before
-evaluating the stationary transformed-data likelihood.
-
-See [Conditional Kalman STARIMA](integrated_maximum_likelihood.md).
+See [Maximum likelihood](maximum_likelihood.md),
+[Conditional Kalman STARIMA](integrated_maximum_likelihood.md), and
+[Seasonal Kalman STARIMA](seasonal_maximum_likelihood.md).
 
 ### Ordinary exact-diffuse STARIMA
 
 Use `ExactDiffuseKalmanSTARIMA` when integration directions must be represented
-on the original scale with exact diffuse initialization.
-
-The ordinary fitted model includes smoothing, primitive disturbance smoothing,
-likelihood inference, forecast intervals, and conditional simulation smoothing.
+on the original scale with exact diffuse initialization. Its fitted facade
+includes smoothing, primitive disturbance smoothing, likelihood inference,
+forecast intervals, and conditional simulation smoothing.
 
 See:
 
@@ -69,17 +64,7 @@ See:
 - [Exact diffuse forecast intervals](exact_diffuse_forecast_intervals.md)
 - [Exact diffuse simulation smoothing](exact_diffuse_simulation_smoothing.md)
 
-### Conditional multiplicative seasonal STARIMA
-
-Use `SeasonalKalmanSTARIMA` for the conditional transformed-data seasonal
-likelihood.
-
-See [Seasonal Kalman STARIMA](seasonal_maximum_likelihood.md).
-
 ### Seasonal exact-diffuse STARIMA
-
-Use `SeasonalExactDiffuseKalmanSTARIMA` for optimizer-facing multiplicative
-seasonal estimation on original levels:
 
 ```python
 model = SeasonalExactDiffuseKalmanSTARIMA(
@@ -96,28 +81,28 @@ result = model.fit(data, weights)
 ```
 
 At each optimizer candidate the estimator expands the ordered ordinary and
-seasonal AR/MA factors, builds the stationary transformed state, constructs the
-seasonal original-level exact-diffuse state, and evaluates the exact-diffuse
-likelihood. Expanded cross-lag matrices are deterministic and do not add free
-AIC/BIC parameters.
+seasonal factor polynomials, builds the transformed state, constructs the
+original-level exact-diffuse augmentation, and filters the original observations.
+Expanded cross lags remain deterministic and do not add free parameters.
 
-The fitted posterior and uncertainty routes are:
+Posterior and uncertainty operations are:
 
 ```python
-smoothed = model.smooth()
-disturbances = model.smooth_innovation_disturbances()
-inference = model.likelihood_inference()
-natural_covariance = inference.innovation_covariance_inference()
+model.smooth()
+model.smooth_innovation_disturbances()
+model.likelihood_inference()
+model.predict_interval(steps=12, n_simulations=5000, random_state=7)
+model.predict_differenced_interval(
+    steps=12,
+    n_simulations=5000,
+    random_state=7,
+)
 ```
 
-The smoother routes use the generic exact-diffuse backward information
-recursions and the complete seasonal augmented-state selection matrix.
-
-The inference route rebuilds the factor expansion, transformed state, seasonal
-exact-diffuse state, and original-level exact filter at every finite-difference
-candidate. Its Hessian therefore uses the same likelihood scope as fitting.
-Expanded cross lags remain deterministic rather than becoming extra inference
-parameters.
+The 0.0.30 forecasting route samples the complete augmented state from the
+proper terminal posterior and propagates it with future fitted innovations.
+Original levels are restored independently for every path before empirical
+quantiles are formed. A nonzero terminal diffuse rank is rejected explicitly.
 
 See:
 
@@ -125,6 +110,7 @@ See:
 - [Seasonal exact diffuse MLE](seasonal_exact_diffuse_mle.md)
 - [Seasonal exact diffuse smoothing](seasonal_exact_diffuse_smoothing.md)
 - [Seasonal exact diffuse inference](seasonal_exact_diffuse_inference.md)
+- [Seasonal exact diffuse forecasting](seasonal_exact_diffuse_forecasting.md)
 
 ## Diagnostics and uncertainty
 
@@ -133,39 +119,34 @@ The package includes:
 - STACF and STPACF diagnostics;
 - space-time portmanteau testing;
 - AR stationarity and inverse-MA invertibility diagnostics;
-- stationary, conditional-integrated, conditional-seasonal, ordinary exact-
-  diffuse, and seasonal exact-diffuse observed-information inference;
-- natural innovation-covariance delta-method inference;
-- Gaussian, bootstrap, and ordinary exact-diffuse interval workflows;
+- observed-information and natural innovation-covariance inference;
+- Gaussian, bootstrap, ordinary exact-diffuse, and seasonal exact-diffuse
+  interval workflows;
 - rolling-origin calibration evaluation.
 
 See [Diagnostics](diagnostics.md), [Likelihood inference](likelihood_inference.md),
 [Innovation covariance inference](covariance_inference.md), and
 [Rolling evaluation](evaluation.md).
 
-## Likelihood scope
+## Likelihood and uncertainty boundaries
 
 Do not combine likelihoods, AIC, BIC, Hessians, or covariance estimates from
-different likelihood conventions:
+different likelihood conventions. Conditional estimators remove or condition on
+differencing history; exact-diffuse estimators evaluate original observations.
 
-- conditional transformed-data estimators remove or condition on differencing
-  history;
-- exact-diffuse estimators evaluate original observations while diffuse
-  directions are identified by the data.
-
-This boundary is part of the public API and test suite.
+The 0.0.30 intervals include terminal state uncertainty and future fitted
+innovation uncertainty, but not fitted-parameter uncertainty.
 
 ## Validation status
 
-Version 0.0.29 adds closed-form seasonal-random-walk information, natural scalar-
-variance delta-method inference, ordinary exact-diffuse reduction, missing-data
-curvature, full-Cholesky covariance transformation, singular-Hessian policy, and
-public API tests.
+The 0.0.30 implementation CI passed 252 tests with 87.28% total branch coverage.
+The new forecasting module is fully covered. Independent references include
+pathwise seasonal inverse differencing, seasonal-random-walk variance growth,
+empirical quantile identity, ordinary exact-diffuse reduction, fitted-facade
+consistency, terminal diffuse-rank rejection, and immutable outputs.
 
-The final synchronized test count and coverage are recorded in
-`PROJECT_STATUS.md` and the Step 29 handoff. CI covers Ubuntu, Windows, and macOS
-on Python 3.11–3.14, strict MkDocs, formatting, linting, typing, reference
-regeneration, and package builds.
+CI covers Ubuntu, Windows, and macOS on Python 3.11–3.14, strict MkDocs,
+formatting, linting, typing, reference regeneration, and package builds.
 
 ## Development
 
