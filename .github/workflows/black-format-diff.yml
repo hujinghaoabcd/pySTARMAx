@@ -1,0 +1,23 @@
+name: Black format diagnostic
+
+on:
+  push:
+    branches:
+      - agent/seasonal-exact-diffuse-inference
+
+permissions:
+  contents: read
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install black==26.5.1
+      - run: >-
+          python -m black --diff
+          src/pystarmax/seasonal_exact_diffuse_inference.py
+          tests/test_seasonal_exact_diffuse_inference.py
