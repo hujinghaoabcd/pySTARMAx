@@ -135,7 +135,7 @@ def test_pure_seasonal_ar_inference_and_natural_covariance() -> None:
     assert result.invertibility_boundary_distance > 0.0
     np.testing.assert_allclose(result.hessian, direct.hessian)
     np.testing.assert_allclose(result.covariance, direct.covariance)
-    assert natural.element_names == ("variance",)
+    assert natural.parameter_names == ("variance.shared",)
     assert natural.estimates[0] == pytest.approx(
         model.result_.innovation_covariance[0, 0]  # type: ignore[union-attr]
     )
