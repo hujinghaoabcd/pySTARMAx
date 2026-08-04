@@ -1,15 +1,21 @@
 # SPDX-FileCopyrightText: 2026 Jinghao Hu
 # SPDX-License-Identifier: MIT
 
-"""Exact diffuse STARIMA estimator facade with smoothing and inference."""
+"""Exact diffuse STARIMA estimator facade with forecasting and inference."""
 
 from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from pystarmax.exact_diffuse_disturbance_smoothing import (
     ExactDiffuseDisturbanceResult,
     exact_diffuse_disturbance_smoother,
+)
+from pystarmax.exact_diffuse_forecasting import (
+    _projected_forecast_interval,
+    exact_diffuse_forecast_interval,
 )
 from pystarmax.exact_diffuse_inference import infer_exact_diffuse_kalman_starima
 from pystarmax.exact_diffuse_mle import (
@@ -22,11 +28,12 @@ from pystarmax.exact_diffuse_smoothing import (
     ExactDiffuseSmootherResult,
     exact_diffuse_smoother,
 )
+from pystarmax.forecasting import ForecastInterval
 from pystarmax.likelihood_inference import LikelihoodInferenceResult
 
 
 class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
-    """Exact diffuse ordinary STARIMA with smoothing and curvature inference."""
+    """Exact diffuse ordinary STARIMA with forecasting and inference."""
 
     def smooth(
         self,
@@ -69,11 +76,59 @@ class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
             allow_singular=allow_singular,
         )
 
+    def predict_interval(
+        self,
+        steps: int = 1,
+        *,
+        level: float = 0.95,
+        n_simulations: int = 2000,
+        random_state: int | np.random.Generator | None = None,
+    ) -> ForecastInterval:
+        """Return an original-level interval from the exact terminal posterior."""
+        return exact_diffuse_forecast_interval(
+            self.filter(),
+            steps=steps,
+            level=level,
+            n_simulations=n_simulations,
+            random_state=random_state,
+        )
+
+    def predict_differenced_interval(
+        self,
+        steps: int = 1,
+        *,
+        level: float = 0.95,
+        n_simulations: int = 2000,
+        random_state: int | np.random.Generator | None = None,
+    ) -> ForecastInterval:
+        """Return an interval on the highest ordinary-difference scale."""
+        result, integrated, filtered = self._require_fit()
+        n_locations = integrated.model.n_locations
+        offset = self.integration_order * n_locations
+        design = np.zeros(
+            (n_locations, integrated.model.state_dim),
+            dtype=float,
+        )
+        design[:, offset:] = result.transformed_state_space.design
+        return _projected_forecast_interval(
+            filtered,
+            design,
+            steps=steps,
+            level=level,
+            n_simulations=n_simulations,
+            random_state=random_state,
+            method=(
+                "fixed-parameter exact diffuse terminal-posterior and innovation "
+                "simulation on the highest ordinary-difference scale"
+            ),
+        )
+
 
 __all__ = [
     "ExactDiffuseDisturbanceResult",
     "ExactDiffuseKalmanSTARIMA",
     "ExactDiffuseKalmanSTARIMAResult",
     "ExactDiffuseSmootherResult",
+    "ForecastInterval",
     "LikelihoodInferenceResult",
 ]
