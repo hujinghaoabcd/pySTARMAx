@@ -132,25 +132,48 @@
   and validation tests;
 - method guide, example, navigation, README, status, and Step 17 handoff.
 
+## Implemented in 0.0.18: Gaussian Kalman forecast intervals
+
+- future state paths initialized from the final filtered Gaussian posterior;
+- future location-level process innovations drawn from the fitted covariance;
+- positive-semidefinite final-state covariance factorization with numerical
+  eigenvalue tolerance;
+- fixed-parameter stationary `KalmanSTARMA.predict_interval()`;
+- transformed-scale `predict_differenced_interval()` for ordinary and seasonal
+  Kalman STARIMA;
+- original-scale `predict_interval()` for ordinary integration and combined
+  ordinary-seasonal integration;
+- pathwise inverse differencing before quantiles rather than inverse-transforming
+  marginal lower and upper bounds;
+- support for arbitrary ordinary integration order and rolling seasonal cycles;
+- deterministic recursive means retained as interval centers;
+- reproducible NumPy random-generator or integer-seed behavior;
+- transformed-scale availability with explicit refusal of original-scale
+  intervals when terminal anchors or seasonal histories are incomplete;
+- analytic state-variance, ordinary random-walk, seasonal-cycle, reproducibility,
+  and validation tests;
+- method guide, runnable example, navigation, README, status, and Step 18
+  handoff.
+
 ## Next priorities
 
-1. Original-scale Gaussian forecast intervals for ordinary and seasonal Kalman
-   STARIMA, with pathwise inverse differencing before quantiles.
-3. Exact diffuse integrated level-state likelihood and smoothing as a separate
+1. Exact diffuse integrated level-state likelihood and smoothing as a separate
    API from the conditional transformed likelihoods.
-4. Sparse spatial weights and sparse arbitrary-lag state matrices for large
+2. Parameter-aware Kalman forecast paths using observed-information or bootstrap
+   parameter draws.
+3. Sparse spatial weights and sparse arbitrary-lag state matrices for large
    seasonal periods and networks.
-5. Cross-time innovation-disturbance covariance and conditional simulation
+4. Cross-time innovation-disturbance covariance and conditional simulation
    smoothing.
-6. Smooth stationarity/invertibility parameterization for optimization and
+5. Smooth stationarity/invertibility parameterization for optimization and
    inference.
-7. Automatic ordinary and seasonal order selection using diagnostics and
+6. Automatic ordinary and seasonal order selection using diagnostics and
    information criteria.
-8. Exogenous regressors and intervention variables.
-9. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-10. Cross-language estimator fixtures and the first PyPI pre-release.
-11. Optional parallel bootstrap and rolling-origin execution.
-12. Profile likelihood, sandwich, conformal, generalized, location-varying, and
+7. Exogenous regressors and intervention variables.
+8. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+9. Cross-language estimator fixtures and the first PyPI pre-release.
+10. Optional parallel bootstrap, forecast-path, and rolling-origin execution.
+11. Profile likelihood, sandwich, conformal, generalized, location-varying, and
     time-varying extensions.
 
 ## Research safeguards for future work
@@ -165,6 +188,11 @@
   results explicitly labelled.
 - Never reconstruct original-scale forecasts without finite ordinary anchors
   and seasonal histories.
+- Inverse-difference complete simulated paths before original-scale quantiles;
+  never transform horizon-wise marginal bounds as though horizons were
+  independent.
+- Distinguish final filtered-state uncertainty, future innovation uncertainty,
+  and parameter uncertainty.
 - Let missing observations propagate through the complete differencing stencil;
   do not impute levels before likelihood evaluation.
 - Preserve the package positive MA sign in inverse-recursion diagnostics.

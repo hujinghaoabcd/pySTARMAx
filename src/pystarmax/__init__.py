@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.17"
+__version__ = "0.0.18"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -57,9 +57,13 @@ from pystarmax.innovation_smoothing import (
     InnovationDisturbanceResult,
     innovation_disturbance_smoother,
 )
-from pystarmax.integrated_maximum_likelihood import (
-    KalmanSTARIMA,
-    KalmanSTARIMAResult,
+from pystarmax.integrated_forecasting import KalmanSTARIMA
+from pystarmax.integrated_maximum_likelihood import KalmanSTARIMAResult
+from pystarmax.kalman_forecasting import (
+    integrated_kalman_forecast_interval,
+    inverse_forecast_paths,
+    kalman_forecast_interval,
+    simulate_kalman_forecast_paths,
 )
 from pystarmax.likelihood_inference import (
     FiniteDifferenceCurvature,
@@ -76,10 +80,8 @@ from pystarmax.maximum_likelihood import (
 from pystarmax.models import STAR, STARIMA, STARMA, SeasonalSTARIMA
 from pystarmax.results import STARMAResult
 from pystarmax.seasonal import LagOperator, expand_multiplicative_operators
-from pystarmax.seasonal_likelihood_inference import (
-    SeasonalKalmanSTARIMA,
-    infer_seasonal_kalman_starima,
-)
+from pystarmax.seasonal_forecasting import SeasonalKalmanSTARIMA
+from pystarmax.seasonal_likelihood_inference import infer_seasonal_kalman_starima
 from pystarmax.seasonal_maximum_likelihood import (
     SeasonalKalmanAdmissibility,
     SeasonalKalmanSTARIMAResult,
@@ -152,6 +154,10 @@ __all__ = [
     "restore_fitted_values",
     "interval_score",
     "rolling_origin_evaluate",
+    "simulate_kalman_forecast_paths",
+    "kalman_forecast_interval",
+    "integrated_kalman_forecast_interval",
+    "inverse_forecast_paths",
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",

@@ -9,15 +9,17 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.17:** stationary, ordinary-integrated, and
+> **Status — 0.0.18:** stationary, ordinary-integrated, and
 > multiplicative seasonal Gaussian Kalman STARMA/STARIMA estimation;
 > expanded AR stationarity and positive-sign MA invertibility diagnostics;
 > observed-information Hessian inference for stationary and seasonal factor
 > models; natural innovation covariance delta-method inference; missing-data
-> filtering; RTS state and original innovation smoothing; original-scale
-> reconstruction; conditional/bootstrap intervals; and rolling evaluation.
-> Exact diffuse integrated likelihood, original-scale Kalman intervals, sparse
-> computation, exogenous regressors, and time-varying extensions remain planned.
+> filtering; RTS state and original innovation smoothing; fixed-parameter
+> Gaussian forecast intervals with filtered-state and future-innovation
+> uncertainty; pathwise original-scale ordinary/seasonal reconstruction;
+> conditional/bootstrap intervals; and rolling evaluation. Exact diffuse
+> integrated likelihood, parameter-aware Kalman intervals, sparse computation,
+> exogenous regressors, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -137,6 +139,13 @@ fit = mle.fit(incomplete, weights)
 print(fit.summary())
 print(mle.admissibility().summary())
 print(mle.predict(steps=6))
+stationary_interval = mle.predict_interval(
+    steps=6,
+    level=0.95,
+    n_simulations=5000,
+    random_state=42,
+)
+print(stationary_interval.lower, stationary_interval.upper)
 ```
 
 `KalmanSTARMA` maximizes the Gaussian likelihood evaluated by the state-space
@@ -176,6 +185,18 @@ integrated_result = integrated_mle.fit(level_series, weights)
 print(integrated_result.summary())
 print(integrated_mle.predict_differenced(steps=6))
 print(integrated_mle.predict(steps=6))
+transformed_interval = integrated_mle.predict_differenced_interval(
+    steps=6,
+    n_simulations=5000,
+    random_state=42,
+)
+original_interval = integrated_mle.predict_interval(
+    steps=6,
+    n_simulations=5000,
+    random_state=42,
+)
+print(transformed_interval.lower, transformed_interval.upper)
+print(original_interval.lower, original_interval.upper)
 ```
 
 For
@@ -199,10 +220,13 @@ integrated level-state likelihood.
 Scale boundaries are explicit:
 
 - `filter()`, `smooth()`, `smooth_innovation_disturbances()`, `infer()`,
-  `to_state_space()`, and `predict_differenced()` use the highest difference
-  scale;
+  `to_state_space()`, `predict_differenced()`, and
+  `predict_differenced_interval()` use the highest difference scale;
 - `predict()` recursively restores the original scale from finite terminal
   differencing anchors;
+- `predict_interval()` draws the final filtered state and future process
+  innovations, inverse-differences every complete path, and only then takes
+  original-scale quantiles;
 - `fitted_original()` aligns transformed one-step predictions to the level
   sample and leaves unavailable rows as `NaN`.
 
@@ -254,7 +278,7 @@ factor.
 ```python
 natural = inference.innovation_covariance_inference()
 
-print(natural.element_table)
+print(natural.table)
 print(natural.covariance_matrix)
 print(natural.standard_error_matrix)
 print(natural.confidence_intervals(level=0.95))
@@ -396,6 +420,12 @@ print(seasonal_result.summary())
 print(seasonal_mle.admissibility().summary())
 print(seasonal_mle.predict_differenced(steps=24))
 print(seasonal_mle.predict(steps=24))
+seasonal_interval = seasonal_mle.predict_interval(
+    steps=24,
+    n_simulations=5000,
+    random_state=42,
+)
+print(seasonal_interval.lower, seasonal_interval.upper)
 print(seasonal_mle.smooth().smoothed_observations)
 ```
 
@@ -432,7 +462,7 @@ Seasonal factor observed-information inference is available directly:
 seasonal_inference = seasonal_mle.infer(relative_step=1e-4)
 print(seasonal_inference.coefficient_table)
 print(seasonal_inference.confidence_intervals())
-print(seasonal_inference.innovation_covariance_inference().element_table)
+print(seasonal_inference.innovation_covariance_inference().table)
 ```
 
 Every finite-difference point is reconstructed through the complete
@@ -440,6 +470,27 @@ multiplicative matrix expansion. Points entering an enabled expanded
 stationarity or invertibility penalty region are rejected rather than treated
 as likelihood curvature. See
 [`docs/seasonal_likelihood_inference.md`](docs/seasonal_likelihood_inference.md).
+
+## Gaussian Kalman forecast intervals
+
+Version 0.0.18 propagates the final filtered-state covariance and future
+process innovations under fixed fitted parameters:
+
+```python
+kalman_interval = integrated_mle.predict_interval(
+    steps=24,
+    level=0.95,
+    n_simulations=5000,
+    random_state=42,
+)
+```
+
+Ordinary and seasonal integrated models also expose
+`predict_differenced_interval()` on the transformed scale. Original-scale
+bounds are constructed by inverse-differencing every simulated path before
+quantiles; marginal transformed bounds are never inverse-transformed as if
+horizons were independent. See
+[`docs/kalman_forecast_intervals.md`](docs/kalman_forecast_intervals.md).
 
 ## Forecast intervals and rolling evaluation
 

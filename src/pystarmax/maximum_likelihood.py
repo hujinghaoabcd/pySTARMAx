@@ -7,13 +7,17 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from pystarmax._maximum_likelihood_model import KalmanSTARMA as _KalmanSTARMA
 from pystarmax._maximum_likelihood_result import KalmanSTARMAResult
 from pystarmax._maximum_likelihood_utils import CovarianceType
+from pystarmax.forecasting import ForecastInterval
 from pystarmax.innovation_smoothing import (
     InnovationDisturbanceResult,
     innovation_disturbance_smoother,
 )
+from pystarmax.kalman_forecasting import kalman_forecast_interval
 from pystarmax.likelihood_inference import (
     LikelihoodInferenceResult,
     infer_kalman_starma,
@@ -62,9 +66,27 @@ class KalmanSTARMA(_KalmanSTARMA):
             rcond=rcond,
         )
 
+    def predict_interval(
+        self,
+        steps: int = 1,
+        *,
+        level: float = 0.95,
+        n_simulations: int = 2000,
+        random_state: int | np.random.Generator | None = None,
+    ) -> ForecastInterval:
+        """Return a fixed-parameter Gaussian forecast interval."""
+        return kalman_forecast_interval(
+            self.filter(),
+            steps=steps,
+            level=level,
+            n_simulations=n_simulations,
+            random_state=random_state,
+        )
+
 
 __all__ = [
     "CovarianceType",
+    "ForecastInterval",
     "InnovationDisturbanceResult",
     "KalmanSTARMA",
     "KalmanSTARMAResult",

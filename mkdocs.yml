@@ -19,6 +19,7 @@ nav:
   - Maximum likelihood: maximum_likelihood.md
   - Likelihood inference: likelihood_inference.md
   - Innovation covariance inference: covariance_inference.md
+  - Kalman forecast intervals: kalman_forecast_intervals.md
   - Forecasting: forecasting.md
   - Bootstrap intervals: bootstrap.md
   - Rolling evaluation: evaluation.md

@@ -106,6 +106,12 @@ inference = model.infer()
 state_space = model.to_state_space()
 admissibility = model.admissibility()
 stationary_forecast = model.predict_differenced(steps=12)
+stationary_interval = model.predict_differenced_interval(
+    steps=12,
+    level=0.95,
+    n_simulations=5000,
+    random_state=42,
+)
 stationary_fitted = model.fitted_differenced()
 ```
 
@@ -117,6 +123,12 @@ stationary polynomial.
 
 ```python
 level_forecast = model.predict(steps=12)
+level_interval = model.predict_interval(
+    steps=12,
+    level=0.95,
+    n_simulations=5000,
+    random_state=42,
+)
 level_fitted = model.fitted_original()
 ```
 
@@ -230,9 +242,12 @@ the optimizer, observed-information Hessian, RTS recursion, or conditional
 Gaussian innovation mapping. Their interpretation is always conditional on the
 ordinary differencing transformation and the initial level history.
 
-Parameter uncertainty is not propagated through original-scale point forecasts
-or smoothing results. Original-scale forecast intervals for the Kalman STARIMA
-wrapper are not yet exposed.
+Version 0.0.18 adds fixed-parameter Gaussian intervals. Every path starts
+from the final filtered state posterior, receives future innovations from the
+fitted covariance, and is inverse-differenced independently before original-
+scale quantiles. This propagates filtered-state and process uncertainty but not
+parameter-estimation uncertainty. See
+[Gaussian Kalman forecast intervals](kalman_forecast_intervals.md).
 
 ## Validation references
 
@@ -254,9 +269,8 @@ The implementation is checked through:
 
 - likelihood is conditional on initial levels, not exact diffuse on the level
   process;
-- only ordinary integration is supported; seasonal integration remains in the
-  conditional `SeasonalSTARIMA` estimator;
-- original-scale forecast intervals are not yet implemented;
+- this wrapper covers ordinary integration; multiplicative seasonal integration is provided by `SeasonalKalmanSTARIMA`;
+- forecast intervals condition on fitted parameters and use Monte Carlo quantiles;
 - original-scale filtered or smoothed level-state distributions are not
   returned;
 - cross-time innovation covariance and simulation smoothing are unavailable;

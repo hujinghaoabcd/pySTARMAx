@@ -281,9 +281,33 @@ Original-scale forecasting requires finite:
 - ordinary terminal anchors for orders `0` through `d - 1`;
 - the last `s` values at each seasonal-difference level below order `D`.
 
-If any required value is non-finite, transformed-scale estimation and forecasts
-remain available, but `predict()` raises instead of interpolating or carrying a
-value forward. `original_scale_forecast_available` records this state.
+If any required value is non-finite, transformed-scale estimation, point
+forecasts, and `predict_differenced_interval()` remain available, but
+`predict()` and `predict_interval()` raise instead of interpolating or carrying
+a value forward. `original_scale_forecast_available` records this state.
+
+## Gaussian forecast intervals
+
+```python
+transformed_interval = model.predict_differenced_interval(
+    steps=24,
+    level=0.95,
+    n_simulations=5000,
+    random_state=42,
+)
+original_interval = model.predict_interval(
+    steps=24,
+    level=0.95,
+    n_simulations=5000,
+    random_state=42,
+)
+```
+
+Future paths draw the final filtered state and future location-level
+innovations under fixed fitted parameters. Original-scale bounds reverse the
+combined differencing state for every complete simulated path, including
+rolling seasonal histories, before taking quantiles. See
+[Gaussian Kalman forecast intervals](kalman_forecast_intervals.md).
 
 ## Result and parameter counting
 
@@ -340,8 +364,7 @@ The implementation is checked through:
 - pure seasonal AR estimation and expanded companion admissibility;
 - seasonal random-walk reconstruction from a rolling cycle history;
 - seasonal missing-value propagation and finite likelihood counts;
-- refusal of original-scale forecasts with incomplete terminal seasonal
-  history;
+- transformed interval availability and original interval refusal with incomplete terminal seasonal history;
 - combined ordinary-seasonal new-data filter and smoother lengths;
 - aligned original fitted values using the complete combined lag polynomial;
 - constructor, dimensionality, infinity, sample-offset, and fitted-state
@@ -353,7 +376,7 @@ The implementation is checked through:
   not exact diffuse on a level-state representation;
 - observed-information inference uses central finite differences and can be
   expensive or step sensitive for large seasonal/full-covariance models;
-- original-scale forecast intervals are unavailable;
+- forecast intervals condition on fitted parameters and use Monte Carlo quantiles;
 - original-scale filtered and smoothed level-state distributions are not
   returned;
 - state and innovation smoothing treat parameters as fixed;
