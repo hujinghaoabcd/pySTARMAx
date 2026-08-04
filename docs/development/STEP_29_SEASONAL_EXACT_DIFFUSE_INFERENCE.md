@@ -287,20 +287,28 @@ Initial implementation CI #603, run ID `30957031201`, passed the complete
 numerical test and coverage matrix. Its only failure was the Black formatting
 issue described above.
 
-The authoritative synchronized CI run number, run ID, exact final head, test
-count, total branch coverage, and new-module coverage must be added here after
-all public API and documentation files are synchronized.
+Authoritative synchronized CI #622, run ID `30958228798`, passed on exact head
+`760b4fe4b57e356f4b2d28a993b2fd5ed2cc0b5e`:
+
+- 244 tests passed;
+- total branch coverage: 87.19%;
+- `seasonal_exact_diffuse_inference.py` branch coverage: 87.4%;
+- `seasonal_exact_diffuse_mle.py` branch coverage: 83.9%;
+- Black, isort, Ruff, and mypy passed;
+- diagnostic-reference regeneration was clean;
+- strict MkDocs passed;
+- sdist, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11–3.14.
+
+A final validation-record-only CI must pass on the exact final head before
+merging PR #29.
 
 ## Merge checklist
 
 Before merging PR #29:
 
-1. synchronize version metadata, README, documentation home, roadmap, remaining
-   work, project status, navigation, example, method guide, and this handoff;
-2. run complete CI on the exact synchronized head;
-3. record the final run and coverage values in this handoff, project status, and
-   PR body;
-4. confirm the formal diff contains no temporary workflow or generated artifact;
-5. confirm no submitted review or unresolved review thread remains;
-6. mark PR #29 ready and squash-merge version 0.0.29;
-7. create the seasonal exact-diffuse forecasting branch from the new `main`.
+1. confirm the validation-record commit passes complete CI;
+2. confirm the formal diff contains no temporary workflow or generated artifact;
+3. confirm no submitted review or unresolved review thread remains;
+4. mark PR #29 ready and squash-merge version 0.0.29;
+5. create the seasonal exact-diffuse forecasting branch from the new `main`.
