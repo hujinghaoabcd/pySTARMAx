@@ -5,32 +5,30 @@ Updated: 2026-08-04
 ## Purpose
 
 Build a modern Python implementation of classical and extended STARMA models
-with explicit statistical conventions, typed public APIs, immutable numerical
+with explicit likelihood conventions, typed public APIs, immutable numerical
 results, independent reference tests, strict documentation, and reproducible
 cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #18 have been squash-merged into `main`.
-- `main` is version `0.0.18` at merge commit
-  `407ced8fec73fd63a4a5357da3b422f62b650e95`.
-- Current branch: `agent/exact-diffuse-kalman`.
-- Current draft pull request: PR #19, `Add exact diffuse Kalman filtering`.
-- Current development version: `0.0.19`.
-- The branch adds a separate exact diffuse filtering kernel and ordinary
-  integrated level-state constructor.
-- Existing `kalman_filter(..., initialization="diffuse")` behavior remains an
-  approximate finite large-variance initialization.
-- Version 0.0.19 provides filtering and fixed-parameter exact diffuse
-  likelihoods; it does not yet provide optimizer-facing exact diffuse MLE or an
-  exact diffuse smoother.
+- PR #1 through PR #19 have been squash-merged into `main`.
+- `main` is version `0.0.19` at merge commit
+  `405b9886f446330e5adf479e03ccb595b95740eb`.
+- Current branch: `agent/exact-diffuse-mle`.
+- Current draft pull request: PR #20, `Add exact diffuse STARIMA maximum
+  likelihood`.
+- Current development version: `0.0.20`.
+- The branch adds optimizer-facing ordinary STARIMA maximum likelihood on the
+  original level process using exact diffuse initialization.
+- Conditional `KalmanSTARIMA` remains available and keeps its existing
+  differenced conditional likelihood; it is not silently redefined.
 
 ## Completed baseline through 0.0.18
 
-### Conditional and Gaussian model families
+### Model families
 
-- immutable `SpatialWeights` with explicit identity lag and preserved matrix
-  orientation;
+- immutable spatial-weight collections with explicit identity lag and preserved
+  non-symmetric orientation;
 - conditional STAR, STARMA, ordinary STARIMA, and multiplicative seasonal
   STARIMA;
 - stationary Gaussian `KalmanSTARMA` with scalar, diagonal, and full Cholesky
@@ -38,59 +36,51 @@ cross-platform CI.
 - conditional ordinary-integrated `KalmanSTARIMA(p,d,q)`;
 - multiplicative seasonal
   `SeasonalKalmanSTARIMA(p,d,q)x(P,D,Q)_s`;
-- ordered seasonal matrix products without projection of cross terms onto the
-  spatial-weight basis;
-- transformed and original scale contracts with reversible ordinary-seasonal
-  differencing.
+- ordered seasonal matrix products without projecting deterministic cross terms
+  back onto the spatial-weight basis;
+- reversible ordinary and seasonal differencing with explicit transformed and
+  original scale contracts.
 
 ### Diagnostics, admissibility, and inference
 
-- ST covariance, STACF, nested Yule--Walker and regression STPACF, and residual
-  portmanteau diagnostics;
+- space-time covariance, STACF, nested Yule--Walker and regression STPACF, and
+  residual portmanteau diagnostics;
 - AR stationarity and positive-sign inverse-MA companion diagnostics;
 - start shrinkage, optimizer penalties, final feasibility checks, eigenvalues,
   spectral radii, limits, and signed boundary distances;
-- finite-difference observed-information Hessians for stationary and seasonal
+- finite-difference observed-information inference for stationary and seasonal
   factor models;
-- coefficient covariance, standard errors, normal tests, intervals,
-  correlations, rank, eigenvalues, condition number, and score diagnostics;
-- strict full-rank positive-definite Hessian policy with explicit diagnostic
-  positive-eigenspace generalized inverse;
-- scalar, diagonal, and full-Cholesky natural innovation covariance delta-method
-  inference with dynamic/covariance cross uncertainty.
+- coefficient covariance, standard errors, normal tests, confidence intervals,
+  correlations, rank, eigenvalue, condition-number, and score diagnostics;
+- strict full-rank positive-definite observed-information policy with an
+  explicitly labelled diagnostic positive-eigenspace generalized inverse;
+- scalar, diagonal, and full-Cholesky natural innovation covariance
+  delta-method inference with dynamic/covariance cross uncertainty.
 
-### Filtering, smoothing, and missing observations
+### Filtering, smoothing, forecasting, and missing data
 
-- auditable stationary and arbitrary-lag state-space construction;
-- stationary, known, and approximate diffuse initialization;
-- partial-location measurement updates and prediction-only fully missing rows;
+- stationary and arbitrary-lag STARMA state-space construction;
+- stationary, known, and approximate large-variance diffuse initialization;
+- partial-location updates and prediction-only fully missing rows;
 - immutable filtering states, covariance, innovations, masks, likelihood
   contributions, and numerical stabilization diagnostics;
-- Rauch--Tung--Striebel fixed-interval state smoothing;
-- smoothed observation moments, lag-one state covariance, smoothing gains,
-  state-disturbance moments, and rank diagnostics;
-- conditional-Gaussian original location-level innovation smoothing;
-- retained uncertainty in selection-matrix null spaces and support residual
-  diagnostics.
-
-### Forecasting and evaluation
-
+- Rauch--Tung--Striebel state smoothing, lag-one covariance, smoothing gains,
+  and state-disturbance moments;
+- original location-level innovation disturbance smoothing with retained
+  selection-nullspace uncertainty;
 - deterministic recursive forecasts and aligned original-scale fitted values;
 - conditional future-innovation and parameter-refitting bootstrap intervals;
-- rolling-origin coverage, width, interval score, MAE, RMSE, and horizon
-  summaries;
-- fixed-parameter Gaussian Kalman forecast paths initialized from the final
+- rolling-origin calibration, sharpness, interval score, MAE, and RMSE;
+- fixed-parameter Gaussian Kalman forecast paths initialized from the terminal
   filtered posterior;
-- future process-innovation uncertainty;
-- pathwise ordinary and seasonal inverse differencing before original-scale
-  quantiles;
-- reproducible integer-seed and NumPy-generator behavior;
-- explicit refusal of original-scale forecasts and intervals when required
-  terminal anchors or seasonal histories are missing.
+- future process-innovation uncertainty and pathwise ordinary/seasonal inverse
+  differencing before original-scale quantiles;
+- explicit refusal of original-scale forecasts when required terminal anchors
+  or seasonal histories are unavailable.
 
 ## Completed in 0.0.19
 
-### Exact diffuse covariance decomposition
+### Exact diffuse filtering
 
 The initial covariance is represented as
 
@@ -99,255 +89,232 @@ P_1(\kappa)=P_{\ast,1}+\kappa P_{\infty,1},
 \qquad \kappa\rightarrow\infty.
 \]
 
-- `P_*` stores finite initial uncertainty;
-- `P_inf` identifies diffuse state directions;
-- both components are predicted and updated separately;
-- the filtered diffuse rank records how many unresolved directions remain;
-- no arbitrary diffuse scale is used in the exact likelihood.
-
-### Sequential diffuse and Gaussian updates
-
-For an observed scalar design row `z`, the implementation computes
-
-\[
-F_\infty=zP_\infty z^\top,
-\qquad
-F_\ast=zP_\ast z^\top,
-\]
-
-\[
-M_\infty=P_\infty z^\top,
-\qquad
-M_\ast=P_\ast z^\top.
-\]
-
-When `F_inf` is positive,
-
-\[
-K_0=M_\infty/F_\infty,
-\]
-
-\[
-K_1=M_\ast/F_\infty-K_0F_\ast/F_\infty,
-\]
-
-and
-
-\[
-a^+=a+K_0v,
-\]
-
-\[
-P_\ast^+=P_\ast-M_\ast K_0^\top-M_\infty K_1^\top,
-\]
-
-\[
-P_\infty^+=P_\infty-M_\infty K_0^\top.
-\]
-
-The exact diffuse likelihood contribution is
-
-\[
--\tfrac12\log(2\pi F_\infty).
-\]
-
-When diffuse variance is numerically zero and finite variance is positive, the
-ordinary scalar Gaussian update and likelihood contribution are used.
-
-### Missing and deterministic observations
-
-- observed locations are processed sequentially;
-- missing cells are skipped;
-- fully missing rows perform prediction only and contribute zero likelihood;
+- finite and diffuse covariance components are stored separately;
+- scalar observed locations are processed sequentially;
+- exact diffuse `K0` and `K1` recursions are used while diffuse variance is
+  positive;
+- ordinary Gaussian updates begin after the corresponding diffuse direction is
+  resolved;
 - missing observations do not reduce diffuse rank;
-- rank-deficient `P_inf` is supported directly;
-- deterministic zero-variance agreement contributes zero;
-- deterministic contradiction raises rather than adding arbitrary jitter.
+- fully missing rows perform prediction only;
+- deterministic zero-variance contradictions raise instead of receiving
+  arbitrary jitter;
+- the result records finite/diffuse covariance paths, innovations, finite and
+  diffuse innovation variances, masks, likelihood contributions, rank paths,
+  diffuse observation count, and diffuse end time.
 
-### Exact diffuse result contract
+### Ordinary integrated state construction
 
-`ExactDiffuseFilterResult` retains immutable arrays for:
-
-- predicted and filtered state means;
-- predicted and filtered finite covariance;
-- predicted and filtered diffuse covariance;
-- scalar innovations;
-- finite and diffuse innovation variances;
-- observed and diffuse-update masks;
-- time likelihood contributions;
-- predicted and filtered diffuse-rank paths.
-
-It also reports total exact diffuse likelihood, finite and diffuse observation
-counts, initial and final diffuse rank, `diffuse_end_time`, and observation-scale
-predicted and filtered values.
-
-### Ordinary integrated level-state construction
-
-Given a stationary transformed state
+For stationary transformed state
 
 \[
 \beta_t=c+T\beta_{t-1}+R\eta_t,
 \qquad x_t=Z\beta_t,
 \]
 
-and `x_t = Delta^d y_t`, the augmented state is
+with `x_t = Delta^d y_t`, the augmented state is
 
 \[
 [y_t,\Delta y_t,\ldots,\Delta^{d-1}y_t,\beta_t].
 \]
 
-Every integration block follows
+- integration directions receive exact diffuse covariance;
+- the transformed STARMA state receives its stationary finite mean and
+  covariance;
+- ordered `Z @ T`, `Z @ c`, and `Z @ R` effects enter every integration block;
+- first- and second-order integrated likelihoods have analytic random-walk
+  references;
+- `d=0` is equivalent to ordinary stationary initialization;
+- a nonstationary transformed subsystem is rejected rather than hidden in the
+  finite initial covariance.
+
+Public APIs include `exact_diffuse_filter()`,
+`exact_diffuse_loglikelihood()`, `build_exact_integrated_state_space()`,
+`exact_integrated_filter()`, and `exact_integrated_loglikelihood()`.
+
+## Completed in 0.0.20
+
+### Optimizer-facing exact diffuse ordinary STARIMA
+
+`ExactDiffuseKalmanSTARIMA(p,d,q)` maximizes the original-level exact diffuse
+Gaussian likelihood. For every optimizer coordinate vector it:
+
+1. decodes the optional intercept, transformed AR factors, transformed MA
+   factors, and scalar/diagonal/full-Cholesky covariance coordinates;
+2. constructs the stationary transformed STARMA state space;
+3. computes transformed AR and positive-sign inverse-MA spectral radii;
+4. applies enabled stationarity and invertibility feasibility penalties;
+5. constructs the ordinary integrated original-level state space;
+6. initializes only integration directions diffusely;
+7. initializes the transformed subsystem from its stationary finite
+   distribution;
+8. exact-filters the original observations;
+9. returns the negative exact diffuse log likelihood.
+
+The optimizer never substitutes the conditional differenced recursion while
+reporting an exact diffuse result.
+
+### Likelihood separation
+
+The existing conditional estimator reports
 
 \[
-\Delta^r y_t
-=\sum_{k=r}^{d-1}\Delta^k y_{t-1}+x_t.
+L_c
+=
+L\left(\Delta^d y_{d+1:T}\mid y_{1:d}\right).
 \]
 
-The constructor therefore inserts the ordered transformed effects `Z @ T`,
-`Z @ c`, and `Z @ R` into each integration block.
+The exact estimator reports
 
-Initialization uses:
+\[
+L_D=L_D(y_{1:T}).
+\]
 
-- identity diffuse covariance over the `d * N` integration directions;
-- zero finite covariance on integration directions;
-- stationary finite mean and covariance for the transformed STARMA state;
-- zero initial finite cross covariance between integration and transformed
-  blocks.
+These are separate named estimators with separate likelihood, AIC, and BIC
+contracts. Integration order changes latent-state dimension but adds no free
+coefficient. For `K` spatial weights,
 
-A nonstationary transformed transition is rejected: nonstationarity must be
-represented in the explicit integration chain rather than hidden inside the
-finite covariance component.
+\[
+k=\mathbf 1_c+K(p+q)+k_Q.
+\]
 
-### Public APIs
+Information criteria use finite original-level cells:
 
-Generic exact diffuse filtering:
+\[
+AIC=-2\ell_D+2k,
+\qquad
+BIC=-2\ell_D+k\log n_{obs}.
+\]
 
-```python
-result = exact_diffuse_filter(
-    observations,
-    state_space,
-    initial_state=initial_state,
-    initial_covariance=P_star,
-    initial_diffuse_covariance=P_inf,
-)
-```
+### Starts and admissibility
 
-Ordinary integrated construction:
+- dynamic and covariance starts reuse the stationary Kalman STARMA machinery on
+  differenced observations;
+- user-supplied starts remain available;
+- scalar, diagonal, and full-Cholesky covariance codecs are shared;
+- L-BFGS-B and covariance bounds are reused;
+- stationarity and invertibility apply only to the transformed STARMA subsystem;
+- intentional integration unit roots are represented explicitly and are not
+  subjected to the transformed stationarity test;
+- final optimizer candidates receive hard transformed admissibility checks.
 
-```python
-specification = build_exact_integrated_state_space(
-    transformed_state_space,
-    integration_order=d,
-)
-result = specification.filter(level_observations)
-```
+### Result and fitted API
 
-Convenience functions:
+`ExactDiffuseKalmanSTARIMAResult` stores immutable:
 
-- `exact_diffuse_loglikelihood()`;
-- `exact_integrated_filter()`;
-- `exact_integrated_loglikelihood()`.
+- dynamic and raw optimizer coordinates and names;
+- intercept, transformed AR factors, transformed MA factors, and natural
+  innovation covariance;
+- exact diffuse likelihood, AIC, and BIC;
+- optimizer convergence, iterations, function evaluations, method, and message;
+- finite and diffuse observation counts;
+- transformed AR and inverse-MA radii, limits, and enforcement flags;
+- complete `ExactDiffuseFilterResult`;
+- stationary transformed `StateSpaceModel`;
+- exact integrated state-space specification.
 
-Public immutable types:
+Fitted methods include:
 
-- `ExactDiffuseFilterResult`;
-- `ExactIntegratedStateSpace`.
+- `filter(data=None)` for retained training or newly initialized exact diffuse
+  filtering;
+- `to_state_space()` for the augmented original-level state;
+- `to_transformed_state_space()` for the stationary highest-difference state;
+- `admissibility()` for transformed dynamics;
+- `predict()` for original-level recursive means;
+- `predict_differenced()` for highest-difference recursive means.
 
-## Authoritative validation for 0.0.19
+### Validation references
 
-GitHub Actions CI #422, run ID `30880321271`, validated the complete
-implementation, tests, example, metadata, README, documentation home,
-navigation, state-space guide, conditional-integrated guide, roadmap, project
-status, and Step 19 documentation head:
+Tests cover:
 
-- 169 tests passed in the coverage job;
-- total branch coverage was 87.12%, above the required 80%;
-- `src/pystarmax/exact_diffuse.py` coverage was 87.8%;
-- `src/pystarmax/exact_integrated.py` coverage was 86.9%;
+1. random-walk drift and variance against closed-form increment MLEs;
+2. second-order integrated drift and variance against closed-form
+   second-difference MLEs;
+3. `d=0` optimizer coordinates and likelihood against stationary
+   `KalmanSTARMA` under identical starts;
+4. missing initial levels and delayed diffuse completion;
+5. retained training filtering and new-data exact filtering;
+6. transformed and original state-space identity contracts;
+7. original-level and highest-difference forecast recursions;
+8. transformed admissibility diagnostics;
+9. immutable result arrays and explicit summary labels;
+10. constructor, fitted-state, data-length, and start validation;
+11. the complete inherited package test suite.
+
+## Core validation for 0.0.20
+
+GitHub Actions CI #433, run ID `30883369794`, validated the implementation,
+unit tests, primary method guide, navigation, packaging, and cross-platform
+matrix before the final README/status synchronization:
+
+- 176 tests passed in the coverage job;
+- total branch coverage was 86.99%, above the required 80%;
+- `src/pystarmax/exact_diffuse_mle.py` coverage was 84.3%;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A validation-record-only merge-gate CI is required after this status and the
-Step 19 handoff are updated. No implementation, test, API, example, README, or
-method-guide changes are made after CI #422.
-
-## Validation references
-
-Tests cover:
-
-1. a local-level exact likelihood equal to a diffuse first-level term plus the
-   Gaussian increment likelihood;
-2. a local-linear-trend comparison with the adjusted large-variance limit;
-3. delayed diffuse-rank reduction under missing observations;
-4. sequential partial-location rank reduction;
-5. deterministic zero-variance agreement and contradiction;
-6. custom rank-deficient diffuse covariance and immutable output arrays;
-7. first-order integrated likelihood equal to the drift-adjusted increment
-   likelihood;
-8. second-order integrated likelihood equal to the second-difference
-   likelihood;
-9. exact augmented transition, intercept, selection, and design orientation;
-10. `d=0` equality with ordinary stationary initialization;
-11. rejection of a nonstationary transformed finite-state transition;
-12. the complete inherited package test suite.
+A complete final CI is required on the synchronized README, documentation home,
+exact-diffuse guide, conditional-integrated guide, roadmap, project status,
+example, and Step 20 head. The authoritative final run must be recorded before
+merge.
 
 ## Design principles
 
-1. Keep conditional transformed likelihoods and exact diffuse level-state
-   likelihoods as separate named APIs.
+1. Keep conditional transformed and exact diffuse original-level likelihoods as
+   separate named APIs.
 2. Never reinterpret approximate `diffuse_scale` initialization as exact.
-3. Store finite and diffuse covariance components separately.
-4. Do not reduce diffuse rank for missing observations.
-5. Do not hide deterministic contradictions behind jitter.
-6. Represent integration directions explicitly in the state.
-7. Require the transformed finite-state subsystem to be stationary.
-8. Preserve ordered spatial-matrix orientation.
-9. Keep transformed and original observation scales explicit.
-10. Preserve positive-sign MA conventions and expanded admissibility rules.
-11. Never project seasonal cross operators onto a spatial basis without an
-    explicit approximation model.
-12. Distinguish state, future innovation, and parameter uncertainty.
-13. Keep public numerical arrays immutable.
-14. Require analytic or independent large-variance references for exact diffuse
-    claims.
+3. Rebuild the complete objective recursion at every optimizer candidate.
+4. Represent integration directions explicitly in the state.
+5. Require the transformed finite-state subsystem to be stationary.
+6. Apply the package positive MA sign consistently.
+7. Do not reduce diffuse rank for missing observations.
+8. Do not hide deterministic contradictions behind jitter.
+9. Preserve ordered spatial-matrix orientation.
+10. Count optimized factors rather than deterministic state augmentation terms.
+11. Distinguish state, future innovation, and parameter uncertainty.
+12. Keep public numerical arrays immutable.
+13. Require analytic or independent equivalence references for likelihood and
+    optimizer claims.
 
 ## Immediate next tasks
 
-1. Run the validation-record-only merge-gate CI.
-2. Update PR #19, mark it ready, and squash-merge it into `main`.
-3. Add optimizer-facing exact diffuse ordinary STARIMA maximum likelihood.
+1. Run complete CI on the synchronized documentation head.
+2. Record the authoritative final run identifier, test count, and coverage.
+3. Update PR #20, mark it ready, and squash-merge it into `main`.
 4. Add exact diffuse fixed-interval smoothing and disturbance smoothing.
-5. Add ordinary-seasonal diffuse state augmentation.
-6. Add parameter-aware Kalman paths, sparse state matrices, cross-time
+5. Add exact diffuse observed-information and natural covariance inference.
+6. Add ordinary-seasonal diffuse state augmentation.
+7. Add forecast intervals for the exact diffuse estimator.
+8. Add sparse state matrices, parameter-aware forecast paths, cross-time
    innovation covariance, simulation smoothing, order selection, exogenous
-   inputs, adapters, and cross-language fixtures.
+   inputs, GIS adapters, and cross-language fixtures.
 
 ## Known limitations
 
-- `KalmanSTARIMA.fit()` still maximizes a conditional transformed likelihood;
-- exact diffuse filtering and fixed-parameter ordinary integrated likelihood are
-  separate low-level APIs;
-- optimizer-facing exact diffuse MLE is unavailable;
-- exact diffuse smoothing is unavailable;
-- seasonal integration-state augmentation is unavailable;
-- the current state-space observation equation has no separate measurement
-  noise covariance;
-- sequential location order can change floating-point rounding;
-- diffuse rank decisions depend on a numerical tolerance;
+- exact diffuse observed-information and natural covariance inference are not
+  implemented;
+- exact diffuse smoothing and disturbance smoothing are not implemented;
+- seasonal ordinary-seasonal diffuse augmentation is not implemented;
+- forecast intervals are not exposed from `ExactDiffuseKalmanSTARIMA`;
+- filtering a new segment starts a new diffuse initialization and does not
+  continue the training terminal posterior;
+- the observation equation has no separate measurement-noise covariance;
+- exact filtering processes locations sequentially, so floating-point rounding
+  can depend on location order;
+- diffuse rank decisions use a numerical tolerance;
 - state and covariance matrices are dense;
-- Kalman forecast intervals condition on fitted parameters;
-- robust, profile-likelihood, sandwich, likelihood-ratio, and Kalman bootstrap
-  inference are unavailable;
+- differenced start construction can be weak for highly incomplete data;
 - exogenous regressors and intervention variables are unsupported.
 
 ## Handoff instruction
 
-Before the next substantial stage, read this file, `docs/exact_diffuse.md`,
-`docs/state_space.md`, `docs/integrated_maximum_likelihood.md`,
-`docs/model.md`, `docs/admissibility.md`, `docs/maximum_likelihood.md`,
+Before the next substantial stage, read this file,
+`docs/exact_diffuse_mle.md`, `docs/exact_diffuse.md`,
+`docs/integrated_maximum_likelihood.md`, `docs/state_space.md`,
+`docs/admissibility.md`, `docs/maximum_likelihood.md`,
 `docs/likelihood_inference.md`, `docs/covariance_inference.md`,
 `docs/smoothing.md`, `docs/innovation_smoothing.md`,
 `docs/kalman_forecast_intervals.md`, `docs/seasonal_maximum_likelihood.md`, and
