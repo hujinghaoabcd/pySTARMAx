@@ -48,6 +48,8 @@ likelihood conventions and retain explicit differencing histories.
 - conditional multiplicative seasonal
   `SeasonalKalmanSTARIMA(p,d,q)x(P,D,Q)_s`;
 - original-level exact diffuse `ExactDiffuseKalmanSTARIMA(p,d,q)`.
+- fixed-parameter seasonal exact diffuse state specification through
+  `ExactSeasonalIntegratedStateSpace`.
 
 The conditional transformed likelihoods and original-level exact diffuse
 likelihood are separate APIs. Their log likelihoods, AIC, and BIC are not
@@ -379,9 +381,9 @@ Results:
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-This status record is the only repository-content change after CI #536. A
-validation-record-only merge-gate CI must pass before PR #25 is marked ready and
-squash-merged.
+PR #25 subsequently passed final synchronized CI #540 and was
+squash-merged as version 0.0.25 at
+`ac7c049e16889046391e8b324970dbc8d9e8798b`.
 
 ## Completed in 0.0.26
 
