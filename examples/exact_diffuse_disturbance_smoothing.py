@@ -34,6 +34,8 @@ print(disturbances.innovation_mean)
 print("Posterior innovation variances:")
 print(np.diagonal(disturbances.innovation_covariance, axis1=1, axis2=2))
 
+# The information smoother gives marginal innovation moments directly; it does
+# not require unavailable exact diffuse lag-one state autocovariance.
 # The observed two-step change is split equally across the two increments.
 np.testing.assert_allclose(disturbances.innovation_mean[:, 0], [1.0, 1.0])
 np.testing.assert_allclose(
