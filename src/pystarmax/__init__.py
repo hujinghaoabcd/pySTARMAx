@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.18"
+__version__ = "0.0.19"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -51,6 +51,11 @@ from pystarmax.evaluation import (
     RollingOriginResult,
     interval_score,
     rolling_origin_evaluate,
+)
+from pystarmax.exact_diffuse import (
+    ExactDiffuseFilterResult,
+    exact_diffuse_filter,
+    exact_diffuse_loglikelihood,
 )
 from pystarmax.forecasting import ForecastInterval
 from pystarmax.innovation_smoothing import (
@@ -128,6 +133,7 @@ __all__ = [
     "FiniteDifferenceCurvature",
     "InnovationCovarianceInference",
     "InnovationCovarianceTransform",
+    "ExactDiffuseFilterResult",
     "PolynomialAdmissibility",
     "STARMAAdmissibility",
     "PolynomialKind",
@@ -158,10 +164,12 @@ __all__ = [
     "kalman_forecast_interval",
     "integrated_kalman_forecast_interval",
     "inverse_forecast_paths",
+    "exact_diffuse_filter",
+    "exact_diffuse_loglikelihood",
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",
-    "infer_seasonal_kalman_starima",
+    "infer_seasonal_kalman_starma",
     "innovation_covariance_transform",
     "innovation_covariance_delta_inference",
     "delta_method_covariance",
