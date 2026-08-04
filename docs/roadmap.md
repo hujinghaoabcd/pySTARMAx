@@ -191,14 +191,33 @@
 - method guide, runnable example, navigation, README, status, and Step 20
   handoff.
 
+## Implemented in 0.0.21: exact diffuse fixed-interval smoothing
+
+- exact diffuse backward information recursions for `r`, `r_inf`, `N`, `N1`,
+  and `N2`;
+- smoothed state means from finite and diffuse covariance components;
+- finite posterior state covariance with all ordinary/diffuse cross terms;
+- smoothed observation means and covariance;
+- forward scalar finite/diffuse covariance reconstruction diagnostics;
+- PSD stabilization diagnostics without a production diffuse scale;
+- missing-row, leading-missing, and partial-location smoothing;
+- stationary zero-diffuse equivalence with ordinary RTS smoothing;
+- random-walk bridge and large-variance-limit references;
+- fitted `ExactDiffuseKalmanSTARIMA.smooth()` for training and new data;
+- explicit omission of lag-one, disturbance, and simulation smoothing until the
+  full diffuse autocovariance recursion is implemented;
+- method guide, runnable example, navigation, README, status, and Step 21
+  handoff.
+
 ## Next priorities
 
-1. Exact diffuse fixed-interval smoothing and disturbance smoothing.
+1. Exact diffuse lag-one state covariance and disturbance smoothing.
 2. Exact diffuse observed-information and natural covariance inference.
-3. Seasonal ordinary-seasonal diffuse state augmentation.
-4. Forecast intervals for the exact diffuse estimator.
-5. Parameter-aware Kalman paths and sparse state matrices.
-6. Cross-time innovation covariance and simulation smoothing.
+3. Exact diffuse simulation smoothing.
+4. Seasonal ordinary-seasonal diffuse state augmentation and smoothing.
+5. Forecast intervals for the exact diffuse estimator.
+6. Parameter-aware paths, sparse state matrices, and cross-time innovation
+   covariance.
 7. Smooth admissibility parameterization and automatic order selection.
 8. Exogenous regressors, GIS adapters, cross-language fixtures, PyPI release,
    parallel execution, robust inference, and time-varying extensions.

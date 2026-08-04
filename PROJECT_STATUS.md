@@ -11,17 +11,17 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #19 have been squash-merged into `main`.
-- `main` is version `0.0.19` at merge commit
-  `405b9886f446330e5adf479e03ccb595b95740eb`.
-- Current branch: `agent/exact-diffuse-mle`.
-- Current draft pull request: PR #20, `Add exact diffuse STARIMA maximum
-  likelihood`.
-- Current development version: `0.0.20`.
-- The branch adds optimizer-facing ordinary STARIMA maximum likelihood on the
-  original level process using exact diffuse initialization.
-- Conditional `KalmanSTARIMA` remains available and keeps its existing
-  differenced conditional likelihood; it is not silently redefined.
+- PR #1 through PR #20 have been squash-merged into `main`.
+- `main` is version `0.0.20` at merge commit
+  `36edc8b37f56e456aef1daa2df7aa496a07f13fb`.
+- Current branch: `agent/exact-diffuse-smoothing`.
+- Current draft pull request: PR #21, `Add exact diffuse fixed-interval
+  smoothing`.
+- Current development version: `0.0.21`.
+- The branch adds exact diffuse marginal state and observation smoothing through
+  backward ordinary/diffuse information recursions.
+- Lag-one state covariance, disturbance smoothing, and simulation smoothing are
+  explicitly outside this stage.
 
 ## Completed baseline through 0.0.18
 
@@ -241,6 +241,65 @@ Tests cover:
 10. constructor, fitted-state, data-length, and start validation;
 11. the complete inherited package test suite.
 
+## Completed in 0.0.21
+
+### Exact diffuse backward information smoothing
+
+- retains ordinary estimator `r` and diffuse estimator `r_inf`;
+- retains ordinary covariance `N`, cross covariance `N1`, and second diffuse
+  covariance `N2`;
+- reconstructs every sequential forward scalar covariance update;
+- reports maximum discrepancy against retained filter covariance;
+- computes smoothed means as `a + P_* r + P_inf r_inf`;
+- computes finite posterior covariance with ordinary, diffuse, and both cross
+  correction terms;
+- returns smoothed observation means and covariance;
+- propagates future information through fully missing and partially observed
+  rows;
+- stabilizes only floating-point-scale negative covariance eigenvalues and
+  reports the largest correction;
+- exposes immutable backward information arrays and diagnostics;
+- integrates as `ExactDiffuseKalmanSTARIMA.smooth()` for training or newly
+  initialized data.
+
+### Validation scope
+
+Tests cover closed-form random-walk bridges, leading missing levels,
+zero-diffuse equality with stationary RTS smoothing, a local-linear-trend
+large-variance limit, partial locations, observed-cell reconstruction, PSD
+covariance, immutable arrays, forward covariance reconstruction, and the
+fitted-model smoothing facade.
+
+### Deliberate boundary
+
+Version 0.0.21 does not fabricate lag-one exact diffuse state covariance. The
+diffuse autocovariance recursion needs an additional higher-order transition
+term beyond retained `L0` and `L1`. State-disturbance, original innovation, and
+simulation smoothing remain future stages.
+
+## Authoritative validation for 0.0.21
+
+GitHub Actions CI #463, run ID `30887094839`, validated the complete
+implementation, tests, example, metadata, README, documentation home,
+navigation, exact diffuse filtering/MLE/smoothing guides, roadmap, project
+status, and Step 21 documentation head:
+
+- 184 tests passed in the coverage job;
+- total branch coverage was 87.16%, above the required 80%;
+- `src/pystarmax/exact_diffuse_smoothing.py` coverage was 91.6%;
+- `src/pystarmax/exact_diffuse_mle.py` coverage was 84.3%;
+- `src/pystarmax/exact_diffuse.py` coverage was 87.8%;
+- `src/pystarmax/exact_integrated.py` coverage was 86.9%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+A validation-record-only merge-gate CI is required after this status and the
+Step 21 handoff are updated. No implementation, test, API, example, README, or
+method-guide changes are made after CI #463.
+
 ## Authoritative validation for 0.0.20
 
 GitHub Actions CI #440, run ID `30884139939`, validated the complete
@@ -284,21 +343,23 @@ method-guide changes are made after CI #440.
 ## Immediate next tasks
 
 1. Run the validation-record-only merge-gate CI.
-2. Update PR #20, mark it ready, and squash-merge it into `main`.
-3. Add exact diffuse fixed-interval smoothing and disturbance smoothing.
+2. Update PR #21, mark it ready, and squash-merge it into `main`.
+3. Add exact diffuse lag-one state covariance and disturbance smoothing.
 4. Add exact diffuse observed-information and natural covariance inference.
-5. Add ordinary-seasonal diffuse state augmentation.
-6. Add forecast intervals for the exact diffuse estimator.
-7. Add sparse state matrices, parameter-aware forecast paths, cross-time
-   innovation covariance, simulation smoothing, order selection, exogenous
-   inputs, GIS adapters, and cross-language fixtures.
+5. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
+6. Add forecast intervals, sparse state matrices, parameter-aware paths,
+   cross-time innovation covariance, order selection, exogenous inputs, GIS
+   adapters, and cross-language fixtures.
 
 ## Known limitations
 
 - exact diffuse observed-information and natural covariance inference are not
   implemented;
-- exact diffuse smoothing and disturbance smoothing are not implemented;
-- seasonal ordinary-seasonal diffuse augmentation is not implemented;
+- exact diffuse marginal state smoothing is implemented, but lag-one state
+  covariance, state/innovation disturbance smoothing, and simulation smoothing
+  are not;
+- seasonal ordinary-seasonal diffuse augmentation and smoothing are not
+  implemented;
 - forecast intervals are not exposed from `ExactDiffuseKalmanSTARIMA`;
 - filtering a new segment starts a new diffuse initialization and does not
   continue the training terminal posterior;
@@ -313,7 +374,8 @@ method-guide changes are made after CI #440.
 ## Handoff instruction
 
 Before the next substantial stage, read this file,
-`docs/exact_diffuse_mle.md`, `docs/exact_diffuse.md`,
+`docs/exact_diffuse_smoothing.md`, `docs/exact_diffuse_mle.md`,
+`docs/exact_diffuse.md`,
 `docs/integrated_maximum_likelihood.md`, `docs/state_space.md`,
 `docs/admissibility.md`, `docs/maximum_likelihood.md`,
 `docs/likelihood_inference.md`, `docs/covariance_inference.md`,

@@ -323,9 +323,12 @@ The exact route:
 
 Version 0.0.20 adds `ExactDiffuseKalmanSTARIMA`, which rebuilds the
 transformed STARMA state, integrated level state, and exact diffuse likelihood
-at every optimizer candidate. See
-[Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md). The
-conditional `KalmanSTARIMA` estimator remains unchanged.
+at every optimizer candidate. Version 0.0.21 adds exact diffuse fixed-interval
+marginal state smoothing through the fitted estimator and low-level
+`exact_diffuse_smoother()`. See
+[Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md) and
+[Exact diffuse smoothing](exact_diffuse_smoothing.md). The conditional
+`KalmanSTARIMA` estimator remains unchanged.
 
 ## Validation references
 
@@ -349,8 +352,9 @@ Tests cover:
 - exact diffuse filtering, fixed-parameter likelihoods, and optimizer-facing
   ordinary STARIMA MLE are available;
 - exact diffuse observed-information inference is not yet implemented;
-- exact diffuse smoothing is not yet implemented;
-- seasonal diffuse state augmentation is not yet implemented;
+- exact diffuse marginal state smoothing is implemented, but lag-one state
+  covariance, disturbance smoothing, and simulation smoothing are not;
+- seasonal diffuse state augmentation and smoothing are not implemented;
 - the current observation equation has no separate measurement-noise matrix;
 - observations are processed sequentially, so location order is part of the
   floating-point evaluation path even though equivalent Gaussian models should
