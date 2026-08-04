@@ -151,20 +151,32 @@ The 0.0.29 suite covers:
 - explicit singular-Hessian failure and generalized-inverse behavior;
 - public functional and fitted-method exports.
 
-## Validation status
+## Authoritative validation
 
 Initial implementation CI #603, run ID `30957031201`, passed the complete
-cross-platform numerical test matrix and coverage job. Its only failure was
-Black formatting for the two newly added Python files.
+cross-platform numerical test and coverage matrix. Its only failure was Black
+formatting for the two newly added Python files.
 
 A temporary read-only Black 26.5.1 diagnostic workflow printed the exact two
-formatting changes. Those changes were applied and the diagnostic workflow was
-removed. It is not part of the formal PR diff.
+formatting changes. Those changes were applied without changing formulas or
+numerical tolerances, and the diagnostic workflow was removed.
 
-A fully synchronized authoritative CI run is required after the 0.0.29 public
-API, documentation, status, roadmap, example, and handoff are complete. The
-final test count, total coverage, and new-module coverage will be recorded here
-before merge.
+Authoritative synchronized CI #622, run ID `30958228798`, passed on exact head
+`760b4fe4b57e356f4b2d28a993b2fd5ed2cc0b5e`.
+
+Results:
+
+- 244 tests passed;
+- total branch coverage: 87.19%;
+- `src/pystarmax/seasonal_exact_diffuse_inference.py` branch coverage: 87.4%;
+- `src/pystarmax/seasonal_exact_diffuse_mle.py` branch coverage: 83.9%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+A final validation-record-only merge-gate CI is required on the final PR head.
 
 ## Numerical and research safeguards
 
@@ -211,17 +223,18 @@ uncertainty. Original-level and transformed-scale paths must use the terminal
 exact-diffuse posterior, require resolved diffuse rank, and restore levels
 pathwise before computing original-scale quantiles.
 
-## Merge checklist for PR #29
+## Merge readiness for PR #29
 
-1. Complete the synchronized README, documentation home, method guide, example,
-   navigation, citation metadata, roadmap, remaining-work inventory, project
-   status, and Step 29 handoff.
-2. Pass complete CI on the exact final head.
-3. Record final run number, run ID, test count, total coverage, and new-module
-   coverage.
-4. Confirm the formal diff contains no temporary workflow or generated artifact.
-5. Confirm no submitted review or unresolved review thread remains.
-6. Mark PR #29 ready and squash-merge version 0.0.29.
+1. Public API, version metadata, README, documentation home, method guide,
+   example, navigation, roadmap, inventory, status, and Step 29 handoff are
+   synchronized.
+2. Authoritative implementation and documentation CI #622 passed.
+3. Closed-form, ordinary-reduction, missing-data, full-covariance, singular-
+   curvature, public-API, and immutability tests passed on all platforms.
+4. The formal diff must be rechecked for temporary workflows and generated
+   artifacts after the validation-record commit.
+5. Reviews and review threads must be rechecked before merge.
+6. After the final record-only gate, mark PR #29 ready and squash-merge 0.0.29.
 7. Create the seasonal exact-diffuse forecasting branch from the new `main`.
 
 ## Handoff documents
