@@ -48,9 +48,7 @@ def test_random_walk_observed_information_matches_closed_form() -> None:
     n_increments = increments.size
     variance = float(fitted.innovation_covariance[0, 0])
     expected_hessian = np.diag([n_increments / variance, 2.0 * n_increments])
-    expected_covariance = np.diag(
-        [variance / n_increments, 1.0 / (2.0 * n_increments)]
-    )
+    expected_covariance = np.diag([variance / n_increments, 1.0 / (2.0 * n_increments)])
 
     assert isinstance(inference, LikelihoodInferenceResult)
     assert inference.parameter_names == fitted.optimizer_parameter_names
