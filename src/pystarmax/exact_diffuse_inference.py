@@ -1,7 +1,11 @@
 # SPDX-FileCopyrightText: 2026 Jinghao Hu
 # SPDX-License-Identifier: MIT
 
-"""Observed-information inference for exact diffuse STARIMA estimates."""
+"""Observed-information inference for exact diffuse STARIMA estimates.
+
+Each curvature candidate rebuilds the original-level exact diffuse objective;
+no conditional differenced likelihood or approximate diffuse scale is reused.
+"""
 
 from __future__ import annotations
 
