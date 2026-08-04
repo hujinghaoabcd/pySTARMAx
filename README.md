@@ -13,13 +13,13 @@ The package keeps its numerical conventions explicit:
 - public numerical result arrays are immutable;
 - conditional and exact-diffuse likelihoods are separate contracts.
 
-> **Status — 0.0.27:** stationary, ordinary-integrated, multiplicative seasonal,
+> **Status — 0.0.28:** stationary, ordinary-integrated, multiplicative seasonal,
 > and original-level exact-diffuse STARMA/STARIMA workflows are available.
-> Version 0.0.27 adds optimizer-facing multiplicative seasonal exact-diffuse
-> maximum likelihood for `(1-B)^d(1-B^s)^D`, with factor-based parameter
-> counting and admissibility checks on the fully expanded recursions. Seasonal
-> exact-diffuse smoothing, inference, interval forecasting, and simulation
-> smoothing remain planned.
+> Version 0.0.28 adds seasonal exact-diffuse fixed-interval state smoothing and
+> primitive innovation/state-disturbance smoothing for
+> `(1-B)^d(1-B^s)^D`. Seasonal exact-diffuse likelihood inference, forecast
+> intervals, conditional simulation smoothing, diffuse lag-one covariance,
+> parameter-aware paths, and sparse execution remain planned.
 
 ## Installation
 
@@ -190,7 +190,7 @@ coordinates receive exact diffuse covariance.
 
 ## Seasonal exact-diffuse maximum likelihood
 
-Version 0.0.27 adds the optimizer-facing estimator:
+Version 0.0.27 added the optimizer-facing estimator:
 
 ```python
 from pystarmax import SeasonalExactDiffuseKalmanSTARIMA
@@ -240,6 +240,41 @@ result.integrated_state_space
 result.filter_result
 ```
 
+## Seasonal exact-diffuse smoothing
+
+Version 0.0.28 adds fitted posterior operations:
+
+```python
+smoothed = seasonal_exact.smooth()
+disturbances = seasonal_exact.smooth_innovation_disturbances()
+
+print(smoothed.smoothed_observations)
+print(smoothed.smoothed_observation_covariance)
+print(disturbances.innovation_mean)
+print(disturbances.innovation_covariance)
+```
+
+The state route returns exact-diffuse fixed-interval state and original-level
+observation marginals. The primitive disturbance route uses the complete
+seasonal augmented-state selection matrix, so each innovation is mapped into
+both the original-level lag companion and the stationary transformed state.
+
+The seasonal facade deliberately reuses the validated generic exact-diffuse
+backward information recursion. It does not create a second seasonal smoother
+and does not replace diffuse coordinates with a finite large variance.
+
+Passing new observations starts a fresh exact-diffuse initialization under the
+fitted parameters:
+
+```python
+new_smoothed = seasonal_exact.smooth(new_level_series)
+new_disturbances = seasonal_exact.smooth_innovation_disturbances(
+    new_level_series
+)
+```
+
+This is not a continuation from the terminal training posterior.
+
 ## Multiplicative seasonal convention
 
 Seasonal factors multiply ordinary factors on the left. For the AR side,
@@ -274,7 +309,10 @@ The package includes:
 - natural innovation-covariance delta-method inference;
 - Gaussian and bootstrap forecast intervals;
 - rolling-origin evaluation and interval scoring;
-- ordinary Kalman and exact-diffuse state/disturbance smoothing.
+- ordinary and seasonal exact-diffuse state/disturbance smoothing.
+
+Seasonal exact-diffuse likelihood inference and interval forecasting remain
+separate future stages.
 
 ## Documentation
 
@@ -283,7 +321,7 @@ The MkDocs site includes dedicated guides for:
 - model conventions and admissibility;
 - stationary, integrated, and seasonal estimation;
 - exact-diffuse filtering, MLE, smoothing, inference, intervals, and simulation;
-- seasonal exact-diffuse integration and MLE;
+- seasonal exact-diffuse integration, MLE, and smoothing;
 - diagnostics, forecasting, covariance inference, and evaluation;
 - the roadmap and development handoffs.
 
@@ -295,10 +333,24 @@ python -m mkdocs serve
 
 ## Validation
 
-Version 0.0.27 is validated against closed-form seasonal-random-walk likelihoods,
-combined ordinary-seasonal integration, deterministic multiplicative cross-lag
-expansion, ordinary exact-diffuse reductions, missing-data diffuse-rank behavior,
-public API contracts, immutable arrays, and the inherited package suite.
+Version 0.0.28 is validated by 238 tests with 87.16% total branch coverage. The
+new fitted smoothing facade is fully covered, and the seasonal exact-diffuse MLE
+module reaches 83.9% branch coverage.
+
+Independent references include:
+
+- a period-two seasonal random walk decomposed into two exact bridges;
+- closed-form missing-level means and variances;
+- closed-form primitive innovation means and variances;
+- unresolved first-transition uncertainty under diffuse initial seasonal levels;
+- multivariate partial-location observations;
+- fresh-data exact-diffuse initialization;
+- exact reduction to ordinary exact-diffuse state and innovation smoothing when
+  seasonal orders are zero.
+
+CI covers Ubuntu, Windows, and macOS on Python 3.11–3.14, strict MkDocs,
+formatting, linting, typing, diagnostic-reference regeneration, source and wheel
+builds, and Twine checks.
 
 ## License and citation
 
