@@ -13,13 +13,13 @@ The package keeps its numerical conventions explicit:
 - public numerical result arrays are immutable;
 - conditional and exact-diffuse likelihoods are separate contracts.
 
-> **Status — 0.0.28:** stationary, ordinary-integrated, multiplicative seasonal,
+> **Status — 0.0.29:** stationary, ordinary-integrated, multiplicative seasonal,
 > and original-level exact-diffuse STARMA/STARIMA workflows are available.
-> Version 0.0.28 adds seasonal exact-diffuse fixed-interval state smoothing and
-> primitive innovation/state-disturbance smoothing for
-> `(1-B)^d(1-B^s)^D`. Seasonal exact-diffuse likelihood inference, forecast
-> intervals, conditional simulation smoothing, diffuse lag-one covariance,
-> parameter-aware paths, and sparse execution remain planned.
+> Version 0.0.29 adds seasonal exact-diffuse observed-information inference and
+> natural innovation-covariance delta-method inference for
+> `(1-B)^d(1-B^s)^D`. Seasonal exact-diffuse forecast intervals, conditional
+> simulation smoothing, diffuse lag-one covariance, parameter-aware paths, and
+> sparse execution remain planned.
 
 ## Installation
 
@@ -242,7 +242,7 @@ result.filter_result
 
 ## Seasonal exact-diffuse smoothing
 
-Version 0.0.28 adds fitted posterior operations:
+Version 0.0.28 added fitted posterior operations:
 
 ```python
 smoothed = seasonal_exact.smooth()
@@ -275,6 +275,40 @@ new_disturbances = seasonal_exact.smooth_innovation_disturbances(
 
 This is not a continuation from the terminal training posterior.
 
+## Seasonal exact-diffuse likelihood inference
+
+Version 0.0.29 adds observed-information inference on the same original-level
+exact-diffuse likelihood used during fitting:
+
+```python
+inference = seasonal_exact.likelihood_inference()
+print(inference.summary())
+
+natural_covariance = inference.innovation_covariance_inference()
+print(natural_covariance.summary())
+```
+
+At every finite-difference stencil point pySTARMAx re-expands the ordinary and
+seasonal factors, decodes the innovation covariance, rebuilds the transformed
+state, rebuilds the seasonal exact-diffuse state, and filters the original
+observations. The Hessian therefore includes the complete candidate-dependent
+model construction.
+
+The inference vector contains only free factor, intercept, and covariance
+coordinates. Expanded multiplicative cross lags are deterministic and do not
+become extra Hessian parameters.
+
+By default the observed-information Hessian must be positive definite and full
+rank. Generalized-inverse inference requires an explicit opt-in:
+
+```python
+inference = seasonal_exact.likelihood_inference(allow_singular=True)
+```
+
+The result records rank, eigenvalues, condition number, pseudoinverse use,
+finite-difference steps, score, evaluation count, and distances from the fitted
+AR and inverse-MA admissibility boundaries.
+
 ## Multiplicative seasonal convention
 
 Seasonal factors multiply ordinary factors on the left. For the AR side,
@@ -296,8 +330,8 @@ The following likelihoods are deliberately distinct:
 - `KalmanSTARIMA`: conditional ordinary-difference likelihood;
 - `ExactDiffuseKalmanSTARIMA`: original-level ordinary exact-diffuse likelihood.
 
-Only compare log likelihoods, AIC, or BIC when candidates use the same likelihood
-scope.
+Only compare likelihoods, AIC, BIC, Hessians, or parameter covariances when
+candidates use the same likelihood scope.
 
 ## Diagnostics, inference, and evaluation
 
@@ -305,14 +339,14 @@ The package includes:
 
 - STACF, STPACF, and space-time portmanteau diagnostics;
 - AR stationarity and positive-sign MA invertibility diagnostics;
-- finite-difference observed-information inference;
+- ordinary, conditional-seasonal, and seasonal exact-diffuse finite-difference
+  observed-information inference;
 - natural innovation-covariance delta-method inference;
 - Gaussian and bootstrap forecast intervals;
 - rolling-origin evaluation and interval scoring;
 - ordinary and seasonal exact-diffuse state/disturbance smoothing.
 
-Seasonal exact-diffuse likelihood inference and interval forecasting remain
-separate future stages.
+Seasonal exact-diffuse interval forecasting remains a separate future stage.
 
 ## Documentation
 
@@ -321,7 +355,7 @@ The MkDocs site includes dedicated guides for:
 - model conventions and admissibility;
 - stationary, integrated, and seasonal estimation;
 - exact-diffuse filtering, MLE, smoothing, inference, intervals, and simulation;
-- seasonal exact-diffuse integration, MLE, and smoothing;
+- seasonal exact-diffuse integration, MLE, smoothing, and likelihood inference;
 - diagnostics, forecasting, covariance inference, and evaluation;
 - the roadmap and development handoffs.
 
@@ -333,24 +367,22 @@ python -m mkdocs serve
 
 ## Validation
 
-Version 0.0.28 is validated by 238 tests with 87.16% total branch coverage. The
-new fitted smoothing facade is fully covered, and the seasonal exact-diffuse MLE
-module reaches 83.9% branch coverage.
+Version 0.0.29 adds independent references for:
 
-Independent references include:
+- closed-form intercept and log-scale information in a seasonal random walk;
+- the natural scalar-variance standard error
+  `q * sqrt(2 / n)`;
+- exact reduction to ordinary exact-diffuse inference when seasonal orders are
+  zero;
+- missing-data curvature evaluation;
+- scalar, diagonal, and full-Cholesky covariance coordinate contracts;
+- explicit singular-Hessian and generalized-inverse behavior;
+- immutable inference outputs and public API exports.
 
-- a period-two seasonal random walk decomposed into two exact bridges;
-- closed-form missing-level means and variances;
-- closed-form primitive innovation means and variances;
-- unresolved first-transition uncertainty under diffuse initial seasonal levels;
-- multivariate partial-location observations;
-- fresh-data exact-diffuse initialization;
-- exact reduction to ordinary exact-diffuse state and innovation smoothing when
-  seasonal orders are zero.
-
-CI covers Ubuntu, Windows, and macOS on Python 3.11–3.14, strict MkDocs,
-formatting, linting, typing, diagnostic-reference regeneration, source and wheel
-builds, and Twine checks.
+The final 0.0.29 test count and coverage are recorded in `PROJECT_STATUS.md` and
+the Step 29 handoff after synchronized CI. CI covers Ubuntu, Windows, and macOS
+on Python 3.11–3.14, strict MkDocs, formatting, linting, typing,
+diagnostic-reference regeneration, source and wheel builds, and Twine checks.
 
 ## License and citation
 
