@@ -174,25 +174,34 @@
 - mathematical guide, runnable example, navigation, README, status, and Step 19
   handoff.
 
+## Implemented in 0.0.20: exact diffuse ordinary STARIMA MLE
+
+- optimizer-facing `ExactDiffuseKalmanSTARIMA(p,d,q)`;
+- original-level exact diffuse likelihood rather than conditional differenced
+  likelihood;
+- transformed and integrated state-space reconstruction at every candidate;
+- stationary factor/covariance starts, L-BFGS-B bounds, and transformed
+  admissibility enforcement;
+- immutable result with likelihood, AIC/BIC, optimizer, diffuse-phase,
+  state-space, and admissibility metadata;
+- fitted filtering, state-space access, and original/highest-difference point
+  forecasts;
+- closed-form random-walk and second-order MLE references plus `d=0`
+  stationary equivalence;
+- method guide, runnable example, navigation, README, status, and Step 20
+  handoff.
+
 ## Next priorities
 
-1. Optimizer-facing exact diffuse ordinary STARIMA maximum likelihood.
-2. Exact diffuse fixed-interval smoothing and disturbance smoothing.
+1. Exact diffuse fixed-interval smoothing and disturbance smoothing.
+2. Exact diffuse observed-information and natural covariance inference.
 3. Seasonal ordinary-seasonal diffuse state augmentation.
-4. Parameter-aware Kalman forecast paths using observed-information or bootstrap
-   parameter draws.
-5. Sparse spatial weights and sparse arbitrary-lag state matrices for large
-   seasonal periods and networks.
-6. Cross-time innovation-disturbance covariance and conditional simulation
-   smoothing.
-7. Smooth stationarity/invertibility parameterization for optimization and
-   inference.
-8. Automatic ordinary and seasonal order selection using diagnostics and
-   information criteria.
-9. Exogenous regressors and intervention variables.
-10. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
-11. Cross-language estimator fixtures, PyPI pre-release, parallel execution,
-    profile likelihood, sandwich, conformal, and time-varying extensions.
+4. Forecast intervals for the exact diffuse estimator.
+5. Parameter-aware Kalman paths and sparse state matrices.
+6. Cross-time innovation covariance and simulation smoothing.
+7. Smooth admissibility parameterization and automatic order selection.
+8. Exogenous regressors, GIS adapters, cross-language fixtures, PyPI release,
+   parallel execution, robust inference, and time-varying extensions.
 
 ## Research safeguards for future work
 

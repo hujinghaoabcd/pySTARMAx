@@ -321,6 +321,12 @@ The exact route:
 - uses the exact diffuse likelihood terms;
 - supports integrated level-state construction.
 
+Version 0.0.20 adds `ExactDiffuseKalmanSTARIMA`, which rebuilds the
+transformed STARMA state, integrated level state, and exact diffuse likelihood
+at every optimizer candidate. See
+[Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md). The
+conditional `KalmanSTARIMA` estimator remains unchanged.
+
 ## Validation references
 
 Tests cover:
@@ -340,9 +346,9 @@ Tests cover:
 
 ## Scope and limitations
 
-- 0.0.19 provides filtering and fixed-parameter exact diffuse likelihoods;
-- optimizer integration with `KalmanSTARIMA.fit()` is not included in this
-  stage;
+- exact diffuse filtering, fixed-parameter likelihoods, and optimizer-facing
+  ordinary STARIMA MLE are available;
+- exact diffuse observed-information inference is not yet implemented;
 - exact diffuse smoothing is not yet implemented;
 - seasonal diffuse state augmentation is not yet implemented;
 - the current observation equation has no separate measurement-noise matrix;

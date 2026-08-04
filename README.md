@@ -9,16 +9,16 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.19:** stationary, conditional ordinary-integrated, and
-> multiplicative seasonal Gaussian Kalman STARMA/STARIMA estimation;
-> expanded AR stationarity and positive-sign MA invertibility diagnostics;
-> observed-information Hessian and natural covariance inference; missing-data
-> filtering; RTS state and original innovation smoothing; fixed-parameter
-> Gaussian forecast intervals with pathwise ordinary/seasonal reconstruction;
-> and a separate exact diffuse filter with ordinary integrated level-state
-> construction and fixed-parameter likelihood. Optimizer-facing exact diffuse
-> MLE, exact diffuse smoothing, seasonal diffuse augmentation, sparse
-> computation, exogenous regressors, and time-varying extensions remain planned.
+> **Status — 0.0.20:** stationary, conditional ordinary-integrated,
+> exact-diffuse ordinary-integrated, and multiplicative seasonal Gaussian
+> Kalman STARMA/STARIMA estimation; expanded AR stationarity and positive-sign
+> MA invertibility diagnostics; observed-information Hessian and natural
+> covariance inference; missing-data filtering; RTS state and original
+> innovation smoothing; fixed-parameter Gaussian forecast intervals with
+> pathwise ordinary/seasonal reconstruction; and optimizer-facing exact
+> diffuse ordinary STARIMA likelihood on original levels. Exact diffuse
+> smoothing/inference, seasonal diffuse augmentation, sparse computation,
+> exogenous regressors, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -263,9 +263,31 @@ diffuse rank reaches zero. The ordinary integrated constructor augments a
 stationary transformed state with explicit level/difference states and assigns
 diffuse covariance only to the integration directions.
 
-This stage exposes filtering and fixed-parameter level likelihoods. It does
-not yet replace `KalmanSTARIMA.fit()` with an optimizer-facing exact diffuse
-estimator. See [`docs/exact_diffuse.md`](docs/exact_diffuse.md).
+Version 0.0.20 adds an optimizer-facing estimator while preserving the
+conditional API as a separate likelihood contract:
+
+```python
+from pystarmax import ExactDiffuseKalmanSTARIMA
+
+exact_mle = ExactDiffuseKalmanSTARIMA(
+    ar_order=1,
+    integration_order=1,
+    ma_order=1,
+    covariance_type="full",
+)
+exact_mle_result = exact_mle.fit(level_series, weights)
+
+print(exact_mle_result.summary())
+print(exact_mle_result.filter_result.filtered_diffuse_rank)
+print(exact_mle.predict(steps=6))
+```
+
+`KalmanSTARIMA` maximizes the conditional differenced likelihood;
+`ExactDiffuseKalmanSTARIMA` rebuilds the transformed and integrated state
+spaces at every candidate and maximizes the original-level exact diffuse
+likelihood. Their likelihoods, AIC, and BIC are not interchangeable. See
+[`docs/exact_diffuse.md`](docs/exact_diffuse.md) and
+[`docs/exact_diffuse_mle.md`](docs/exact_diffuse_mle.md).
 
 ## Observed-information inference
 
@@ -616,10 +638,10 @@ coverage, pull request, and next-stage handoff.
 
 ## Current limitations
 
-- `KalmanSTARIMA.fit()` still uses a conditional differenced likelihood;
-- exact diffuse filtering and fixed-parameter ordinary level likelihood are
-  available separately, but optimizer-facing exact diffuse MLE is not;
-- exact diffuse smoothing and seasonal diffuse augmentation are unavailable;
+- `KalmanSTARIMA.fit()` and `ExactDiffuseKalmanSTARIMA.fit()` expose
+  distinct conditional and exact diffuse likelihood contracts;
+- exact diffuse observed-information inference and smoothing are unavailable;
+- seasonal diffuse augmentation is unavailable;
 - seasonal likelihood-Hessian inference uses finite differences and can be
   costly or step sensitive;
 - Kalman forecast intervals condition on fitted parameters;

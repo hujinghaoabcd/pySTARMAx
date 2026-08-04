@@ -17,6 +17,7 @@ rolling-origin calibration diagnostics.
 import numpy as np
 
 from pystarmax import (
+    ExactDiffuseKalmanSTARIMA,
     KalmanSTARIMA,
     KalmanSTARMA,
     STARMA,
@@ -70,6 +71,16 @@ integrated_interval = integrated_mle.predict_interval(
 print(integrated_result.summary())
 print(integrated_mle.predict(steps=6))
 print(integrated_interval.lower, integrated_interval.upper)
+
+exact_integrated_mle = ExactDiffuseKalmanSTARIMA(
+    ar_order=1,
+    integration_order=1,
+    ma_order=1,
+    covariance_type="full",
+)
+exact_integrated_result = exact_integrated_mle.fit(level_series, weights)
+print(exact_integrated_result.summary())
+print(exact_integrated_mle.predict(steps=6))
 
 seasonal_mle = SeasonalKalmanSTARIMA(
     ar_order=1,
@@ -129,9 +140,10 @@ between transformed and recursively restored original scales.
 
 [Exact diffuse filtering](exact_diffuse.md) documents the separate
 `P_* + kappa P_inf` covariance decomposition, sequential diffuse updates,
-missing-observation rank behavior, deterministic measurements, and fixed-
-parameter ordinary integrated level-state construction. It does not silently
-reinterpret the conditional `KalmanSTARIMA.fit()` likelihood.
+missing-observation rank behavior, deterministic measurements, and ordinary
+integrated level-state construction. [Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md)
+documents optimizer reconstruction on original levels. The conditional
+`KalmanSTARIMA` likelihood remains a separate API.
 
 [Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
 observed-information result contract for ordinary and seasonal factor
