@@ -3,23 +3,23 @@
 **pySTARMAx** is a typed, research-oriented Python toolkit for classical and
 extended space-time autoregressive moving-average modelling.
 
-The package follows the STARMA framework of Pfeifer and Deutsch while keeping
-its numerical conventions explicit: observations use `(time, location)`,
-spatial lag zero is the identity matrix, non-symmetric spatial weights retain
-their supplied orientation, missing observations are never silently imputed,
-and public numerical result arrays are immutable.
+The package keeps its numerical conventions explicit:
 
-> **Status — 0.0.26:** stationary, conditional ordinary-integrated,
-> exact-diffuse ordinary-integrated, multiplicative seasonal Gaussian Kalman
-> STARIMA estimation, and a fixed-parameter seasonal exact diffuse original-
-> level state-space/filter/likelihood foundation for
-> `(1-B)^d(1-B^s)^D`; observed-information and natural covariance inference;
-> missing-data filtering; ordinary and exact diffuse smoothing and disturbance
-> smoothing; Gaussian and exact diffuse forecast intervals; and dense exact
-> diffuse conditional simulation smoothing. Optimizer-facing seasonal exact
-> diffuse MLE, seasonal posterior operations, diffuse lag-one covariance,
-> parameter-aware paths, sparse computation, exogenous regressors, and time-
-> varying extensions remain planned.
+- observations use `(time, location)`;
+- spatial lag zero is the identity matrix;
+- non-symmetric spatial weights retain their supplied orientation;
+- moving-average operators use the positive-sign convention;
+- missing observations are never silently imputed;
+- public numerical result arrays are immutable;
+- conditional and exact-diffuse likelihoods are separate contracts.
+
+> **Status — 0.0.27:** stationary, ordinary-integrated, multiplicative seasonal,
+> and original-level exact-diffuse STARMA/STARIMA workflows are available.
+> Version 0.0.27 adds optimizer-facing multiplicative seasonal exact-diffuse
+> maximum likelihood for `(1-B)^d(1-B^s)^D`, with factor-based parameter
+> counting and admissibility checks on the fully expanded recursions. Seasonal
+> exact-diffuse smoothing, inference, interval forecasting, and simulation
+> smoothing remain planned.
 
 ## Installation
 
@@ -33,16 +33,25 @@ Development and documentation dependencies:
 python -m pip install -e ".[dev,docs]"
 ```
 
-## Spatial weights and conditional STARMA
+## Spatial weights
 
 ```python
 import numpy as np
-from pystarmax import STARMA, SpatialWeights, lattice_weights, simulate_starma
+from pystarmax import SpatialWeights, lattice_weights
 
 weights = SpatialWeights.from_adjacency(
     lattice_weights(2, 3),
     max_order=1,
 )
+```
+
+`SpatialWeights` stores an ordered collection `(W0, W1, ...)`, where `W0` is
+the identity. A coefficient row contains one parameter per stored spatial lag.
+
+## Stationary STARMA
+
+```python
+from pystarmax import STARMA, simulate_starma
 
 series = simulate_starma(
     phi=np.array([[0.45, 0.20]]),
@@ -52,28 +61,19 @@ series = simulate_starma(
     random_state=42,
 )
 
-model = STARMA(ar_order=1, ma_order=1, max_iter=100)
+model = STARMA(ar_order=1, ma_order=1)
 result = model.fit(series, weights)
-
 print(result.summary())
 print(model.predict(steps=6))
 ```
 
-`SpatialWeights` stores an ordered collection `(W0, W1, ...)`. `W0` is the
-identity matrix. A parameter row therefore contains one coefficient per stored
-spatial lag.
-
-For a stationary STARMA model,
+For
 
 \[
-z_t = c + \sum_{i=1}^{p} A_i z_{t-i}
-      + \varepsilon_t
-      + \sum_{j=1}^{q} B_j\varepsilon_{t-j},
-\qquad
-\varepsilon_t\sim\mathcal N(0,\Sigma),
+z_t=c+\sum_i A_i z_{t-i}+\varepsilon_t+\sum_j B_j\varepsilon_{t-j},
 \]
 
-with
+pySTARMAx uses
 
 \[
 A_i=\sum_k\phi_{ik}W_k,
@@ -81,605 +81,226 @@ A_i=\sum_k\phi_{ik}W_k,
 B_j=\sum_k\theta_{jk}W_k.
 \]
 
-The package uses a positive moving-average sign. The inverse innovation
-recursion is therefore
+The positive moving-average sign implies the inverse recursion
 
 \[
-\varepsilon_t=r_t-\sum_jB_j\varepsilon_{t-j},
+\varepsilon_t=r_t-\sum_jB_j\varepsilon_{t-j}.
 \]
 
-and MA invertibility uses the companion top row `[-B1, ..., -Bq]`.
-
-See [`docs/model.md`](docs/model.md).
-
-## Stationarity and invertibility
-
-```python
-from pystarmax import (
-    autoregressive_diagnostics,
-    moving_average_diagnostics,
-    starma_admissibility,
-)
-
-ar = autoregressive_diagnostics(phi, weights, margin=1e-6)
-ma = moving_average_diagnostics(theta, weights, margin=1e-6)
-joint = starma_admissibility(phi, theta, weights)
-
-print(ar.spectral_radius)
-print(ma.eigenvalues)
-print(joint.summary())
-```
-
-The immutable results retain lag operators, block companion matrices, complex
-eigenvalues, spectral radii, configured limits, signed boundary distances, and
-admissibility decisions. Zero-order AR or MA polynomials have spectral radius
-zero.
-
-See [`docs/admissibility.md`](docs/admissibility.md).
-
-## Stationary Gaussian Kalman maximum likelihood
+## Gaussian Kalman maximum likelihood
 
 ```python
 from pystarmax import KalmanSTARMA
-
-incomplete = series.copy()
-incomplete[20, 2] = np.nan
-incomplete[80, :] = np.nan
 
 mle = KalmanSTARMA(
     ar_order=1,
     ma_order=1,
     covariance_type="full",
     include_intercept=False,
-    enforce_stationarity=True,
-    enforce_invertibility=True,
 )
-fit = mle.fit(incomplete, weights)
+fit = mle.fit(series, weights)
 
 print(fit.summary())
 print(mle.admissibility().summary())
 print(mle.predict(steps=6))
-stationary_interval = mle.predict_interval(
-    steps=6,
-    level=0.95,
-    n_simulations=5000,
-    random_state=42,
-)
-print(stationary_interval.lower, stationary_interval.upper)
 ```
 
-`KalmanSTARMA` maximizes the Gaussian likelihood evaluated by the state-space
-filter. Missing locations are removed from the measurement update; a fully
-missing row performs prediction only and contributes zero to the likelihood.
+Innovation covariance options are `"scalar"`, `"diagonal"`, and positive-
+definite `"full"` Cholesky covariance. Missing locations are removed from the
+measurement update; a fully missing row performs prediction only.
 
-Innovation covariance options are:
-
-- `"scalar"`: one shared variance;
-- `"diagonal"`: one variance per location;
-- `"full"`: positive-definite Cholesky covariance.
-
-Automatic starts are independently shrunk into the configured AR and inverse-MA
-regions. Candidates outside an enabled region receive a feasibility penalty,
-and the final optimizer candidate is checked again. These are explicit
-feasibility controls, not a smooth bijective parameterization.
-
-See [`docs/maximum_likelihood.md`](docs/maximum_likelihood.md).
-
-## Conditional integrated Kalman STARIMA
-
-Version 0.0.15 adds ordinary-integrated Gaussian estimation without duplicating
-the stationary optimizer:
+## Conditional integrated STARIMA
 
 ```python
 from pystarmax import KalmanSTARIMA
 
-integrated_mle = KalmanSTARIMA(
+integrated = KalmanSTARIMA(
     ar_order=1,
     integration_order=1,
     ma_order=1,
     covariance_type="full",
-    include_intercept=True,
 )
-integrated_result = integrated_mle.fit(level_series, weights)
+result = integrated.fit(level_series, weights)
 
-print(integrated_result.summary())
-print(integrated_mle.predict_differenced(steps=6))
-print(integrated_mle.predict(steps=6))
-transformed_interval = integrated_mle.predict_differenced_interval(
-    steps=6,
-    n_simulations=5000,
-    random_state=42,
-)
-original_interval = integrated_mle.predict_interval(
-    steps=6,
-    n_simulations=5000,
-    random_state=42,
-)
-print(transformed_interval.lower, transformed_interval.upper)
-print(original_interval.lower, original_interval.upper)
+print(integrated.predict_differenced(steps=6))
+print(integrated.predict(steps=6))
 ```
 
-For
+`KalmanSTARIMA` evaluates a conditional likelihood after ordinary differencing.
+Its likelihood, AIC, and BIC must not be mixed with original-level exact-diffuse
+results.
 
-\[
-x_t=(1-B)^d y_t,
-\]
-
-`KalmanSTARIMA` fits stationary `KalmanSTARMA` to the `T-d` transformed rows.
-The reported likelihood is
-
-\[
-\ell_c(\vartheta;y_{1:T})
-=
-\ell(\vartheta;\Delta^d y_{d+1:T}\mid y_{1:d}).
-\]
-
-It is conditional on the first `d` level rows and is **not** an exact diffuse
-integrated level-state likelihood.
-
-Scale boundaries are explicit:
-
-- `filter()`, `smooth()`, `smooth_innovation_disturbances()`, `infer()`,
-  `to_state_space()`, `predict_differenced()`, and
-  `predict_differenced_interval()` use the highest difference scale;
-- `predict()` recursively restores the original scale from finite terminal
-  differencing anchors;
-- `predict_interval()` draws the final filtered state and future process
-  innovations, inverse-differences every complete path, and only then takes
-  original-scale quantiles;
-- `fitted_original()` aligns transformed one-step predictions to the level
-  sample and leaves unavailable rows as `NaN`.
-
-Missing values are not imputed before differencing. They propagate through the
-finite-difference stencil and are then handled by the existing partial-location
-Kalman update. If trailing missing values destroy a required terminal level or
-lower-difference anchor, differenced-scale methods remain available but
-`predict()` raises rather than inventing a level continuation.
-
-See [`docs/integrated_maximum_likelihood.md`](docs/integrated_maximum_likelihood.md).
-
-## Exact diffuse filtering and level-state likelihood
-
-Version 0.0.19 adds a separate exact diffuse route without changing the
-conditional estimator or the existing approximate `initialization="diffuse"`:
-
-```python
-from pystarmax import build_exact_integrated_state_space
-
-exact_specification = build_exact_integrated_state_space(
-    transformed_state_space,
-    integration_order=1,
-)
-exact_result = exact_specification.filter(level_series)
-
-print(exact_result.log_likelihood)
-print(exact_result.filtered_diffuse_rank)
-print(exact_result.diffuse_end_time)
-```
-
-The exact filter stores finite covariance `P_*` and diffuse covariance
-`P_inf` separately, uses sequential `K0`/`K1` updates, supports missing and
-partially observed rows, and switches to ordinary Gaussian updates after the
-diffuse rank reaches zero. The ordinary integrated constructor augments a
-stationary transformed state with explicit level/difference states and assigns
-diffuse covariance only to the integration directions.
-
-Version 0.0.20 adds an optimizer-facing estimator while preserving the
-conditional API as a separate likelihood contract:
+## Ordinary exact-diffuse STARIMA
 
 ```python
 from pystarmax import ExactDiffuseKalmanSTARIMA
 
-exact_mle = ExactDiffuseKalmanSTARIMA(
+exact = ExactDiffuseKalmanSTARIMA(
     ar_order=1,
     integration_order=1,
     ma_order=1,
     covariance_type="full",
 )
-exact_mle_result = exact_mle.fit(level_series, weights)
+result = exact.fit(level_series, weights)
 
-print(exact_mle_result.summary())
-print(exact_mle_result.filter_result.filtered_diffuse_rank)
-print(exact_mle.predict(steps=6))
-exact_smoothed = exact_mle.smooth()
-exact_disturbances = exact_mle.smooth_innovation_disturbances()
-exact_inference = exact_mle.likelihood_inference()
-exact_natural = exact_inference.innovation_covariance_inference()
-print(exact_smoothed.smoothed_observations)
-print(exact_smoothed.smoothed_covariance)
-print(exact_disturbances.innovation_mean)
-print(exact_disturbances.innovation_covariance)
-print(exact_inference.optimizer_table)
-print(exact_natural.table)
+print(result.summary())
+print(result.filter_result.filtered_diffuse_rank)
+print(exact.predict(steps=6))
 ```
 
-`KalmanSTARIMA` maximizes the conditional differenced likelihood;
-`ExactDiffuseKalmanSTARIMA` rebuilds the transformed and integrated state
-spaces at every candidate and maximizes the original-level exact diffuse
-likelihood. Their likelihoods, AIC, and BIC are not interchangeable. See
-[`docs/exact_diffuse.md`](docs/exact_diffuse.md),
-[`docs/exact_diffuse_mle.md`](docs/exact_diffuse_mle.md),
-[`docs/exact_diffuse_inference.md`](docs/exact_diffuse_inference.md),
-[`docs/exact_diffuse_smoothing.md`](docs/exact_diffuse_smoothing.md), and
-[`docs/exact_diffuse_disturbance_smoothing.md`](docs/exact_diffuse_disturbance_smoothing.md).
+The exact filter stores finite covariance `P_*` and diffuse covariance `P_inf`
+separately. No arbitrary finite large variance substitutes for unidentified
+integration directions.
 
-## Observed-information inference
+The ordinary exact-diffuse fitted model also exposes:
 
 ```python
-inference = mle.infer(
-    relative_step=1e-4,
-    absolute_step=1e-6,
-    rcond=1e-10,
+exact.smooth()
+exact.smooth_innovation_disturbances()
+exact.likelihood_inference()
+exact.predict_interval(steps=6, n_simulations=5000, random_state=42)
+exact.simulation_smoother(n_simulations=1000, random_state=42)
+```
+
+## Seasonal exact-diffuse state construction
+
+For
+
+\[
+x_t=(1-B)^d(1-B^s)^D y_t,
+\]
+
+version 0.0.26 introduced a reusable original-level state specification:
+
+```python
+from pystarmax import build_exact_seasonal_integrated_state_space
+
+specification = build_exact_seasonal_integrated_state_space(
+    transformed_state_space,
+    ordinary_integration_order=d,
+    seasonal_integration_order=D,
+    seasonal_period=s,
 )
-
-print(inference.coefficient_table)
-print(inference.optimizer_table)
-print(inference.confidence_intervals(level=0.95))
-print(inference.eigenvalues)
-print(inference.condition_number)
+filtered = specification.filter(level_series)
 ```
 
-The score and Hessian use central finite differences of the negative Gaussian
-Kalman log likelihood. The inverse observed-information matrix supplies
-covariance, standard errors, normal tests, intervals, correlations, Hessian
-rank, eigenvalues, condition number, score, and admissibility-boundary
-diagnostics.
+The positive-seasonal-order state stores the required original-level lag
+companion together with the stationary transformed state. All integration lag
+coordinates receive exact diffuse covariance.
 
-A non-positive-definite or rank-deficient Hessian raises by default.
-`allow_singular=True` explicitly uses the positive-curvature eigenspace and
-marks the result as a diagnostic pseudoinverse.
+## Seasonal exact-diffuse maximum likelihood
 
-`KalmanSTARIMA.infer()` applies the same procedure to the conditional
-differenced likelihood. `ExactDiffuseKalmanSTARIMA.likelihood_inference()`
-instead rebuilds the transformed state, integrated original-level state, and
-exact diffuse filter at every curvature candidate. Its Hessian therefore
-belongs to the original-level exact diffuse likelihood rather than the
-conditional differenced objective.
-
-See [`docs/likelihood_inference.md`](docs/likelihood_inference.md) and
-[`docs/exact_diffuse_inference.md`](docs/exact_diffuse_inference.md).
-
-## Natural innovation covariance inference
-
-The optimizer covariance parameters are not covariance elements. Scalar and
-diagonal models use log standard deviations; full covariance uses a Cholesky
-factor.
+Version 0.0.27 adds the optimizer-facing estimator:
 
 ```python
-natural = inference.innovation_covariance_inference()
+from pystarmax import SeasonalExactDiffuseKalmanSTARIMA
 
-print(natural.table)
-print(natural.covariance_matrix)
-print(natural.standard_error_matrix)
-print(natural.confidence_intervals(level=0.95))
-print(natural.dynamic_cross_covariance)
-```
-
-For \(\Sigma=LL^\top\), the full-covariance Jacobian follows
-
-\[
-d\Sigma=dL\,L^\top+L\,dL^\top.
-\]
-
-Intervals are first-order unbounded normal approximations. Negative lower
-endpoints are not silently clipped, and an ordinary `variance = 0` Wald test is
-not reported because zero is a boundary null.
-
-See [`docs/covariance_inference.md`](docs/covariance_inference.md).
-
-## State-space filtering and smoothing
-
-```python
-state_space = mle.to_state_space()
-filtered = mle.filter(incomplete)
-smoothed = mle.smooth(incomplete)
-
-print(filtered.log_likelihood)
-print(filtered.n_observations)
-print(smoothed.smoothed_observations)
-print(smoothed.lag_one_covariance)
-print(smoothed.state_disturbance_mean)
-print(smoothed.prediction_rank)
-```
-
-The fixed-parameter API also supports direct construction:
-
-```python
-from pystarmax import build_starma_state_space, kalman_filter, kalman_smoother
-
-state_space = build_starma_state_space(
-    ar_parameters=phi,
-    ma_parameters=theta,
-    weights=weights,
-    innovation_covariance=np.eye(weights.n_locations),
-)
-filtered = kalman_filter(incomplete, state_space)
-smoothed = kalman_smoother(filtered)
-```
-
-Initialization options in `kalman_filter()` are stationary, user-supplied
-known moments, and an explicit approximate diffuse initialization. That diffuse
-option remains a large-variance approximation. Exact diffuse filtering is
-available separately through `exact_diffuse_filter()` and
-`build_exact_integrated_state_space()` so the two likelihood conventions are
-never silently conflated.
-
-The RTS smoother retains state means and covariances, smoothing gains, lag-one
-cross covariance, state-equation disturbance moments, prediction ranks, and
-pseudoinverse use.
-
-See [`docs/state_space.md`](docs/state_space.md) and
-[`docs/smoothing.md`](docs/smoothing.md).
-
-## Original innovation disturbance smoothing
-
-For state disturbance \(w_t=R\eta_t\), with
-\(\eta_t\sim\mathcal N(0,Q)\), define
-
-\[
-S=RQR^\top,
-\qquad
-A=QR^\top S^+.
-\]
-
-The original innovation posterior is
-
-\[
-E(\eta_t\mid y)=A E(w_t\mid y),
-\]
-
-\[
-\operatorname{Var}(\eta_t\mid y)
-=Q-AS A^\top+A\operatorname{Var}(w_t\mid y)A^\top.
-\]
-
-```python
-innovation_result = mle.smooth_innovation_disturbances(incomplete)
-
-print(innovation_result.innovation_mean)
-print(innovation_result.innovation_covariance)
-print(innovation_result.unresolved_covariance)
-print(innovation_result.process_rank)
-print(innovation_result.mean_support_residual)
-```
-
-This retains innovation uncertainty that cannot be identified from the state
-disturbance. It is not a naive pseudoinverse of the selection matrix.
-
-See [`docs/innovation_smoothing.md`](docs/innovation_smoothing.md).
-
-## Conditional and Gaussian seasonal STARIMA
-
-The conditional nonlinear least-squares route remains available:
-
-```python
-from pystarmax import SeasonalSTARIMA
-
-conditional_seasonal = SeasonalSTARIMA(
+seasonal_exact = SeasonalExactDiffuseKalmanSTARIMA(
     ar_order=1,
-    integration_order=1,
-    ma_order=1,
+    integration_order=0,
+    ma_order=0,
     seasonal_ar_order=1,
     seasonal_integration_order=1,
-    seasonal_ma_order=1,
-    seasonal_period=24,
-    include_intercept=False,
+    seasonal_ma_order=0,
+    seasonal_period=12,
+    covariance_type="scalar",
 )
-conditional_seasonal.fit(seasonal_series, weights)
-print(conditional_seasonal.predict(steps=24))
+result = seasonal_exact.fit(level_series, weights)
+
+print(result.summary())
+print(seasonal_exact.admissibility().summary())
+print(seasonal_exact.predict_differenced(steps=12))
+print(seasonal_exact.predict(steps=12))
 ```
 
-Version 0.0.16 adds the Gaussian Kalman route:
+The free dynamic parameters remain ordinary and seasonal AR/MA **factor
+coefficients**. At every optimizer candidate pySTARMAx:
+
+1. expands the ordered multiplicative matrix polynomials;
+2. builds the stationary transformed state-space model;
+3. rebuilds the original-level seasonal exact-diffuse state;
+4. evaluates the exact-diffuse likelihood on the original observations.
+
+Expanded cross-lag matrices are deterministic functions of factor parameters.
+They are not optimized independently and do not add AIC/BIC parameters.
+
+The estimator retains both factor parameters and expanded operators:
 
 ```python
-from pystarmax import SeasonalKalmanSTARIMA
-
-seasonal_mle = SeasonalKalmanSTARIMA(
-    ar_order=1,
-    integration_order=1,
-    ma_order=1,
-    seasonal_ar_order=1,
-    seasonal_integration_order=1,
-    seasonal_ma_order=1,
-    seasonal_period=24,
-    covariance_type="full",
-    include_intercept=False,
-    enforce_stationarity=True,
-    enforce_invertibility=True,
-)
-seasonal_result = seasonal_mle.fit(incomplete_seasonal_levels, weights)
-
-print(seasonal_result.summary())
-print(seasonal_mle.admissibility().summary())
-print(seasonal_mle.predict_differenced(steps=24))
-print(seasonal_mle.predict(steps=24))
-seasonal_interval = seasonal_mle.predict_interval(
-    steps=24,
-    n_simulations=5000,
-    random_state=42,
-)
-print(seasonal_interval.lower, seasonal_interval.upper)
-print(seasonal_mle.smooth().smoothed_observations)
+result.ar_parameters
+result.seasonal_ar_parameters
+result.ma_parameters
+result.seasonal_ma_parameters
+result.ar_lags
+result.ar_matrices
+result.ma_lags
+result.ma_matrices
+result.transformed_state_space
+result.integrated_state_space
+result.filter_result
 ```
 
-Both routes use the multiplicative convention
+## Multiplicative seasonal convention
+
+Seasonal factors multiply ordinary factors on the left. For the AR side,
 
 \[
-\Phi_s(B^s)\Phi(B)x_t=\Theta_s(B^s)\Theta(B)\eta_t.
+(I-S(B^s))(I-A(B)),
 \]
 
-Ordered matrix products are preserved. AR cross lags are
-`-S_r @ A_i`; positive-sign MA cross lags are `+N_u @ M_j`. Cross-lag
-matrices are applied directly and are not projected back onto the supplied
-spatial-weight basis.
+cross terms have the ordered form `-S_j @ A_i`. Moving-average cross terms have
+positive sign. Equal temporal lags are aggregated without projecting the result
+back onto the supplied spatial-weight basis.
 
-`SeasonalKalmanSTARIMA` optimizes only ordinary and seasonal factor
-parameters, builds an arbitrary-lag companion state from the complete expanded
-matrices, and checks stationarity/invertibility on the expanded recursions. AIC
-and BIC count factor parameters and covariance parameters, not deterministic
-multiplicative cross terms.
+## Likelihood scope
 
-Its likelihood is conditional on the ordinary-seasonal history removed by
-`(1-B)^d(1-B^s)^D`. Missing levels propagate through the full differencing
-stencil without imputation, after which the transformed Kalman filter applies
-partial-location updates. Original-scale forecasts require finite ordinary
-terminal anchors and seasonal histories.
+The following likelihoods are deliberately distinct:
 
-See [`docs/seasonal.md`](docs/seasonal.md) and
-[`docs/seasonal_maximum_likelihood.md`](docs/seasonal_maximum_likelihood.md).
+- `SeasonalKalmanSTARIMA`: conditional transformed-data likelihood;
+- `SeasonalExactDiffuseKalmanSTARIMA`: original-level exact-diffuse likelihood;
+- `KalmanSTARIMA`: conditional ordinary-difference likelihood;
+- `ExactDiffuseKalmanSTARIMA`: original-level ordinary exact-diffuse likelihood.
 
+Only compare log likelihoods, AIC, or BIC when candidates use the same likelihood
+scope.
 
-Seasonal factor observed-information inference is available directly:
+## Diagnostics, inference, and evaluation
 
-```python
-seasonal_inference = seasonal_mle.infer(relative_step=1e-4)
-print(seasonal_inference.coefficient_table)
-print(seasonal_inference.confidence_intervals())
-print(seasonal_inference.innovation_covariance_inference().table)
+The package includes:
+
+- STACF, STPACF, and space-time portmanteau diagnostics;
+- AR stationarity and positive-sign MA invertibility diagnostics;
+- finite-difference observed-information inference;
+- natural innovation-covariance delta-method inference;
+- Gaussian and bootstrap forecast intervals;
+- rolling-origin evaluation and interval scoring;
+- ordinary Kalman and exact-diffuse state/disturbance smoothing.
+
+## Documentation
+
+The MkDocs site includes dedicated guides for:
+
+- model conventions and admissibility;
+- stationary, integrated, and seasonal estimation;
+- exact-diffuse filtering, MLE, smoothing, inference, intervals, and simulation;
+- seasonal exact-diffuse integration and MLE;
+- diagnostics, forecasting, covariance inference, and evaluation;
+- the roadmap and development handoffs.
+
+Build it locally with:
+
+```bash
+python -m mkdocs serve
 ```
 
-Every finite-difference point is reconstructed through the complete
-multiplicative matrix expansion. Points entering an enabled expanded
-stationarity or invertibility penalty region are rejected rather than treated
-as likelihood curvature. See
-[`docs/seasonal_likelihood_inference.md`](docs/seasonal_likelihood_inference.md).
+## Validation
 
-## Gaussian Kalman forecast intervals
+Version 0.0.27 is validated against closed-form seasonal-random-walk likelihoods,
+combined ordinary-seasonal integration, deterministic multiplicative cross-lag
+expansion, ordinary exact-diffuse reductions, missing-data diffuse-rank behavior,
+public API contracts, immutable arrays, and the inherited package suite.
 
-Version 0.0.18 propagates the final filtered-state covariance and future
-process innovations under fixed fitted parameters:
+## License and citation
 
-```python
-kalman_interval = integrated_mle.predict_interval(
-    steps=24,
-    level=0.95,
-    n_simulations=5000,
-    random_state=42,
-)
-```
-
-Ordinary and seasonal integrated models also expose
-`predict_differenced_interval()` on the transformed scale. Original-scale
-bounds are constructed by inverse-differencing every simulated path before
-quantiles; marginal transformed bounds are never inverse-transformed as if
-horizons were independent. See
-[`docs/kalman_forecast_intervals.md`](docs/kalman_forecast_intervals.md).
-
-## Forecast intervals and rolling evaluation
-
-Conditional future-innovation intervals:
-
-```python
-interval = model.predict_interval(
-    steps=24,
-    level=0.95,
-    n_simulations=2000,
-    random_state=42,
-)
-```
-
-Parameter-aware bootstrap intervals:
-
-```python
-bootstrap = model.predict_bootstrap_interval(
-    steps=24,
-    level=0.95,
-    n_bootstrap=500,
-    bootstrap_method="residual",
-    include_future_innovations=True,
-    random_state=42,
-)
-```
-
-Rolling-origin evaluation:
-
-```python
-from pystarmax import rolling_origin_evaluate
-
-rolling = rolling_origin_evaluate(
-    lambda: STARMA(ar_order=1, ma_order=1),
-    series,
-    weights,
-    initial_window=160,
-    horizon=6,
-    step=6,
-    interval_kwargs={"n_simulations": 500},
-    random_state=42,
-)
-
-print(rolling.metrics())
-print(rolling.metrics_by_horizon())
-```
-
-Metrics include empirical coverage, signed and absolute coverage error, mean
-width, Winkler interval score, MAE, and RMSE.
-
-See [`docs/forecasting.md`](docs/forecasting.md),
-[`docs/bootstrap.md`](docs/bootstrap.md), and
-[`docs/evaluation.md`](docs/evaluation.md).
-
-## Diagnostics
-
-```python
-from pystarmax import space_time_portmanteau, stacf, stcov, stpacf
-
-covariance = stcov(
-    series,
-    weights,
-    past_spatial_lag=1,
-    future_spatial_lag=0,
-    temporal_lag=1,
-)
-acf = stacf(result.residuals, weights, max_tlag=8)
-pacf = stpacf(series, weights, max_tlag=8)
-portmanteau = space_time_portmanteau(result.residuals, weights, max_tlag=8)
-```
-
-The default STPACF follows the classical nested Yule--Walker construction. A
-regression analogue remains available behind an explicit option.
-
-See [`docs/diagnostics.md`](docs/diagnostics.md).
-
-## Validation and supported Python versions
-
-The CI workflow checks:
-
-- Black, isort, Ruff, and mypy;
-- independent diagnostic-reference regeneration;
-- strict MkDocs construction;
-- source distribution, wheel, and Twine metadata;
-- Ubuntu, Windows, and macOS;
-- Python 3.11, 3.12, 3.13, and 3.14;
-- branch coverage with an 80% minimum.
-
-See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the authoritative test count,
-coverage, pull request, and next-stage handoff.
-
-## Current limitations
-
-- `KalmanSTARIMA.fit()` and `ExactDiffuseKalmanSTARIMA.fit()` expose
-  distinct conditional and exact diffuse likelihood contracts;
-- exact diffuse state marginal and primitive innovation/state-disturbance
-  marginal smoothing are available, but lag-one state autocovariance,
-  cross-time disturbance covariance, and simulation smoothing are unavailable;
-- exact diffuse observed-information and natural innovation covariance
-  inference are available, but analytic derivatives, robust covariance, and
-  parameter-uncertainty propagation into forecasts or smoothers are not;
-- seasonal diffuse augmentation, smoothing, and inference are unavailable;
-- seasonal likelihood-Hessian inference uses finite differences and can be
-  costly or step sensitive;
-- Kalman forecast intervals condition on fitted parameters;
-- state and innovation smoothing treat parameters as fixed;
-- innovation smoothing returns marginal covariance by transition, not
-  cross-time innovation covariance;
-- AR/MA feasibility uses penalties rather than a smooth parameterization;
-- state and spatial matrices are dense, and seasonal companion dimensions can grow rapidly;
-- robust, profile-likelihood, likelihood-ratio, and Kalman-MLE bootstrap
-  inference remain future work;
-- exogenous regressors and interventions are unsupported;
-- bootstrap and rolling refits execute serially.
-
-## Licence and citation
-
-pySTARMAx is released under the MIT licence. Citation metadata is provided in
-[`CITATION.cff`](CITATION.cff).
+pySTARMAx is released under the MIT License. Citation metadata is provided in
+`CITATION.cff`.
