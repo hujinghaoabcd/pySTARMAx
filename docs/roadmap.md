@@ -2,10 +2,10 @@
 
 ## Current release line
 
-Version 0.0.27 adds optimizer-facing multiplicative seasonal exact-diffuse
-maximum likelihood on original observations.
+Version 0.0.28 adds seasonal exact-diffuse fixed-interval state smoothing and
+primitive innovation/state-disturbance smoothing on original observations.
 
-The project now has a common progression:
+The project follows a common progression:
 
 1. stationary transformed-state construction;
 2. ordinary and seasonal differencing contracts;
@@ -33,52 +33,64 @@ The project now has a common progression:
 - original-level and transformed-scale forecast intervals;
 - dense conditional simulation smoothing.
 
-### Seasonal exact-diffuse foundation
+### Seasonal exact-diffuse state and estimation
 
-Version 0.0.26 delivered:
+Versions 0.0.26 and 0.0.27 delivered:
 
 - complete `(1-B)^d(1-B^s)^D` differencing polynomial;
 - auditable original-level lag companion;
 - exact diffuse initialization of all integration coordinates;
 - stationary finite initialization of the transformed subsystem;
 - fixed-parameter filtering and original-level likelihood;
-- exact `D=0` reduction to the ordinary state contract.
-
-### Implemented in 0.0.27
-
-Version 0.0.27 delivers:
-
-- `SeasonalExactDiffuseKalmanSTARIMA`;
-- ordinary and seasonal AR/MA factor optimization;
-- deterministic ordered cross-lag expansion for every candidate;
-- expanded AR stationarity and positive-sign inverse-MA admissibility;
-- scalar, diagonal, and full-Cholesky innovation covariance;
-- original-level exact-diffuse likelihood;
-- factor-based AIC/BIC parameter counting;
-- immutable fitted factor, operator, covariance, state-space, filter, diffuse,
-  and optimizer metadata;
+- optimizer-facing multiplicative seasonal MLE;
+- deterministic factor expansion and factor-based parameter counting;
+- expanded AR stationarity and positive-sign inverse-MA invertibility;
 - original-level and highest-difference point forecasts;
-- closed-form, reduction, missing-data, public-API, and cross-platform tests;
-- synchronized method guide, example, status, and handoff documentation.
+- exact ordinary reduction and missing-data validation.
+
+### Implemented in 0.0.28
+
+Version 0.0.28 delivers:
+
+- `SeasonalExactDiffuseKalmanSTARIMA.smooth()`;
+- `SeasonalExactDiffuseKalmanSTARIMA.smooth_innovation_disturbances()`;
+- training-sample and freshly initialized new-data routes;
+- reuse of the generic exact-diffuse backward information smoother;
+- primitive innovation moments through the complete seasonal selection matrix;
+- original-level state and observation posterior marginals;
+- immutable posterior arrays and numerical diagnostics;
+- period-two seasonal bridge closed forms;
+- unresolved first-transition innovation uncertainty under diffuse initial
+  seasonal levels;
+- partial-location missing-data validation;
+- exact reduction to ordinary exact-diffuse smoothing when seasonal orders are
+  zero;
+- method guide, example, navigation, status, remaining-work inventory, and Step
+  28 handoff.
 
 ## Next priorities
 
-### 1. Seasonal exact-diffuse smoothing
-
-Extend fixed-interval state smoothing and primitive disturbance smoothing to the
-seasonal augmented state. The implementation must reuse the 0.0.26 state and
-0.0.27 fitted-model contracts.
-
-### 2. Seasonal exact-diffuse likelihood inference
+### 1. Seasonal exact-diffuse likelihood inference
 
 Add finite-difference observed-information inference and natural innovation-
-covariance inference around the seasonal exact-diffuse objective. Boundary and
-rank-deficiency policies must remain explicit.
+covariance inference around the seasonal exact-diffuse objective. Every
+curvature candidate must rebuild the multiplicative transformed state, seasonal
+integrated state, and exact diffuse filter. Boundary, rank, and pseudoinverse
+policies must remain explicit.
 
-### 3. Seasonal exact-diffuse forecasting uncertainty
+### 2. Seasonal exact-diffuse forecasting uncertainty
 
 Add original-level and transformed-scale forecast paths and intervals using the
-terminal exact-diffuse posterior after diffuse resolution.
+resolved terminal exact-diffuse posterior. Require explicit behavior when the
+final diffuse rank is nonzero. Restore levels pathwise before computing original-
+scale quantiles.
+
+### 3. Seasonal exact-diffuse conditional simulation smoothing
+
+Extend complete latent path simulation to the seasonal augmented state only
+after the fitted posterior and interval contracts are stable. Preserve exact
+conditioning and deterministic observation consistency without an arbitrary
+finite diffuse variance.
 
 ### 4. Diffuse cross-time covariance theory
 
@@ -88,8 +100,9 @@ replace exact diffuse initialization with a finite large-variance approximation.
 
 ### 5. Stronger uncertainty
 
-Add robust/sandwich covariance, profile likelihood, and parameter-uncertainty
-propagation into forecasts and selected posterior summaries.
+Add robust/sandwich covariance, profile likelihood, boundary-aware inference,
+and parameter-uncertainty propagation into forecasts and selected posterior
+summaries.
 
 ### 6. Scalable numerical execution
 
