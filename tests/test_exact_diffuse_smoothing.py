@@ -127,7 +127,7 @@ def test_exact_diffuse_smoother_matches_large_variance_limit() -> None:
     )
     exact = exact_diffuse_smoother(exact_filter)
 
-    scale = 1e8
+    scale = 1e6
     approximate_filter = kalman_filter(
         data,
         model,
