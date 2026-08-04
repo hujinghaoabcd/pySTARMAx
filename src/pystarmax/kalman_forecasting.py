@@ -24,11 +24,9 @@ class ForecastInverter(Protocol):
     """Structural interface for ordinary or combined inverse differencing."""
 
     @property
-    def n_locations(self) -> int:
-        """Number of locations accepted by ``inverse_forecast``."""
+    def n_locations(self) -> int: ...
 
-    def inverse_forecast(self, differenced_forecast: Any) -> FloatArray:
-        """Map one transformed forecast path to the original scale."""
+    def inverse_forecast(self, differenced_forecast: Any) -> FloatArray: ...
 
 
 def _positive_semidefinite_factor(value: Any, *, name: str) -> FloatArray:
