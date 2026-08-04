@@ -325,7 +325,9 @@ def exact_diffuse_filter(
     else:
         state = np.asarray(initial_state, dtype=float)
         if state.shape != (state_dim,) or not np.all(np.isfinite(state)):
-            raise ValueError("initial_state must be finite and match the state dimension")
+            raise ValueError(
+                "initial_state must be finite and match the state dimension"
+            )
         state = np.ascontiguousarray(state, dtype=float)
 
     if initial_covariance is None:
@@ -384,7 +386,9 @@ def exact_diffuse_filter(
 
         for location_index in np.flatnonzero(observed_mask[time_index]):
             design = model.design[location_index]
-            innovation = float(observations[time_index, location_index] - design @ state)
+            innovation = float(
+                observations[time_index, location_index] - design @ state
+            )
             finite_cross = covariance @ design
             diffuse_cross = diffuse_covariance @ design
             finite_scale = float(np.linalg.norm(covariance, ord=2)) * float(
@@ -429,9 +433,7 @@ def exact_diffuse_filter(
                     gain_zero,
                 )
                 covariance = _symmetric(cast(FloatArray, covariance))
-                diffuse_covariance = _symmetric(
-                    cast(FloatArray, diffuse_covariance)
-                )
+                diffuse_covariance = _symmetric(cast(FloatArray, diffuse_covariance))
                 contributions[time_index] -= 0.5 * (
                     log_two_pi + float(np.log(diffuse_value))
                 )

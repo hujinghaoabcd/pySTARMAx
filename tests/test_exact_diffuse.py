@@ -43,15 +43,13 @@ def test_local_level_exact_diffuse_likelihood_is_increment_likelihood() -> None:
     expected = -0.5 * np.log(2.0 * np.pi)
     for increment in (0.5, -1.0):
         expected -= 0.5 * (
-            np.log(2.0 * np.pi)
-            + np.log(variance)
-            + increment * increment / variance
+            np.log(2.0 * np.pi) + np.log(variance) + increment * increment / variance
         )
 
     assert result.log_likelihood == pytest.approx(expected)
-    assert exact_diffuse_loglikelihood(data, local_level_model(variance)) == pytest.approx(
-        expected
-    )
+    assert exact_diffuse_loglikelihood(
+        data, local_level_model(variance)
+    ) == pytest.approx(expected)
     np.testing.assert_allclose(result.filtered_state[:, 0], data[:, 0])
     np.testing.assert_allclose(result.filtered_covariance[:, 0, 0], 0.0, atol=1e-14)
     np.testing.assert_array_equal(result.filtered_diffuse_rank, [0, 0, 0])
