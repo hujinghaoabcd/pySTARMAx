@@ -60,7 +60,7 @@ class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
         rcond: float = 1e-10,
         tolerance: float | None = None,
     ) -> ExactDiffuseSimulationSmootherResult:
-        """Draw complete state paths conditional on training or new observations."""
+        """Draw conditional state paths with a dense moderate-sample method."""
         return exact_diffuse_simulation_smoother(
             self.filter(data),
             n_simulations=n_simulations,
