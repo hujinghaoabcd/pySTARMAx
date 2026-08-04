@@ -32,7 +32,13 @@ print(smoothed.smoothed_observations)
 print("Posterior innovation means:")
 print(disturbances.innovation_mean)
 print("Posterior innovation variances:")
-print(np.diagonal(disturbances.innovation_covariance, axis1=1, axis2=2))
+print(
+    np.diagonal(
+        disturbances.innovation_covariance,
+        axis1=1,
+        axis2=2,
+    )
+)
 
 # The information smoother gives marginal innovation moments directly; it does
 # not require unavailable exact diffuse lag-one state autocovariance.
