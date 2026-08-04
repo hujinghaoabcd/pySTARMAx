@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
-from pystarmax._maximum_likelihood_result import KalmanSTARMAResult
 from pystarmax._maximum_likelihood_utils import (
     CovarianceType,
     _CovarianceCodec,
