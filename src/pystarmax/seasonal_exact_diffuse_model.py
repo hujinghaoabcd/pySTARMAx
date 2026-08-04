@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jinghao Hu
 # SPDX-License-Identifier: MIT
 
-"""Seasonal exact diffuse STARIMA facade with posterior smoothing."""
+"""Seasonal exact diffuse STARIMA facade with posterior operations."""
 
 from __future__ import annotations
 
@@ -15,6 +15,10 @@ from pystarmax.exact_diffuse_smoothing import (
     ExactDiffuseSmootherResult,
     exact_diffuse_smoother,
 )
+from pystarmax.likelihood_inference import LikelihoodInferenceResult
+from pystarmax.seasonal_exact_diffuse_inference import (
+    infer_seasonal_exact_diffuse_kalman_starima,
+)
 from pystarmax.seasonal_exact_diffuse_mle import (
     SeasonalExactDiffuseKalmanSTARIMA as _SeasonalExactDiffuseKalmanSTARIMA,
 )
@@ -24,7 +28,7 @@ from pystarmax.seasonal_exact_diffuse_mle import (
 
 
 class SeasonalExactDiffuseKalmanSTARIMA(_SeasonalExactDiffuseKalmanSTARIMA):
-    """Seasonal exact diffuse STARIMA with state and disturbance smoothing."""
+    """Seasonal exact diffuse STARIMA with smoothing and inference."""
 
     def smooth(
         self,
@@ -55,10 +59,28 @@ class SeasonalExactDiffuseKalmanSTARIMA(_SeasonalExactDiffuseKalmanSTARIMA):
             tolerance=tolerance,
         )
 
+    def likelihood_inference(
+        self,
+        *,
+        relative_step: float = 1e-4,
+        absolute_step: float = 1e-6,
+        rcond: float = 1e-10,
+        allow_singular: bool = False,
+    ) -> LikelihoodInferenceResult:
+        """Infer curvature from the seasonal original-level exact objective."""
+        return infer_seasonal_exact_diffuse_kalman_starima(
+            self,
+            relative_step=relative_step,
+            absolute_step=absolute_step,
+            rcond=rcond,
+            allow_singular=allow_singular,
+        )
+
 
 __all__ = [
     "ExactDiffuseDisturbanceResult",
     "ExactDiffuseSmootherResult",
+    "LikelihoodInferenceResult",
     "SeasonalExactDiffuseKalmanSTARIMA",
     "SeasonalExactDiffuseKalmanSTARIMAResult",
 ]
