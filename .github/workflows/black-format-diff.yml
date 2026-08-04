@@ -1,9 +1,7 @@
 name: Black format diagnostic
 
 on:
-  push:
-    branches:
-      - agent/seasonal-exact-diffuse-inference
+  pull_request:
 
 permissions:
   contents: read
