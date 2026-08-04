@@ -3,9 +3,10 @@
 pySTARMAx is a typed Python toolkit for classical and extended space-time
 autoregressive moving-average modelling.
 
-Version 0.0.27 supports stationary, integrated, multiplicative seasonal, and
+Version 0.0.28 supports stationary, integrated, multiplicative seasonal, and
 original-level exact-diffuse workflows, including optimizer-facing seasonal
-exact-diffuse maximum likelihood for
+exact-diffuse maximum likelihood plus fixed-interval state and primitive
+innovation/state-disturbance smoothing for
 
 \[
 (1-B)^d(1-B^s)^D y_t.
@@ -96,15 +97,26 @@ result = model.fit(data, weights)
 At each optimizer candidate the estimator expands the ordered ordinary and
 seasonal AR/MA factors, builds the stationary transformed state, constructs the
 seasonal original-level exact-diffuse state, and evaluates the exact-diffuse
-likelihood.
+likelihood. Expanded cross-lag matrices are deterministic and do not add free
+AIC/BIC parameters.
 
-Expanded cross-lag matrices are deterministic and do not add free AIC/BIC
-parameters.
+Version 0.0.28 adds fitted posterior routes:
+
+```python
+smoothed = model.smooth()
+disturbances = model.smooth_innovation_disturbances()
+```
+
+The state route returns original-level state and observation posterior
+marginals. The disturbance route returns primitive innovations and their
+state-equation images using the complete seasonal selection matrix. Passing new
+data starts a fresh exact-diffuse initialization under the fitted parameters.
 
 See:
 
 - [Seasonal exact diffuse integration](exact_seasonal_integrated.md)
 - [Seasonal exact diffuse MLE](seasonal_exact_diffuse_mle.md)
+- [Seasonal exact diffuse smoothing](seasonal_exact_diffuse_smoothing.md)
 
 ## Diagnostics and uncertainty
 
@@ -135,10 +147,16 @@ This boundary is part of the public API and test suite.
 
 ## Validation status
 
-The 0.0.27 implementation is validated by 231 tests with 87.10% total branch
-coverage and 82.9% branch coverage for the new seasonal exact-diffuse MLE
-module. CI covers Ubuntu, Windows, and macOS on Python 3.11–3.14, strict MkDocs,
-formatting, linting, typing, reference regeneration, and package builds.
+The 0.0.28 implementation is validated by 238 tests with 87.16% total branch
+coverage. The fitted smoothing facade is fully covered, and the seasonal
+exact-diffuse MLE module reaches 83.9% branch coverage. CI covers Ubuntu,
+Windows, and macOS on Python 3.11–3.14, strict MkDocs, formatting, linting,
+typing, reference regeneration, and package builds.
+
+Independent references include a period-two seasonal random-walk bridge,
+primitive innovation posterior moments, multivariate partial observations,
+fresh-data diffuse initialization, and exact reduction to ordinary
+exact-diffuse smoothing when seasonal orders are zero.
 
 ## Development
 
