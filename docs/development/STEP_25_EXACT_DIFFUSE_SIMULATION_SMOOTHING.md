@@ -7,8 +7,11 @@
 - pull request: PR #25, `Add exact diffuse simulation smoothing`;
 - base: version 0.0.24 on `main` at merge commit
   `0639f4bd932aa86020215b50b6ef9867bb5ad566`;
-- final validation: pending on the complete implementation and documentation
-  head.
+- README, roadmap, root project status, exact diffuse MLE cross-links,
+  documentation home, and MkDocs navigation are synchronized through 0.0.25;
+- the temporary formatting and status-patching workflows have self-deleted and
+  are absent from the final PR diff;
+- final validation: pending on the ordinary post-cleanup merge-gate CI head.
 
 ## Delivered API
 
@@ -122,8 +125,8 @@ Before marking PR #25 ready:
 1. pass complete CI on the final code and documentation head;
 2. record run number, run ID, test count, total branch coverage, and new-module
    coverage;
-3. update README, documentation home, roadmap, project status, exact diffuse MLE
-   cross-links, and MkDocs navigation;
+3. confirm README, documentation home, roadmap, project status, exact diffuse
+   MLE cross-links, and MkDocs navigation remain synchronized;
 4. confirm no temporary workflow or generated artifact remains;
 5. confirm no unresolved review thread remains;
 6. mark ready and squash-merge;
