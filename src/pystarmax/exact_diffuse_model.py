@@ -10,7 +10,9 @@ from typing import Any
 from pystarmax.exact_diffuse_mle import (
     ExactDiffuseKalmanSTARIMA as _ExactDiffuseKalmanSTARIMA,
 )
-from pystarmax.exact_diffuse_mle import ExactDiffuseKalmanSTARIMAResult
+from pystarmax.exact_diffuse_mle import (
+    ExactDiffuseKalmanSTARIMAResult,
+)
 from pystarmax.exact_diffuse_smoothing import (
     ExactDiffuseSmootherResult,
     exact_diffuse_smoother,
