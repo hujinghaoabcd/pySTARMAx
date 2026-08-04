@@ -7,7 +7,12 @@
 - pull request: PR #26, `Add seasonal exact diffuse state-space foundation`;
 - base: version 0.0.25 on `main` at merge commit
   `ac7c049e16889046391e8b324970dbc8d9e8798b`;
-- final validation: pending on the synchronized code and documentation head.
+- package exports, version metadata, README, documentation home, roadmap,
+  project status, remaining-work inventory, method guide, example, and MkDocs
+  navigation are synchronized through 0.0.26;
+- one-shot formatting and status-maintenance workflows have self-deleted and are
+  absent from the formal PR diff;
+- authoritative validation: pending on this ordinary synchronized head.
 
 ## Delivered API
 
