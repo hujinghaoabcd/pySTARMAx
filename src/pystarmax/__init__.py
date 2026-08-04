@@ -57,6 +57,12 @@ from pystarmax.exact_diffuse import (
     exact_diffuse_filter,
     exact_diffuse_loglikelihood,
 )
+from pystarmax.exact_integrated import (
+    ExactIntegratedStateSpace,
+    build_exact_integrated_state_space,
+    exact_integrated_filter,
+    exact_integrated_loglikelihood,
+)
 from pystarmax.forecasting import ForecastInterval
 from pystarmax.innovation_smoothing import (
     InnovationDisturbanceResult,
@@ -134,6 +140,7 @@ __all__ = [
     "InnovationCovarianceInference",
     "InnovationCovarianceTransform",
     "ExactDiffuseFilterResult",
+    "ExactIntegratedStateSpace",
     "PolynomialAdmissibility",
     "STARMAAdmissibility",
     "PolynomialKind",
@@ -166,6 +173,9 @@ __all__ = [
     "inverse_forecast_paths",
     "exact_diffuse_filter",
     "exact_diffuse_loglikelihood",
+    "build_exact_integrated_state_space",
+    "exact_integrated_filter",
+    "exact_integrated_loglikelihood",
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",
