@@ -20,9 +20,7 @@ def main() -> None:
         series[time_index] = (
             ordinary_ar * series[time_index - 1]
             + seasonal_ar * series[time_index - period]
-            - ordinary_ar
-            * seasonal_ar
-            * series[time_index - period - 1]
+            - ordinary_ar * seasonal_ar * series[time_index - period - 1]
             + innovations[time_index]
         )
 
