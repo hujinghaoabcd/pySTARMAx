@@ -1,0 +1,283 @@
+name: Synchronize exact diffuse MLE docs
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.event.pull_request.head.ref == 'agent/exact-diffuse-mle'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/exact-diffuse-mle
+      - name: Update documentation surfaces
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path: str, old: str, new: str, label: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              if old not in text:
+                  raise SystemExit(f"{label} not found in {path}")
+              file.write_text(text.replace(old, new, 1))
+
+          replace(
+              "README.md",
+              '''> **Status — 0.0.19:** stationary, conditional ordinary-integrated, and
+          > multiplicative seasonal Gaussian Kalman STARMA/STARIMA estimation;
+          > expanded AR stationarity and positive-sign MA invertibility diagnostics;
+          > observed-information Hessian and natural covariance inference; missing-data
+          > filtering; RTS state and original innovation smoothing; fixed-parameter
+          > Gaussian forecast intervals with pathwise ordinary/seasonal reconstruction;
+          > and a separate exact diffuse filter with ordinary integrated level-state
+          > construction and fixed-parameter likelihood. Optimizer-facing exact diffuse
+          > MLE, exact diffuse smoothing, seasonal diffuse augmentation, sparse
+          > computation, exogenous regressors, and time-varying extensions remain planned.
+          ''',
+              '''> **Status — 0.0.20:** stationary, conditional ordinary-integrated,
+          > exact-diffuse ordinary-integrated, and multiplicative seasonal Gaussian
+          > Kalman STARMA/STARIMA estimation; expanded AR stationarity and positive-sign
+          > MA invertibility diagnostics; observed-information Hessian and natural
+          > covariance inference; missing-data filtering; RTS state and original
+          > innovation smoothing; fixed-parameter Gaussian forecast intervals with
+          > pathwise ordinary/seasonal reconstruction; and optimizer-facing exact
+          > diffuse ordinary STARIMA likelihood on original levels. Exact diffuse
+          > smoothing/inference, seasonal diffuse augmentation, sparse computation,
+          > exogenous regressors, and time-varying extensions remain planned.
+          ''',
+              "README status",
+          )
+          replace(
+              "README.md",
+              '''This stage exposes filtering and fixed-parameter level likelihoods. It does
+          not yet replace `KalmanSTARIMA.fit()` with an optimizer-facing exact diffuse
+          estimator. See [`docs/exact_diffuse.md`](docs/exact_diffuse.md).
+          ''',
+              '''Version 0.0.20 adds an optimizer-facing estimator while preserving the
+          conditional API as a separate likelihood contract:
+          
+          ```python
+          from pystarmax import ExactDiffuseKalmanSTARIMA
+          
+          exact_mle = ExactDiffuseKalmanSTARIMA(
+              ar_order=1,
+              integration_order=1,
+              ma_order=1,
+              covariance_type="full",
+          )
+          exact_mle_result = exact_mle.fit(level_series, weights)
+          
+          print(exact_mle_result.summary())
+          print(exact_mle_result.filter_result.filtered_diffuse_rank)
+          print(exact_mle.predict(steps=6))
+          ```
+          
+          `KalmanSTARIMA` maximizes the conditional differenced likelihood;
+          `ExactDiffuseKalmanSTARIMA` rebuilds the transformed and integrated state
+          spaces at every candidate and maximizes the original-level exact diffuse
+          likelihood. Their likelihoods, AIC, and BIC are not interchangeable. See
+          [`docs/exact_diffuse.md`](docs/exact_diffuse.md) and
+          [`docs/exact_diffuse_mle.md`](docs/exact_diffuse_mle.md).
+          ''',
+              "README exact MLE section",
+          )
+          replace(
+              "README.md",
+              '''- `KalmanSTARIMA.fit()` still uses a conditional differenced likelihood;
+          - exact diffuse filtering and fixed-parameter ordinary level likelihood are
+            available separately, but optimizer-facing exact diffuse MLE is not;
+          - exact diffuse smoothing and seasonal diffuse augmentation are unavailable;
+          ''',
+              '''- `KalmanSTARIMA.fit()` and `ExactDiffuseKalmanSTARIMA.fit()` expose
+            distinct conditional and exact diffuse likelihood contracts;
+          - exact diffuse observed-information inference and smoothing are unavailable;
+          - seasonal diffuse augmentation is unavailable;
+          ''',
+              "README limitations",
+          )
+
+          replace(
+              "docs/index.md",
+              '''from pystarmax import (
+              KalmanSTARIMA,
+              KalmanSTARMA,
+              STARMA,
+          ''',
+              '''from pystarmax import (
+              ExactDiffuseKalmanSTARIMA,
+              KalmanSTARIMA,
+              KalmanSTARMA,
+              STARMA,
+          ''',
+              "docs index imports",
+          )
+          replace(
+              "docs/index.md",
+              '''print(integrated_result.summary())
+          print(integrated_mle.predict(steps=6))
+          print(integrated_interval.lower, integrated_interval.upper)
+          ''',
+              '''print(integrated_result.summary())
+          print(integrated_mle.predict(steps=6))
+          print(integrated_interval.lower, integrated_interval.upper)
+          
+          exact_integrated_mle = ExactDiffuseKalmanSTARIMA(
+              ar_order=1,
+              integration_order=1,
+              ma_order=1,
+              covariance_type="full",
+          )
+          exact_integrated_result = exact_integrated_mle.fit(level_series, weights)
+          print(exact_integrated_result.summary())
+          print(exact_integrated_mle.predict(steps=6))
+          ''',
+              "docs index exact MLE example",
+          )
+          replace(
+              "docs/index.md",
+              '''[Exact diffuse filtering](exact_diffuse.md) documents the separate
+          `P_* + kappa P_inf` covariance decomposition, sequential diffuse updates,
+          missing-observation rank behavior, deterministic measurements, and fixed-
+          parameter ordinary integrated level-state construction. It does not silently
+          reinterpret the conditional `KalmanSTARIMA.fit()` likelihood.
+          ''',
+              '''[Exact diffuse filtering](exact_diffuse.md) documents the separate
+          `P_* + kappa P_inf` covariance decomposition, sequential diffuse updates,
+          missing-observation rank behavior, deterministic measurements, and ordinary
+          integrated level-state construction. [Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md)
+          documents optimizer reconstruction on original levels. The conditional
+          `KalmanSTARIMA` likelihood remains a separate API.
+          ''',
+              "docs index exact diffuse paragraph",
+          )
+
+          replace(
+              "docs/exact_diffuse.md",
+              '''- supports integrated level-state construction.
+          
+          ## Validation references
+          ''',
+              '''- supports integrated level-state construction.
+          
+          Version 0.0.20 adds `ExactDiffuseKalmanSTARIMA`, which rebuilds the
+          transformed STARMA state, integrated level state, and exact diffuse likelihood
+          at every optimizer candidate. See
+          [Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md). The
+          conditional `KalmanSTARIMA` estimator remains unchanged.
+          
+          ## Validation references
+          ''',
+              "exact diffuse MLE cross-reference",
+          )
+          replace(
+              "docs/exact_diffuse.md",
+              '''- 0.0.19 provides filtering and fixed-parameter exact diffuse likelihoods;
+          - optimizer integration with `KalmanSTARIMA.fit()` is not included in this
+            stage;
+          - exact diffuse smoothing is not yet implemented;
+          ''',
+              '''- exact diffuse filtering, fixed-parameter likelihoods, and optimizer-facing
+            ordinary STARIMA MLE are available;
+          - exact diffuse observed-information inference is not yet implemented;
+          - exact diffuse smoothing is not yet implemented;
+          ''',
+              "exact diffuse scope",
+          )
+
+          replace(
+              "docs/integrated_maximum_likelihood.md",
+              '''Version 0.0.19 adds a separate fixed-parameter exact diffuse level-state route.
+          Given a stationary transformed `StateSpaceModel`,
+          `build_exact_integrated_state_space()` augments explicit level and lower-
+          difference states and evaluates the original-level exact diffuse likelihood.
+          It does not yet optimize STARMA parameters and therefore does not replace this
+          conditional estimator. See [Exact diffuse filtering](exact_diffuse.md).
+          ''',
+              '''Version 0.0.19 added the separate fixed-parameter exact diffuse
+          level-state route. Version 0.0.20 adds `ExactDiffuseKalmanSTARIMA`, which
+          optimizes STARMA parameters against the original-level exact diffuse
+          likelihood. It remains a separate estimator because this page's
+          `KalmanSTARIMA` intentionally reports a conditional differenced likelihood.
+          See [Exact diffuse filtering](exact_diffuse.md) and
+          [Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md).
+          ''',
+              "conditional/exact MLE distinction",
+          )
+
+          roadmap = Path("docs/roadmap.md")
+          text = roadmap.read_text()
+          marker = "## Next priorities\n"
+          if marker not in text:
+              raise SystemExit("roadmap marker not found")
+          text = text.replace(
+              marker,
+              '''## Implemented in 0.0.20: exact diffuse ordinary STARIMA MLE
+          
+          - optimizer-facing `ExactDiffuseKalmanSTARIMA(p,d,q)`;
+          - original-level exact diffuse likelihood rather than conditional differenced
+            likelihood;
+          - transformed and integrated state-space reconstruction at every candidate;
+          - stationary factor/covariance starts, L-BFGS-B bounds, and transformed
+            admissibility enforcement;
+          - immutable result with likelihood, AIC/BIC, optimizer, diffuse-phase,
+            state-space, and admissibility metadata;
+          - fitted filtering, state-space access, and original/highest-difference point
+            forecasts;
+          - closed-form random-walk and second-order MLE references plus `d=0`
+            stationary equivalence;
+          - method guide, runnable example, navigation, README, status, and Step 20
+            handoff.
+          
+          ## Next priorities
+          ''',
+              1,
+          )
+          old_priorities = '''1. Optimizer-facing exact diffuse ordinary STARIMA maximum likelihood.
+          2. Exact diffuse fixed-interval smoothing and disturbance smoothing.
+          3. Seasonal ordinary-seasonal diffuse state augmentation.
+          4. Parameter-aware Kalman forecast paths using observed-information or bootstrap
+             parameter draws.
+          5. Sparse spatial weights and sparse arbitrary-lag state matrices for large
+             seasonal periods and networks.
+          6. Cross-time innovation-disturbance covariance and conditional simulation
+             smoothing.
+          7. Smooth stationarity/invertibility parameterization for optimization and
+             inference.
+          8. Automatic ordinary and seasonal order selection using diagnostics and
+             information criteria.
+          9. Exogenous regressors and intervention variables.
+          10. GeoPandas, libpysal, NetworkX, and OSMnx adapters.
+          11. Cross-language estimator fixtures, PyPI pre-release, parallel execution,
+              profile likelihood, sandwich, conformal, and time-varying extensions.
+          '''
+          new_priorities = '''1. Exact diffuse fixed-interval smoothing and disturbance smoothing.
+          2. Exact diffuse observed-information and natural covariance inference.
+          3. Seasonal ordinary-seasonal diffuse state augmentation.
+          4. Forecast intervals for the exact diffuse estimator.
+          5. Parameter-aware Kalman paths and sparse state matrices.
+          6. Cross-time innovation covariance and simulation smoothing.
+          7. Smooth admissibility parameterization and automatic order selection.
+          8. Exogenous regressors, GIS adapters, cross-language fixtures, PyPI release,
+             parallel execution, robust inference, and time-varying extensions.
+          '''
+          if old_priorities not in text:
+              raise SystemExit("roadmap priorities not found")
+          roadmap.write_text(text.replace(old_priorities, new_priorities, 1))
+          PY
+      - name: Commit synchronized docs and remove workflow
+        shell: bash
+        run: |
+          git rm .github/workflows/sync-exact-diffuse-mle-docs.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/index.md docs/exact_diffuse.md \
+            docs/integrated_maximum_likelihood.md docs/roadmap.md
+          git commit -m "Synchronize exact diffuse MLE documentation"
+          git push
