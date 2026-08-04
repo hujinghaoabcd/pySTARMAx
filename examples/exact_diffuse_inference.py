@@ -6,7 +6,6 @@ import numpy as np
 
 from pystarmax import ExactDiffuseKalmanSTARIMA, SpatialWeights
 
-
 rng = np.random.default_rng(2300)
 increments = 0.25 + rng.normal(scale=0.6, size=80)
 levels = np.concatenate([[0.0], np.cumsum(increments)])[:, None]
@@ -40,9 +39,7 @@ natural = inference.innovation_covariance_inference()
 # deviation. Natural variance uncertainty is obtained by the analytic delta map.
 n_increments = increments.size
 variance = float(fit.innovation_covariance[0, 0])
-expected_information = np.diag(
-    [n_increments / variance, 2.0 * n_increments]
-)
+expected_information = np.diag([n_increments / variance, 2.0 * n_increments])
 expected_variance_se = variance * np.sqrt(2.0 / n_increments)
 
 print(inference.summary())
