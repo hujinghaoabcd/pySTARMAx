@@ -36,6 +36,8 @@ inference = model.likelihood_inference(
 )
 natural = inference.innovation_covariance_inference()
 
+# The Hessian is expressed in optimizer coordinates: drift and log standard
+# deviation. Natural variance uncertainty is obtained by the analytic delta map.
 n_increments = increments.size
 variance = float(fit.innovation_covariance[0, 0])
 expected_information = np.diag(
