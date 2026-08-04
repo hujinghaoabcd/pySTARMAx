@@ -13,7 +13,8 @@
 - `src/pystarmax/kalman_forecasting.py` coverage: 80.2%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
   macOS Python 3.11–3.14 all passed;
-- a validation-record-only merge-gate CI is required before merge.
+- the current validation-record-only head changes only this handoff and
+  `PROJECT_STATUS.md` relative to CI #403 and receives the final merge-gate CI.
 
 ## Delivered API
 
@@ -180,7 +181,9 @@ Tests include:
 8. steps, level, simulation count, covariance, shape, and type validation;
 9. the complete inherited package test suite.
 
-Authoritative CI #403 reported:
+## Authoritative validation
+
+GitHub Actions CI #403, run ID `30878184542`, reported:
 
 - 155 tests passed in 36.77 seconds in the coverage job;
 - total branch coverage: 87.09%;
@@ -191,9 +194,9 @@ Authoritative CI #403 reported:
   regeneration passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-The validation-record-only head changes only this handoff and
-`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #18 is
-marked ready and merged.
+No implementation, test, API, example, README, or method-guide changes are made
+after CI #403. The validation-record-only head receives one final merge-gate CI
+before PR #18 is marked ready and merged.
 
 ## Files introduced or changed
 
