@@ -337,15 +337,22 @@ smoothing gains. During the exact diffuse phase, the corresponding autocovarianc
 recursion requires an additional higher-order transition term beyond the
 `L0`/`L1` information retained by the current filter and smoother.
 
-Version 0.0.21 therefore does **not** fabricate:
+Version 0.0.21 therefore does **not** fabricate lag-one exact diffuse
+state covariance. Version 0.0.22 adds primitive innovation and state-equation
+disturbance **marginal** posterior moments directly from the backward
+information quantities:
 
-- lag-one exact diffuse state covariance;
-- exact diffuse state-disturbance covariance;
-- original innovation disturbance smoothing;
-- simulation smoothing.
+\[
+E(\eta_{t+1}\mid Y)=QR^	op r_t,
+\qquad
+\operatorname{Var}(\eta_{t+1}\mid Y)=Q-QR^	op N_tRQ.
+\]
 
-These require a dedicated extension with the complete diffuse autocovariance
-recursion.
+This does not require lag-one state autocovariance. See
+[Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md).
+Lag-one state covariance, cross-time disturbance covariance, and simulation
+smoothing still require a dedicated extension with the complete diffuse
+autocovariance recursion.
 
 ## Parameter uncertainty
 
@@ -371,7 +378,8 @@ Tests cover:
 ## Current limitations
 
 - no lag-one exact diffuse state covariance;
-- no exact diffuse state or innovation disturbance smoothing;
+- primitive innovation and state-disturbance marginal moments are available,
+  but cross-time disturbance covariance is not;
 - no exact diffuse simulation smoother;
 - no seasonal diffuse smoothing;
 - no separate measurement-noise covariance;

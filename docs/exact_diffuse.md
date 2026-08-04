@@ -325,10 +325,13 @@ Version 0.0.20 adds `ExactDiffuseKalmanSTARIMA`, which rebuilds the
 transformed STARMA state, integrated level state, and exact diffuse likelihood
 at every optimizer candidate. Version 0.0.21 adds exact diffuse fixed-interval
 marginal state smoothing through the fitted estimator and low-level
-`exact_diffuse_smoother()`. See
-[Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md) and
-[Exact diffuse smoothing](exact_diffuse_smoothing.md). The conditional
-`KalmanSTARIMA` estimator remains unchanged.
+`exact_diffuse_smoother()`. Version 0.0.22 adds primitive innovation and
+state-equation disturbance marginal smoothing through
+`exact_diffuse_disturbance_smoother()` and the fitted estimator facade. See
+[Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md),
+[Exact diffuse smoothing](exact_diffuse_smoothing.md), and
+[Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md).
+The conditional `KalmanSTARIMA` estimator remains unchanged.
 
 ## Validation references
 
@@ -352,8 +355,9 @@ Tests cover:
 - exact diffuse filtering, fixed-parameter likelihoods, and optimizer-facing
   ordinary STARIMA MLE are available;
 - exact diffuse observed-information inference is not yet implemented;
-- exact diffuse marginal state smoothing is implemented, but lag-one state
-  covariance, disturbance smoothing, and simulation smoothing are not;
+- exact diffuse marginal state and primitive innovation/state-disturbance
+  smoothing are implemented, but lag-one state autocovariance, cross-time
+  disturbance covariance, and simulation smoothing are not;
 - seasonal diffuse state augmentation and smoothing are not implemented;
 - the current observation equation has no separate measurement-noise matrix;
 - observations are processed sequentially, so location order is part of the

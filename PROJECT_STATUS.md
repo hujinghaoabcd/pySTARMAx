@@ -11,17 +11,16 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #20 have been squash-merged into `main`.
-- `main` is version `0.0.20` at merge commit
-  `36edc8b37f56e456aef1daa2df7aa496a07f13fb`.
-- Current branch: `agent/exact-diffuse-smoothing`.
-- Current draft pull request: PR #21, `Add exact diffuse fixed-interval
-  smoothing`.
-- Current development version: `0.0.21`.
-- The branch adds exact diffuse marginal state and observation smoothing through
-  backward ordinary/diffuse information recursions.
-- Lag-one state covariance, disturbance smoothing, and simulation smoothing are
-  explicitly outside this stage.
+- PR #1 through PR #21 have been squash-merged into `main`.
+- `main` is version `0.0.21` at merge commit
+  `b6e9b167a012191590aae2abef0218f25482d00b`.
+- Current branch: `agent/exact-diffuse-disturbance-smoothing`.
+- Current draft pull request: PR #22, `Add exact diffuse disturbance smoothing`.
+- Current development version: `0.0.22`.
+- The branch adds exact diffuse primitive innovation and state-equation
+  disturbance marginal posterior moments from backward information quantities.
+- Lag-one state autocovariance, cross-time disturbance covariance, and
+  simulation smoothing remain explicitly outside this stage.
 
 ## Completed baseline through 0.0.18
 
@@ -277,6 +276,56 @@ diffuse autocovariance recursion needs an additional higher-order transition
 term beyond retained `L0` and `L1`. State-disturbance, original innovation, and
 simulation smoothing remain future stages.
 
+## Completed in 0.0.22
+
+### Exact diffuse primitive innovation and state disturbance moments
+
+- computes `E(eta_(t+1) | Y) = Q R.T r_t`;
+- computes `Var(eta_(t+1) | Y) = Q - Q R.T N_t R Q`;
+- maps primitive moments to state-equation disturbances through `R`;
+- uses exact diffuse backward information directly rather than an ordinary RTS
+  lag-one formula;
+- preserves unresolved prior variance in selection-nullspace directions;
+- returns immutable means, marginal covariance, tolerances, and maximum
+  covariance corrections;
+- integrates as
+  `ExactDiffuseKalmanSTARIMA.smooth_innovation_disturbances()` for retained
+  training data or a newly initialized data segment.
+
+### Validation scope
+
+Tests cover fully observed random-walk increments, a closed-form missing bridge,
+leading missing diffuse levels, zero-diffuse equality with the ordinary RTS
+innovation smoother, valid rank-deficient selection, PSD covariance, immutable
+arrays, validation errors, and the fitted-model facade.
+
+### Deliberate boundary
+
+Exact diffuse lag-one state autocovariance remains unavailable because the
+diffuse autocovariance recursion requires a nontrivial higher-order `L2` term.
+Cross-time disturbance covariance and simulation smoothing are not claimed.
+
+## Core validation for 0.0.22
+
+GitHub Actions CI #472, run ID `30891197678`, validated the numerical core,
+public exports, model facade, packaging, and full cross-platform matrix:
+
+- 193 tests passed in the coverage job;
+- total branch coverage was 87.19%, above the required 80%;
+- `src/pystarmax/exact_diffuse_disturbance_smoothing.py` coverage was 88.1%;
+- `src/pystarmax/exact_diffuse_smoothing.py` coverage was 91.6%;
+- `src/pystarmax/exact_diffuse_mle.py` coverage was 84.3%;
+- `src/pystarmax/exact_diffuse.py` coverage was 87.8%;
+- `src/pystarmax/exact_integrated.py` coverage was 86.9%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+A complete final CI is required on the synchronized documentation head. The
+authoritative final run must be recorded before merge.
+
 ## Authoritative validation for 0.0.21
 
 GitHub Actions CI #463, run ID `30887094839`, validated the complete
@@ -342,12 +391,13 @@ method-guide changes are made after CI #440.
 
 ## Immediate next tasks
 
-1. Run the validation-record-only merge-gate CI.
-2. Update PR #21, mark it ready, and squash-merge it into `main`.
-3. Add exact diffuse lag-one state covariance and disturbance smoothing.
+1. Run complete CI on the synchronized 0.0.22 documentation head.
+2. Record the authoritative final run identifier, test count, and coverage.
+3. Update PR #22, mark it ready, and squash-merge it into `main`.
 4. Add exact diffuse observed-information and natural covariance inference.
 5. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
-6. Add forecast intervals, sparse state matrices, parameter-aware paths,
+6. Research the nontrivial diffuse `L2` autocovariance recursion separately.
+7. Add forecast intervals, sparse state matrices, parameter-aware paths,
    cross-time innovation covariance, order selection, exogenous inputs, GIS
    adapters, and cross-language fixtures.
 
@@ -355,9 +405,9 @@ method-guide changes are made after CI #440.
 
 - exact diffuse observed-information and natural covariance inference are not
   implemented;
-- exact diffuse marginal state smoothing is implemented, but lag-one state
-  covariance, state/innovation disturbance smoothing, and simulation smoothing
-  are not;
+- exact diffuse marginal state and primitive innovation/state-disturbance
+  smoothing are implemented, but lag-one state autocovariance, cross-time
+  disturbance covariance, and simulation smoothing are not;
 - seasonal ordinary-seasonal diffuse augmentation and smoothing are not
   implemented;
 - forecast intervals are not exposed from `ExactDiffuseKalmanSTARIMA`;
@@ -374,6 +424,7 @@ method-guide changes are made after CI #440.
 ## Handoff instruction
 
 Before the next substantial stage, read this file,
+`docs/exact_diffuse_disturbance_smoothing.md`,
 `docs/exact_diffuse_smoothing.md`, `docs/exact_diffuse_mle.md`,
 `docs/exact_diffuse.md`,
 `docs/integrated_maximum_likelihood.md`, `docs/state_space.md`,

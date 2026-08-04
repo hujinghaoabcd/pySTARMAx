@@ -10,9 +10,9 @@ innovation covariance inference, missing-observation filtering, fixed-interval
 state smoothing, original location-level innovation disturbance smoothing,
 combined differencing, original-scale forecast reconstruction, fixed-parameter
 Gaussian Kalman forecast intervals, a separate exact diffuse filter and ordinary
-integrated level-state likelihood, exact diffuse fixed-interval state
-smoothing, conditional and bootstrap intervals, and rolling-origin calibration
-diagnostics.
+integrated level-state likelihood, exact diffuse fixed-interval state and
+primitive innovation/state-disturbance smoothing, conditional and bootstrap
+intervals, and rolling-origin calibration diagnostics.
 
 ```python
 import numpy as np
@@ -83,7 +83,9 @@ exact_integrated_result = exact_integrated_mle.fit(level_series, weights)
 print(exact_integrated_result.summary())
 print(exact_integrated_mle.predict(steps=6))
 exact_smoothed = exact_integrated_mle.smooth()
+exact_disturbances = exact_integrated_mle.smooth_innovation_disturbances()
 print(exact_smoothed.smoothed_observations)
+print(exact_disturbances.innovation_mean)
 
 seasonal_mle = SeasonalKalmanSTARIMA(
     ar_order=1,
@@ -147,8 +149,12 @@ missing-observation rank behavior, deterministic measurements, and ordinary
 integrated level-state construction. [Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md)
 documents optimizer reconstruction on original levels. [Exact diffuse
 smoothing](exact_diffuse_smoothing.md) documents the backward `r`, `r_inf`,
-`N`, `N1`, and `N2` recursions and finite posterior state moments. The
-conditional `KalmanSTARIMA` likelihood remains a separate API.
+`N`, `N1`, and `N2` recursions and finite posterior state moments.
+[Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md)
+documents primitive innovation and state-equation disturbance posteriors from
+`Q R.T r_t` and `Q - Q R.T N_t R Q`, without fabricating diffuse lag-one
+autocovariance. The conditional `KalmanSTARIMA` likelihood remains a separate
+API.
 
 [Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
 observed-information result contract for ordinary and seasonal factor

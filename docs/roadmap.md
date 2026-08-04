@@ -209,13 +209,32 @@
 - method guide, runnable example, navigation, README, status, and Step 21
   handoff.
 
+## Implemented in 0.0.22: exact diffuse disturbance smoothing
+
+- primitive innovation posterior means from `Q R.T r_t`;
+- primitive innovation marginal covariance from `Q - Q R.T N_t R Q`;
+- state-equation disturbance moments by exact multiplication with `R`;
+- no dependence on unavailable exact diffuse lag-one state autocovariance;
+- retained prior uncertainty in selection-matrix null-space directions;
+- covariance symmetrization, floating-point PSD stabilization, and reported
+  maximum corrections;
+- random-walk increment, missing-bridge, leading-missing, stationary
+  zero-diffuse, and rank-deficient-selection references;
+- fitted `ExactDiffuseKalmanSTARIMA.smooth_innovation_disturbances()` for
+  training and newly initialized data;
+- explicit omission of lag-one autocovariance, cross-time disturbance
+  covariance, and simulation smoothing;
+- method guide, runnable example, navigation, README, status, and Step 22
+  handoff.
+
 ## Next priorities
 
-1. Exact diffuse lag-one state covariance and disturbance smoothing.
-2. Exact diffuse observed-information and natural covariance inference.
-3. Exact diffuse simulation smoothing.
-4. Seasonal ordinary-seasonal diffuse state augmentation and smoothing.
-5. Forecast intervals for the exact diffuse estimator.
+1. Exact diffuse observed-information and natural covariance inference.
+2. Exact diffuse simulation smoothing.
+3. Seasonal ordinary-seasonal diffuse state augmentation and smoothing.
+4. Forecast intervals for the exact diffuse estimator.
+5. Research the nontrivial diffuse `L2` recursion required for lag-one state
+   autocovariance and cross-time disturbance covariance.
 6. Parameter-aware paths, sparse state matrices, and cross-time innovation
    covariance.
 7. Smooth admissibility parameterization and automatic order selection.
