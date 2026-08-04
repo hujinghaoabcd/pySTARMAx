@@ -13,6 +13,7 @@
 - `src/pystarmax/exact_diffuse_disturbance_smoothing.py` coverage: 88.1%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
   macOS Python 3.11–3.14 all passed;
+- the merge-gate candidate is frozen except for this validation-record note;
 - a validation-record-only merge-gate CI is required before merge.
 
 ## Delivered API
