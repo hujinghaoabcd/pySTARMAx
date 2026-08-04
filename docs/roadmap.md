@@ -1,336 +1,128 @@
 # Roadmap
 
-## Implemented in 0.0.1--0.0.7: conditional modelling and evaluation
+## Current release line
 
-- immutable spatial-weight collections and higher-order constructors;
-- STAR ordinary least squares and STARMA iterative conditional least squares;
-- classical STACF, nested Yule--Walker STPACF, regression analogues, and
-  residual portmanteau tests;
-- arbitrary ordinary and seasonal differencing with reversible terminal states;
-- conditional `STARIMA(p,d,q)` and multiplicative
-  `(p,d,q)x(P,D,Q)_s` estimation;
-- ordered matrix-polynomial expansion without cross-term basis projection;
-- deterministic and stochastic simulation;
-- aligned original-scale fitted values;
-- conditional future-innovation and parameter-refitting bootstrap intervals;
-- expanding and fixed-window rolling-origin interval evaluation;
-- coverage, width, Winkler score, MAE, RMSE, and horizon summaries.
+Version 0.0.27 adds optimizer-facing multiplicative seasonal exact-diffuse
+maximum likelihood on original observations.
 
-## Implemented in 0.0.8--0.0.9: state space and stationary Kalman MLE
+The project now has a common progression:
 
-- explicit stationary STARMA companion state space;
-- preservation of non-symmetric spatial-weight orientation;
-- stationary, known, and approximate diffuse initialization;
-- Gaussian filtering and log likelihood with partial-location and fully missing
-  rows;
-- immutable state, covariance, innovation, mask, and likelihood results;
-- independent `KalmanSTARMA` maximum-likelihood estimator;
-- scalar, diagonal, and full Cholesky innovation covariance;
-- conditional-estimator automatic starts;
-- optimizer, likelihood, covariance, AIC, BIC, filtering, state-space, and
-  recursive mean-prediction diagnostics.
+1. stationary transformed-state construction;
+2. ordinary and seasonal differencing contracts;
+3. original-level exact-diffuse state augmentation;
+4. optimizer-facing fitted models;
+5. posterior operations and uncertainty;
+6. scalable execution and ecosystem integration.
 
-## Implemented in 0.0.10--0.0.12: admissibility and inference
+## Delivered foundations
 
-- central finite-difference score and observed-information Hessian;
-- parameter-scaled steps and mixed-partial stencil;
-- coefficient covariance, standard errors, normal tests, intervals,
-  correlations, rank, eigenvalues, condition number, and score diagnostics;
-- strict indefinite/rank-deficient behavior and explicit positive-eigenspace
-  diagnostic pseudoinverse;
-- reusable AR and positive-sign inverse-MA companion diagnostics;
-- complex eigenvalues, spectral radii, limits, and signed boundary distances;
-- independent stationarity and invertibility start shrinkage, penalties, and
-  final validation;
-- scalar, diagonal, and analytic full-Cholesky natural covariance
-  delta-method inference;
-- dynamic-coefficient/covariance-element cross covariance and explicit boundary
-  inference policy.
+### Classical and conditional models
 
-## Implemented in 0.0.13--0.0.14: smoothing and original innovations
+- `STARMA`, `STARIMA`, and `SeasonalSTARIMA`;
+- stationary Gaussian `KalmanSTARMA`;
+- conditional ordinary-integrated `KalmanSTARIMA`;
+- conditional multiplicative seasonal `SeasonalKalmanSTARIMA`.
 
-- Rauch--Tung--Striebel fixed-interval state smoothing;
-- smoothed state and observation means and covariances;
-- retained smoothing gains and lag-one state covariance;
-- state-equation disturbance posterior moments;
-- rank-deficient prediction diagnostics and positive-eigenspace inverse policy;
-- exact conditional-Gaussian mapping from `w_t = R eta_t` to original
-  location-level innovations;
-- covariance-weighted map `Q R.T (R Q R.T)+`;
-- posterior innovation means and marginal covariances;
-- retained unresolved selection-nullspace covariance;
-- process rank, pseudoinverse use, and state-support residual diagnostics;
-- fitted filtering/smoothing routes for training or new incomplete data.
+### Exact-diffuse ordinary integration
 
-## Implemented in 0.0.15: conditional ordinary-integrated Kalman STARIMA
+- exact diffuse filtering and original-level likelihood;
+- optimizer-facing ordinary STARIMA MLE;
+- fixed-interval state smoothing;
+- primitive innovation and state-disturbance smoothing;
+- likelihood and natural covariance inference;
+- original-level and transformed-scale forecast intervals;
+- dense conditional simulation smoothing.
 
-- public `KalmanSTARIMA(p,d,q)` wrapper around the stationary Gaussian core;
-- ordinary finite differencing before likelihood evaluation;
-- explicit conditional likelihood
-  `L(Delta^d y_(d+1:T) | y_(1:d))`;
-- explicit separation from exact diffuse integrated level-state likelihood;
-- immutable integrated result metadata;
-- distinct transformed-scale and original-scale methods;
-- arbitrary non-negative integration order through `DifferencingState`;
-- pathwise recursive inverse differencing;
-- terminal-anchor validation and refusal of indefensible level forecasts;
-- missing-value propagation through the ordinary finite-difference stencil;
-- inherited filtering, smoothing, innovation smoothing, admissibility, and
-  observed-information inference on the transformed scale;
-- exact `d=0` equivalence and analytic random-walk/inverse-difference tests.
+### Seasonal exact-diffuse foundation
 
-## Implemented in 0.0.16: multiplicative seasonal Kalman STARIMA
+Version 0.0.26 delivered:
 
-- public `SeasonalKalmanSTARIMA(p,d,q)x(P,D,Q)_s`;
-- Gaussian Kalman likelihood on the combined ordinary-seasonally transformed
-  process;
-- explicit conditional likelihood on the removed transformation history;
-- ordinary and seasonal AR/MA factor parameters rather than independent expanded
-  cross-lag parameters;
-- ordered matrix products `-S_r @ A_i` for AR cross lags and
-  `+N_u @ M_j` for positive-sign MA cross lags;
-- direct use of arbitrary cross-lag matrices without spatial-basis projection;
-- aggregation of equal temporal lags and dense arbitrary-lag companion
-  construction;
-- stationarity and inverse-MA spectral radii on the complete expanded
-  recursions;
-- independent factor-block start shrinkage, feasibility penalties, and final
-  admissibility checks;
-- scalar, diagonal, and full Cholesky innovation covariance;
-- factor-based AIC/BIC parameter counting that excludes deterministic cross
-  terms;
-- combined ordinary-seasonal missing-value propagation without imputation;
-- transformed-scale filtering, RTS smoothing, original innovation smoothing,
-  and forecasts;
-- pathwise seasonal-then-ordinary original-scale reconstruction;
-- terminal ordinary-anchor and seasonal-history validation;
-- aligned original-scale fitted values using the complete combined differencing
-  polynomial;
-- zero-seasonal equivalence, multiplicative sign, pure seasonal AR, seasonal
-  random-walk, missing propagation, and new-data validation tests;
-- method guide, runnable example, navigation, README, status, and Step 16
-  handoff.
+- complete `(1-B)^d(1-B^s)^D` differencing polynomial;
+- auditable original-level lag companion;
+- exact diffuse initialization of all integration coordinates;
+- stationary finite initialization of the transformed subsystem;
+- fixed-parameter filtering and original-level likelihood;
+- exact `D=0` reduction to the ordinary state contract.
 
-## Implemented in 0.0.17: seasonal likelihood-Hessian inference
+### Implemented in 0.0.27
 
-- package-root seasonal inference facade and low-level
-  `infer_seasonal_kalman_starima()`;
-- central finite-difference score and observed-information Hessian for ordinary
-  and seasonal factor parameters plus covariance optimizer coordinates;
-- objective reconstruction through the complete multiplicative matrix expansion
-  and arbitrary-lag state space at every stencil point;
-- rejection of expanded AR-stationarity and positive-sign MA-invertibility
-  penalty points;
-- shared immutable coefficient/optimizer tables, covariance, standard errors,
-  normal tests, intervals, correlation, score, rank, eigenvalue, condition, and
-  boundary diagnostics;
-- strict full-rank positive-definite Hessian policy and explicit diagnostic
-  positive-eigenspace generalized inverse;
-- scalar, diagonal, and full natural innovation covariance delta-method inference
-  with seasonal factor/covariance cross uncertainty;
-- zero-seasonal equivalence, pure seasonal factor, penalty, singular-Hessian,
-  and validation tests;
-- method guide, example, navigation, README, status, and Step 17 handoff.
+Version 0.0.27 delivers:
 
-## Implemented in 0.0.18: Gaussian Kalman forecast intervals
-
-- future state paths initialized from the final filtered Gaussian posterior;
-- future location-level process innovations drawn from the fitted covariance;
-- positive-semidefinite final-state covariance factorization with numerical
-  eigenvalue tolerance;
-- fixed-parameter stationary `KalmanSTARMA.predict_interval()`;
-- transformed-scale `predict_differenced_interval()` for ordinary and seasonal
-  Kalman STARIMA;
-- original-scale `predict_interval()` for ordinary integration and combined
-  ordinary-seasonal integration;
-- pathwise inverse differencing before quantiles rather than inverse-transforming
-  marginal lower and upper bounds;
-- support for arbitrary ordinary integration order and rolling seasonal cycles;
-- deterministic recursive means retained as interval centers;
-- reproducible NumPy random-generator or integer-seed behavior;
-- transformed-scale availability with explicit refusal of original-scale
-  intervals when terminal anchors or seasonal histories are incomplete;
-- analytic state-variance, ordinary random-walk, seasonal-cycle, reproducibility,
-  and validation tests;
-- method guide, runnable example, navigation, README, status, and Step 18
-  handoff.
-
-## Implemented in 0.0.19: exact diffuse filtering and ordinary level states
-
-- separate exact diffuse filtering without changing approximate
-  `initialization="diffuse"` semantics;
-- initial covariance decomposition `P_* + kappa P_inf`;
-- sequential scalar diffuse and ordinary Gaussian updates;
-- immutable finite/diffuse covariance, innovation, mask, likelihood, and rank
-  diagnostics;
-- missing and partial-location observations without artificial rank reduction;
-- deterministic zero-variance agreement and contradiction handling;
-- ordinary integrated augmentation `[y, Delta y, ..., Delta^(d-1)y, beta]`;
-- stationary finite initialization for the transformed STARMA state and diffuse
-  initialization only for integration directions;
-- first- and second-order analytic integrated likelihood references;
-- large-variance-limit, `d=0`, matrix-orientation, missing-data, and
-  cross-platform validation;
-- mathematical guide, runnable example, navigation, README, status, and Step 19
-  handoff.
-
-## Implemented in 0.0.20: exact diffuse ordinary STARIMA MLE
-
-- optimizer-facing `ExactDiffuseKalmanSTARIMA(p,d,q)`;
-- original-level exact diffuse likelihood rather than conditional differenced
-  likelihood;
-- transformed and integrated state-space reconstruction at every candidate;
-- stationary factor/covariance starts, L-BFGS-B bounds, and transformed
-  admissibility enforcement;
-- immutable result with likelihood, AIC/BIC, optimizer, diffuse-phase,
-  state-space, and admissibility metadata;
-- fitted filtering, state-space access, and original/highest-difference point
-  forecasts;
-- closed-form random-walk and second-order MLE references plus `d=0`
-  stationary equivalence;
-- method guide, runnable example, navigation, README, status, and Step 20
-  handoff.
-
-## Implemented in 0.0.21: exact diffuse fixed-interval smoothing
-
-- exact diffuse backward information recursions for `r`, `r_inf`, `N`, `N1`,
-  and `N2`;
-- smoothed state means from finite and diffuse covariance components;
-- finite posterior state covariance with all ordinary/diffuse cross terms;
-- smoothed observation means and covariance;
-- forward scalar finite/diffuse covariance reconstruction diagnostics;
-- PSD stabilization diagnostics without a production diffuse scale;
-- missing-row, leading-missing, and partial-location smoothing;
-- stationary zero-diffuse equivalence with ordinary RTS smoothing;
-- random-walk bridge and large-variance-limit references;
-- fitted `ExactDiffuseKalmanSTARIMA.smooth()` for training and new data;
-- explicit omission of lag-one, disturbance, and simulation smoothing until the
-  full diffuse autocovariance recursion is implemented;
-- method guide, runnable example, navigation, README, status, and Step 21
-  handoff.
-
-## Implemented in 0.0.22: exact diffuse disturbance smoothing
-
-- primitive innovation posterior means from `Q R.T r_t`;
-- primitive innovation marginal covariance from `Q - Q R.T N_t R Q`;
-- state-equation disturbance moments by exact multiplication with `R`;
-- no dependence on unavailable exact diffuse lag-one state autocovariance;
-- retained prior uncertainty in selection-matrix null-space directions;
-- covariance symmetrization, floating-point PSD stabilization, and reported
-  maximum corrections;
-- random-walk increment, missing-bridge, leading-missing, stationary
-  zero-diffuse, and rank-deficient-selection references;
-- fitted `ExactDiffuseKalmanSTARIMA.smooth_innovation_disturbances()` for
-  training and newly initialized data;
-- explicit omission of lag-one autocovariance, cross-time disturbance
-  covariance, and simulation smoothing;
-- method guide, runnable example, navigation, README, status, and Step 22
-  handoff.
-
-## Implemented in 0.0.23: exact diffuse likelihood inference
-
-- observed-information curvature of the original-level exact diffuse objective;
-- transformed STARMA, integrated state, covariance, and exact diffuse filter
-  reconstruction at every finite-difference candidate;
-- shared AR stationarity and positive-sign inverse-MA feasibility boundaries;
-- immutable Hessian, covariance, standard errors, Wald summaries, correlations,
-  rank, eigenvalues, score, steps, and condition diagnostics;
-- strict full-rank positive-definite Hessian policy by default;
-- explicitly labelled positive-eigenspace generalized inverse diagnostics;
-- scalar, diagonal, and full-Cholesky natural innovation covariance delta
-  inference with dynamic/covariance cross uncertainty;
-- scalar random-walk closed-form Hessian, optimizer covariance, and natural
-  variance standard-error references;
-- missing-data-aware candidate reconstruction;
-- fitted `ExactDiffuseKalmanSTARIMA.likelihood_inference()` and low-level
-  `infer_exact_diffuse_kalman_starima()`;
-- method guide, analytic example, navigation, README, status, and Step 23
-  handoff.
-
-## Implemented in 0.0.24: exact diffuse forecast intervals
-
-- original-level and highest ordinary-difference fixed-parameter forecast
-  intervals for `ExactDiffuseKalmanSTARIMA`;
-- terminal exact diffuse rank-zero requirement and explicit refusal of an
-  improper terminal posterior;
-- direct augmented-state path simulation with terminal filtered-state and
-  future process-innovation uncertainty;
-- deterministic recursive point forecasts retained as interval centers;
-- analytic state-variance, random-walk, second-order integration,
-  reproducibility, validation, and immutable-result tests;
-- method guide, runnable example, navigation, citation metadata, and Step 24
-  handoff.
-
-## Implemented in 0.0.25: exact diffuse simulation smoothing
-
-- dense conditional simulation of complete latent state and observation paths;
-- explicit flat diffuse coordinates and proper finite Gaussian source
-  coordinates;
-- analytic diffuse-coordinate elimination and left-null-space conditioning;
-- no large finite diffuse variance and no dependence on unavailable diffuse
-  lag-one covariance;
-- deterministic posterior marginal mean and covariance agreement with the
-  exact diffuse information smoother;
-- random-walk bridge, deterministic fully observed path, stationary
-  zero-diffuse, partial-location, fitted-route, reproducibility, immutability,
-  and unresolved-rank tests;
-- method guide, runnable example, navigation, remaining-work inventory, and
-  Step 25 handoff.
-
-## Implemented in 0.0.26: seasonal exact diffuse state-space foundation
-
-- fixed-parameter original-level augmentation for
-  `(1-B)^d(1-B^s)^D` integration;
-- explicit combined differencing polynomial and auditable original-level lag
-  companion state;
-- exact diffuse covariance on all `(d+Ds)n` integration coordinates;
-- stationary finite initialization for the transformed STARMA state;
-- exact diffuse filtering and original-level Gaussian likelihood;
-- exact delegation to the ordinary integrated constructor when `D=0`;
-- closed-form seasonal random-walk likelihood reference;
-- explicit `(1-B)(1-B^2)` matrix and transformed-residual references;
-- missing-observation diffuse-rank tests and immutable initialization arrays;
-- public exports, method guide, runnable example, navigation, status inventory,
-  and Step 26 handoff.
+- `SeasonalExactDiffuseKalmanSTARIMA`;
+- ordinary and seasonal AR/MA factor optimization;
+- deterministic ordered cross-lag expansion for every candidate;
+- expanded AR stationarity and positive-sign inverse-MA admissibility;
+- scalar, diagonal, and full-Cholesky innovation covariance;
+- original-level exact-diffuse likelihood;
+- factor-based AIC/BIC parameter counting;
+- immutable fitted factor, operator, covariance, state-space, filter, diffuse,
+  and optimizer metadata;
+- original-level and highest-difference point forecasts;
+- closed-form, reduction, missing-data, public-API, and cross-platform tests;
+- synchronized method guide, example, status, and handoff documentation.
 
 ## Next priorities
 
-1. Optimizer-facing seasonal exact diffuse MLE with multiplicative factor
-   parameter counting and expanded admissibility checks.
-2. Seasonal exact diffuse smoothing, likelihood inference, and original-level
-   forecasting built on the common 0.0.26 state contract.
-3. Research and implement the diffuse `L2` recursion required for lag-one
-   state autocovariance and cross-time disturbance covariance.
-4. Robust/profile-likelihood and parameter-uncertainty propagation.
-5. Sparse state matrices, memory-aware execution, and reproducible parallel
-   paths.
-6. Smooth admissibility parameterization and automatic order/spatial-lag
-   selection.
-7. Exogenous regressors, intervention variables, GIS adapters,
-   cross-language fixtures, public PyPI automation, and time-varying models.
+### 1. Seasonal exact-diffuse smoothing
 
-## Research safeguards for future work
+Extend fixed-interval state smoothing and primitive disturbance smoothing to the
+seasonal augmented state. The implementation must reuse the 0.0.26 state and
+0.0.27 fitted-model contracts.
 
-- Distinguish conditional transformed likelihoods from exact diffuse integrated
-  likelihoods.
-- Count optimized multiplicative factor parameters, not deterministic expanded
-  cross-lag matrices.
-- Preserve ordered matrix products and never project cross terms back onto a
-  spatial-weight basis without an explicit approximation model.
-- Keep transformed-scale filtering, smoothing, inference, and innovation
-  results explicitly labelled.
-- Never reconstruct original-scale forecasts without finite ordinary anchors
-  and seasonal histories.
-- Inverse-difference complete simulated paths before original-scale quantiles;
-  never transform horizon-wise marginal bounds as though horizons were
-  independent.
-- Distinguish final filtered-state uncertainty, future innovation uncertainty,
-  and parameter uncertainty.
-- Let missing observations propagate through the complete differencing stencil;
-  do not impute levels before likelihood evaluation.
-- Preserve the package positive MA sign in inverse-recursion diagnostics.
-- Distinguish state-equation disturbances from original location innovations.
-- Preserve `Var(eta_t | R eta_t)` for non-injective selection maps.
-- Do not treat feasibility penalties as smooth parameterizations.
-- Do not report singular observed-information inverses without explicit status.
-- Preserve non-symmetric spatial-matrix orientation in every extension.
+### 2. Seasonal exact-diffuse likelihood inference
+
+Add finite-difference observed-information inference and natural innovation-
+covariance inference around the seasonal exact-diffuse objective. Boundary and
+rank-deficiency policies must remain explicit.
+
+### 3. Seasonal exact-diffuse forecasting uncertainty
+
+Add original-level and transformed-scale forecast paths and intervals using the
+terminal exact-diffuse posterior after diffuse resolution.
+
+### 4. Diffuse cross-time covariance theory
+
+Derive and independently validate the diffuse `L2` recursion required for
+lag-one smoothed state covariance and cross-time disturbance covariance. Do not
+replace exact diffuse initialization with a finite large-variance approximation.
+
+### 5. Stronger uncertainty
+
+Add robust/sandwich covariance, profile likelihood, and parameter-uncertainty
+propagation into forecasts and selected posterior summaries.
+
+### 6. Scalable numerical execution
+
+Introduce sparse state matrices, memory-aware filtering/smoothing, and
+reproducible chunked or parallel execution. Dense implementations remain the
+reference path for numerical equivalence.
+
+### 7. Model specification automation
+
+Split into independently reviewable stages:
+
+- smooth admissibility parameterization;
+- automatic ordinary and seasonal order selection;
+- automatic spatial-weight and spatial-lag selection;
+- comparable model-selection reporting without mixing likelihood scopes.
+
+### 8. Exogenous inputs and ecosystem work
+
+- exogenous regressors and intervention variables;
+- GIS-oriented data and spatial-weight adapters;
+- cross-language numerical reference fixtures;
+- public release and signed automation;
+- explicitly time-varying state-space extensions.
+
+## Delivery policy
+
+Each milestone should provide:
+
+- an explicit mathematical and likelihood-scale contract;
+- immutable typed public results;
+- independently constructed numerical references;
+- missing-data and rank-deficiency behavior;
+- cross-platform tests;
+- formatting, linting, typing, strict documentation, and package-build success;
+- synchronized README, status, roadmap, method guide, example, and handoff;
+- no temporary workflows, generated artifacts, or unresolved review threads.
