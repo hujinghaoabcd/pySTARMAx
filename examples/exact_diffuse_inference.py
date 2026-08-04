@@ -60,3 +60,6 @@ np.testing.assert_allclose(
     rtol=2e-3,
     atol=2e-5,
 )
+
+# The assertions validate the original-level exact diffuse objective itself,
+# not a conditional likelihood calculated after differencing.
