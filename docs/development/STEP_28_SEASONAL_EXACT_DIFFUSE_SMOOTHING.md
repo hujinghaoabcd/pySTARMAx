@@ -6,7 +6,9 @@
 - branch: `agent/seasonal-exact-diffuse-smoothing`;
 - pull request: PR #28, `Add seasonal exact diffuse smoothing`;
 - base: version 0.0.27 on `main` at merge commit
-  `66fc0442b561ce257f2653e54bbecfd635c78f09`.
+  `66fc0442b561ce257f2653e54bbecfd635c78f09`;
+- synchronized merge-gate: CI #599, run ID `30952280713`, passed on
+  `e3d9ac6155847bc3dbb8289452953bf54e95189e`.
 
 ## Delivered API
 
@@ -85,10 +87,14 @@ Multivariate tests use different observation masks by location. Observed cells
 are reproduced, missing cells receive posterior moments, covariance matrices
 remain positive semidefinite within tolerance, and the original mask is retained.
 
-## Implementation validation
+## Authoritative validation
 
-CI #589, run ID `30951765063`, validated implementation head
-`50a80b5cca2fbca188631bed5beffc8925deaf97`:
+Implementation CI #589, run ID `30951765063`, validated implementation head
+`50a80b5cca2fbca188631bed5beffc8925deaf97`. Synchronized merge-gate CI #599,
+run ID `30952280713`, validated final implementation and documentation head
+`e3d9ac6155847bc3dbb8289452953bf54e95189e`.
+
+Results:
 
 - 238 tests passed;
 - total branch coverage: 87.16%;
@@ -129,15 +135,15 @@ separate PR. After Step 28 the inventory contains six major technical
 workstreams, eight numbered core milestones, and approximately 13–17
 independently reviewable projects after ecosystem work is split.
 
-## Merge checklist
+## Merge record
 
-Before merging PR #28:
+Before squash merge, the branch had:
 
-1. synchronize README, documentation home, project status, roadmap, remaining
-   work, citation metadata, navigation, example, method guide, and this handoff;
-2. run final CI on the exact synchronized head;
-3. record final run number, run ID, test count, and coverage;
-4. confirm no workflow helper or generated artifact remains;
-5. confirm no review thread or submitted review remains;
-6. mark ready and squash-merge;
-7. create the seasonal exact-diffuse inference branch from the new `main`.
+1. synchronized README, documentation home, project status, roadmap, remaining
+   work, citation metadata, navigation, example, method guide, and handoff;
+2. successful implementation CI #589 and synchronized merge-gate CI #599;
+3. a 14-file formal diff with no workflow changes or generated artifacts;
+4. no submitted review and no unresolved review thread.
+
+The next branch should be created from the resulting 0.0.28 `main` for seasonal
+exact-diffuse likelihood inference.
