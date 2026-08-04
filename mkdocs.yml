@@ -20,6 +20,7 @@ nav:
   - Seasonal exact diffuse integration: exact_seasonal_integrated.md
   - Seasonal exact diffuse MLE: seasonal_exact_diffuse_mle.md
   - Seasonal exact diffuse smoothing: seasonal_exact_diffuse_smoothing.md
+  - Seasonal exact diffuse inference: seasonal_exact_diffuse_inference.md
   - Seasonal STARIMA: seasonal.md
   - Seasonal Kalman STARIMA: seasonal_maximum_likelihood.md
   - Seasonal likelihood inference: seasonal_likelihood_inference.md
