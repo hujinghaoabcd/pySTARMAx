@@ -112,9 +112,7 @@ class ExactDiffuseDisturbanceResult:
         for name, array in frozen.items():
             object.__setattr__(self, name, array)
 
-        innovation_correction = float(
-            self.maximum_innovation_covariance_correction
-        )
+        innovation_correction = float(self.maximum_innovation_covariance_correction)
         state_correction = float(self.maximum_state_covariance_correction)
         if not np.isfinite(innovation_correction) or innovation_correction < 0.0:
             raise ValueError(
@@ -198,9 +196,7 @@ def exact_diffuse_disturbance_smoother(
     process_loading_covariance = selection @ innovation_covariance_prior
 
     information_vector = smoother_result.scaled_smoothed_estimator[1:]
-    information_covariance = (
-        smoother_result.scaled_smoothed_estimator_covariance[1:]
-    )
+    information_covariance = smoother_result.scaled_smoothed_estimator_covariance[1:]
     innovation_mean = information_vector @ process_loading_covariance
     innovation_covariance = np.empty(
         (n_transitions, innovation_dim, innovation_dim),
@@ -218,9 +214,7 @@ def exact_diffuse_disturbance_smoother(
         information = information_covariance[transition_index]
         posterior_innovation_covariance = (
             innovation_covariance_prior
-            - process_loading_covariance.T
-            @ information
-            @ process_loading_covariance
+            - process_loading_covariance.T @ information @ process_loading_covariance
         )
         stabilized_innovation, innovation_correction = _stabilize_covariance(
             cast(FloatArray, posterior_innovation_covariance),
@@ -233,9 +227,7 @@ def exact_diffuse_disturbance_smoother(
             innovation_correction,
         )
 
-        posterior_state_covariance = (
-            selection @ stabilized_innovation @ selection.T
-        )
+        posterior_state_covariance = selection @ stabilized_innovation @ selection.T
         stabilized_state, state_correction = _stabilize_covariance(
             cast(FloatArray, posterior_state_covariance),
             name="state disturbance covariance",

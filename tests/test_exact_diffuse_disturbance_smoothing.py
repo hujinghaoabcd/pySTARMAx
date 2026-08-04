@@ -66,9 +66,7 @@ def test_random_walk_bridge_has_conditional_increment_moments() -> None:
     variance = 0.5
     data = np.array([[1.0], [np.nan], [3.0]])
     result = exact_diffuse_disturbance_smoother(
-        exact_diffuse_smoother(
-            exact_diffuse_filter(data, local_level_model(variance))
-        )
+        exact_diffuse_smoother(exact_diffuse_filter(data, local_level_model(variance)))
     )
 
     np.testing.assert_allclose(result.innovation_mean[:, 0], [1.0, 1.0])
@@ -87,9 +85,7 @@ def test_leading_diffuse_level_leaves_future_innovations_unresolved() -> None:
     variance = 0.4
     data = np.array([[np.nan], [np.nan], [3.0]])
     result = exact_diffuse_disturbance_smoother(
-        exact_diffuse_smoother(
-            exact_diffuse_filter(data, local_level_model(variance))
-        )
+        exact_diffuse_smoother(exact_diffuse_filter(data, local_level_model(variance)))
     )
 
     np.testing.assert_allclose(result.innovation_mean[:, 0], [0.0, 0.0])

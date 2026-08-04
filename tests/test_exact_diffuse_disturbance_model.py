@@ -36,7 +36,9 @@ def test_fitted_model_smooths_training_and_new_innovation_disturbances() -> None
 
     assert isinstance(training, ExactDiffuseDisturbanceResult)
     assert training.smoother_result.filter_result is fitted.filter_result
-    np.testing.assert_allclose(training.innovation_mean, direct_training.innovation_mean)
+    np.testing.assert_allclose(
+        training.innovation_mean, direct_training.innovation_mean
+    )
     np.testing.assert_allclose(
         training.innovation_covariance,
         direct_training.innovation_covariance,
