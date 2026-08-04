@@ -323,7 +323,7 @@ The exact route:
 
 Version 0.0.20 adds `ExactDiffuseKalmanSTARIMA`, which rebuilds the
 transformed STARMA state, integrated level state, and exact diffuse likelihood
-at every optimizer candidate. See
+at every optimizer candidate. It is documented in
 [Exact diffuse STARIMA maximum likelihood](exact_diffuse_mle.md). The
 conditional `KalmanSTARIMA` estimator remains unchanged.
 
