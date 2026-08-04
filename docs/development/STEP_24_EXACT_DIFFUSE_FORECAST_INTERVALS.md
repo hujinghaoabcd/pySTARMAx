@@ -7,8 +7,12 @@
 - pull request: PR #24, `Add exact diffuse forecast intervals`;
 - base: version 0.0.23 on `main` at merge commit
   `b7bd9e3b55e856ba43e5da9cb82e8616bd6c132f`;
-- final validation: pending on the synchronized implementation and documentation
-  head.
+- authoritative implementation and documentation validation: GitHub Actions
+  CI #518, run ID `30941761879`;
+- validation result: 207 tests passed and 87.30% total branch coverage;
+- `src/pystarmax/exact_diffuse_forecasting.py` coverage: 87.8%;
+- Black, isort, Ruff, mypy, strict MkDocs, source/wheel construction, Twine,
+  Ubuntu, Windows, and macOS Python 3.11–3.14 passed.
 
 ## Delivered API
 
@@ -34,7 +38,7 @@ interval = fitted_exact_model.predict_differenced_interval(
 )
 ```
 
-Low-level original-level path simulation:
+Low-level original-level path simulation and interval:
 
 ```python
 paths = simulate_exact_diffuse_forecast_paths(
@@ -43,11 +47,7 @@ paths = simulate_exact_diffuse_forecast_paths(
     n_simulations=5000,
     random_state=2026,
 )
-```
 
-Low-level original-level interval:
-
-```python
 interval = exact_diffuse_forecast_interval(
     fitted_exact_model.filter(),
     steps=12,
@@ -76,10 +76,10 @@ Forecast simulation requires
 
 A positive final diffuse rank means that the terminal state distribution remains
 improper. Step 24 raises rather than replacing unresolved uncertainty with a
-large finite variance.
+large finite variance, discarding the unresolved direction, or using only the
+finite covariance component.
 
-This check is applied before terminal-state drawing for both original-level and
-highest-difference intervals.
+This check applies to both original-level and highest-difference intervals.
 
 ## Simulation recursion
 
@@ -90,21 +90,18 @@ After diffuse resolution,
 \mathcal N(a_{T\mid T},P_{\ast,T\mid T}).
 \]
 
-For simulation path `b`,
+For path `b`,
 
 \[
-\alpha_T^{(b)}
-=
-a_{T\mid T}+L_Tz_0^{(b)},
+\alpha_T^{(b)}=a_{T\mid T}+L_Tz_0^{(b)},
 \]
 
 \[
 \alpha_{T+h}^{(b)}
-=
-c+T\alpha_{T+h-1}^{(b)}+R\eta_{T+h}^{(b)},
+=c+T\alpha_{T+h-1}^{(b)}+R\eta_{T+h}^{(b)},
 \]
 
-where
+with
 
 \[
 z_0^{(b)}\sim\mathcal N(0,I),
@@ -112,14 +109,14 @@ z_0^{(b)}\sim\mathcal N(0,I),
 \eta_{T+h}^{(b)}\sim\mathcal N(0,Q).
 \]
 
-The original-level path is
+Original-level paths use
 
 \[
 y_{T+h}^{(b)}=Z\alpha_{T+h}^{(b)}.
 \]
 
-The highest ordinary-difference path uses a projection matrix that selects the
-transformed STARMA substate from the same augmented exact state path.
+Highest ordinary-difference paths project the same simulated augmented states
+through a matrix that selects the transformed STARMA substate.
 
 ## Why the integrated state is simulated directly
 
@@ -129,60 +126,79 @@ The exact state already contains
 [y_t,\Delta y_t,\ldots,\Delta^{d-1}y_t,\beta_t].
 \]
 
-Direct propagation therefore preserves:
+Direct propagation preserves:
 
-- terminal uncertainty in all integrated levels;
-- finite covariance between integrated blocks and the transformed substate;
+- terminal uncertainty in integrated levels and lower differences;
+- covariance between integrated blocks and the transformed substate;
 - future cumulative innovation effects;
-- the same transition and selection matrices used by exact diffuse fitting.
+- the same transition, selection, and design conventions used by exact diffuse
+  fitting and filtering.
 
-No external inverse-differencing history is required for the original-level
+No external inverse-differencing history is needed for the original-level
 interval.
 
 ## Point forecast convention
 
-`ForecastInterval.mean` is the deterministic recursive point forecast. It is
-not the Monte Carlo sample mean. Thus the reported center is independent of
-seed and simulation count and agrees with:
+`ForecastInterval.mean` is the deterministic recursive forecast, not the Monte
+Carlo sample mean. It therefore remains independent of the seed and simulation
+count and agrees with:
 
-- `ExactDiffuseKalmanSTARIMA.predict()` on the original level scale;
+- `ExactDiffuseKalmanSTARIMA.predict()` on original levels;
 - `ExactDiffuseKalmanSTARIMA.predict_differenced()` on the highest ordinary-
   difference scale.
 
 ## Covariance policy
 
-The final finite covariance is symmetrized and factorized through an
-eigendecomposition. Floating-point-scale negative eigenvalues are clipped to
-zero. Materially negative eigenvalues raise.
+The final finite covariance is symmetrized and factorized by eigendecomposition.
+Floating-point-scale negative eigenvalues are clipped to zero; materially
+negative eigenvalues raise. No diagonal jitter or arbitrary diffuse scale is
+introduced.
 
-Step 24 adds no diagonal jitter and no arbitrary diffuse scale.
-
-## Validation design
+## Validation scope
 
 The tests cover:
 
-1. exact equality with ordinary stationary Kalman forecast paths when both
+1. exact equality with ordinary stationary Kalman forecast paths when the two
    filters have zero diffuse rank and identical terminal moments;
 2. a scalar analytic state process with future means `1.5`, `2.0` and variances
    `5.0`, `6.0`;
 3. random-walk variance increasing linearly with forecast horizon;
-4. interval mean equality with original-level recursive point forecasts;
-5. highest-difference interval mean equality with transformed recursive point
-   forecasts;
+4. original-level interval mean equality with `predict()`;
+5. highest-difference interval mean equality with `predict_differenced()`;
 6. deterministic reproducibility under a fixed integer seed;
 7. second-order integrated-state projection;
-8. immutable interval arrays;
+8. immutable public interval arrays;
 9. unresolved terminal diffuse-rank refusal;
 10. steps, level, simulation count, and result-type validation;
 11. the complete inherited package suite.
 
-## First CI finding
+## CI findings and fixes
 
-Initial CI #509 reached quality, strict MkDocs, distributions, and packaging
-success. The only test failure was a reference-array shape mismatch in the
-random-walk fixture: a `(3, 1)` simulated mean was compared with a `(3,)`
-reference. The reference was corrected to retain its location axis. The failure
-did not indicate a numerical implementation defect.
+Initial CI #509 showed one test-fixture shape mismatch: a `(3, 1)` simulated
+random-walk mean was compared with a `(3,)` reference. The reference was fixed
+to retain its location axis; the numerical implementation was unchanged.
+
+CI #515 then showed only a Black formatting difference in the runnable example.
+The example was formatted. CI #518 passed the synchronized implementation,
+tests, example, package metadata, documentation home, navigation, method guide,
+and this handoff.
+
+## Final validation
+
+GitHub Actions CI #518, run ID `30941761879`, completed successfully:
+
+- 207 tests passed;
+- total branch coverage: 87.30%;
+- exact diffuse forecast module coverage: 87.8%;
+- Black, isort, Ruff, and mypy passed;
+- independent diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+A documentation-record-only merge-gate CI is required after this handoff update.
+No implementation, test, API, metadata, example, or method-guide behavior is
+changed after CI #518.
 
 ## Deliberate boundaries
 
@@ -194,13 +210,11 @@ Step 24 does not claim:
 - public analytic horizon-by-horizon or cross-time forecast covariance;
 - separate measurement-noise simulation;
 - sparse state propagation;
-- continuation from a user-supplied terminal filter result through the fitted
-  facade;
 - predictive distributions integrated over parameter uncertainty.
 
 ## Files added or changed
 
-Core:
+Core and metadata:
 
 - `src/pystarmax/exact_diffuse_forecasting.py`;
 - `src/pystarmax/exact_diffuse_model.py`;
@@ -215,40 +229,33 @@ Validation:
 Documentation and example:
 
 - `docs/exact_diffuse_forecast_intervals.md`;
+- `docs/index.md`;
+- `docs/development/STEP_24_EXACT_DIFFUSE_FORECAST_INTERVALS.md`;
 - `examples/exact_diffuse_forecast_intervals.py`;
-- `mkdocs.yml`;
-- this Step 24 handoff;
-- README, documentation home, roadmap, project status, and exact diffuse MLE
-  cross-links are to be synchronized before merge.
+- `mkdocs.yml`.
 
 ## Next recommended stage
 
-After Step 24, the highest-value exact diffuse extensions are:
+The next branch should separate forecast simulation from simulation smoothing.
+Recommended order:
 
-1. exact diffuse simulation smoothing after resolving the required diffuse
-   backward-sampling recursions;
+1. exact diffuse simulation smoothing after deriving the required backward
+   sampling recursion without fabricating unavailable lag-one diffuse moments;
 2. seasonal exact diffuse state augmentation and likelihood;
-3. parameter-aware forecast paths using either asymptotic draws or bootstrap
-   refitting;
-4. robust or sandwich likelihood inference;
+3. parameter-aware forecast paths using asymptotic or bootstrap parameter draws;
+4. robust likelihood inference;
 5. sparse state and spatial operators;
 6. order selection and exogenous regressors.
 
-Exact diffuse simulation smoothing should remain separate from forecast path
-simulation. Forecast paths condition on observations only through the terminal
-filter posterior and simulate future disturbances; simulation smoothing samples
-latent states and disturbances over the observed interval conditional on the
-complete data.
+Forecast paths condition on observations through the terminal filter posterior
+and simulate future disturbances. Simulation smoothing instead samples latent
+states and disturbances over the observed interval conditional on the complete
+data; it must be implemented and documented as a distinct method.
 
 ## Merge checklist
 
-Before marking PR #24 ready:
-
-1. obtain a complete all-platform CI success on the final code and documentation
-   head;
-2. record run number, run ID, test count, total branch coverage, and new-module
-   coverage here and in `PROJECT_STATUS.md`;
-3. update the PR body with final method scope and validation;
-4. confirm no unresolved review threads or generated artifacts remain;
-5. mark ready and squash-merge;
-6. create the next branch from the resulting `main` merge commit.
+1. Run the validation-record-only merge-gate CI.
+2. Update the PR body with the final validation record.
+3. Confirm no unresolved review thread or temporary artifact remains.
+4. Mark PR #24 ready and squash-merge it into `main`.
+5. Create the next development branch from the resulting merge commit.
