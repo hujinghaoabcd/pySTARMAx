@@ -169,7 +169,7 @@ __all__ = [
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",
-    "infer_seasonal_kalman_starma",
+    "infer_seasonal_kalman_starima",
     "innovation_covariance_transform",
     "innovation_covariance_delta_inference",
     "delta_method_covariance",
