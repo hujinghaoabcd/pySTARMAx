@@ -242,9 +242,7 @@ def test_full_covariance_delta_method_uses_factor_parameter_count(
         gradient=np.zeros(point.size, dtype=float),
         hessian=2.0 * np.eye(point.size),
         n_function_evaluations=(
-            1
-            + 2 * point.size
-            + 4 * (point.size * (point.size - 1) // 2)
+            1 + 2 * point.size + 4 * (point.size * (point.size - 1) // 2)
         ),
     )
     monkeypatch.setattr(
