@@ -247,7 +247,9 @@ def build_exact_seasonal_integrated_state_space(
         transition[
             :n_locations,
             column : column + n_locations,
-        ] = -float(coefficient) * identity
+        ] = (
+            -float(coefficient) * identity
+        )
     transformed_effect = transformed_model.design @ transformed_model.transition
     transition[:n_locations, integrated_dim:] = transformed_effect
     for block in range(1, integration_degree):
