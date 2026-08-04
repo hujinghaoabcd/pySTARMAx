@@ -2,34 +2,38 @@
 
 ## Snapshot
 
-This inventory is based on `main` version 0.0.28 at
-`83656043b916395b95c7a1135625cb223e8a43ce` and PR #29 for development version
-0.0.29.
+This inventory is based on development version 0.0.30 and PR #30.
 
-Step 29 completes seasonal exact-diffuse observed-information and natural
-innovation-covariance inference. After that merge, the plan contains:
+Step 30 completes fixed-parameter seasonal exact-diffuse forecast paths and
+central simulation intervals on original and transformed scales. After this
+merge, the plan contains:
 
 - **6 major technical workstreams**;
-- **7 numbered core milestones**;
-- approximately **12–16 independently reviewable projects** after ecosystem
+- **6 numbered core milestones**;
+- approximately **11–15 independently reviewable projects** after ecosystem
   work is split.
 
 This is a delivery inventory, not a claim that every research extension already
 has a production-ready derivation.
 
-## Workstream 1: remaining seasonal exact-diffuse posterior operations
+## Workstream 1: remaining seasonal posterior operation
 
-Status: next implementation sequence.
+Status: next implementation candidate.
 
-14. Add original-level and transformed-scale seasonal exact-diffuse forecast
-    paths and interval contracts.
+Add seasonal exact-diffuse conditional simulation smoothing after the 0.0.30
+path and interval contracts are stable.
 
-A later independent project may add seasonal conditional simulation smoothing
-after forecasting contracts stabilize.
+The implementation should:
 
-The remaining operations must reuse the 0.0.26 original-level state, 0.0.27
-fitted-model contract, 0.0.28 posterior facade, and 0.0.29 likelihood-inference
-contract. They must not introduce a second seasonal state convention.
+- reuse the 0.0.26 augmented state without creating another seasonal layout;
+- condition complete latent paths on original observations and missing masks;
+- retain deterministic observation consistency where posterior variance is zero;
+- reject unresolved terminal or smoothing diffuse directions when a proper draw
+  cannot be defined;
+- reduce exactly to the ordinary exact-diffuse simulation smoother when seasonal
+  orders are zero;
+- keep dense reference behavior explicit before introducing chunking or sparse
+  execution.
 
 ## Workstream 2: diffuse cross-time covariance theory
 
@@ -64,8 +68,9 @@ Status: not started.
 20. Add chunked or parallel execution with deterministic seed partitioning and
     dense-reference equivalence.
 
-The dense implementations remain transparent moderate-sample references rather
-than large-data performance claims.
+For forecasting, chunked empirical quantiles must define their approximation or
+storage contract explicitly. The current dense path arrays remain transparent
+moderate-sample references rather than large-data performance claims.
 
 ## Workstream 5: model specification automation
 
@@ -89,16 +94,14 @@ Status: split into independent future pull requests.
 
 ## Recommended sequence
 
-1. Merge PR #29 after final synchronized CI.
-2. Add seasonal exact-diffuse forecasting uncertainty.
-3. Add seasonal conditional simulation smoothing only after the interval
+1. Merge PR #30 after final synchronized CI.
+2. Add seasonal exact-diffuse conditional simulation smoothing.
+3. Run the diffuse `L2` derivation as a separate theory-and-validation project.
+4. Add robust, profile, and parameter-aware uncertainty after posterior
    contracts are stable.
-4. Run the diffuse `L2` derivation as a separate theory-and-validation project.
-5. Add robust, profile, and parameter-aware uncertainty after posterior
-   contracts are stable.
-6. Introduce sparse execution before broad GIS adapters or automatic model
-   search.
-7. Complete ecosystem and release engineering after public numerical contracts
+5. Introduce sparse and chunked execution before broad GIS adapters or automatic
+   model search.
+6. Complete ecosystem and release engineering after public numerical contracts
    stabilize.
 
 ## Completion definition
