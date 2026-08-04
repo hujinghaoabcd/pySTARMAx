@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.29"
+__version__ = "0.0.30"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -118,6 +118,12 @@ from pystarmax.maximum_likelihood import (
 from pystarmax.models import STAR, STARIMA, STARMA, SeasonalSTARIMA
 from pystarmax.results import STARMAResult
 from pystarmax.seasonal import LagOperator, expand_multiplicative_operators
+from pystarmax.seasonal_exact_diffuse_forecasting import (
+    seasonal_exact_diffuse_differenced_forecast_interval,
+    seasonal_exact_diffuse_forecast_interval,
+    simulate_seasonal_exact_diffuse_differenced_forecast_paths,
+    simulate_seasonal_exact_diffuse_forecast_paths,
+)
 from pystarmax.seasonal_exact_diffuse_inference import (
     infer_seasonal_exact_diffuse_kalman_starima,
 )
@@ -215,6 +221,10 @@ __all__ = [
     "inverse_forecast_paths",
     "simulate_exact_diffuse_forecast_paths",
     "exact_diffuse_forecast_interval",
+    "simulate_seasonal_exact_diffuse_forecast_paths",
+    "simulate_seasonal_exact_diffuse_differenced_forecast_paths",
+    "seasonal_exact_diffuse_forecast_interval",
+    "seasonal_exact_diffuse_differenced_forecast_interval",
     "exact_diffuse_filter",
     "exact_diffuse_loglikelihood",
     "exact_diffuse_smoother",
