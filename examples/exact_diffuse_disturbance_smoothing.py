@@ -40,7 +40,8 @@ print(
 )
 
 # The information smoother gives marginal innovation moments directly; it does
-# not require unavailable exact diffuse lag-one state autocovariance.
+# not require unavailable exact diffuse lag-one state autocovariance. The
+# printed covariance is marginal by transition, not cross-time covariance.
 # The observed two-step change is split equally across the two increments.
 np.testing.assert_allclose(disturbances.innovation_mean[:, 0], [1.0, 1.0])
 np.testing.assert_allclose(
