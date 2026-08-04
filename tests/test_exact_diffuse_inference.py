@@ -3,7 +3,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from pystarmax import ExactDiffuseKalmanSTARIMA, SpatialWeights
+import pystarmax.exact_diffuse_inference as inference_module
+from pystarmax import (
+    ExactDiffuseKalmanSTARIMA,
+    FiniteDifferenceCurvature,
+    SpatialWeights,
+)
 from pystarmax.exact_diffuse_inference import infer_exact_diffuse_kalman_starima
 from pystarmax.likelihood_inference import LikelihoodInferenceResult
 
@@ -43,7 +48,9 @@ def test_random_walk_observed_information_matches_closed_form() -> None:
     n_increments = increments.size
     variance = float(fitted.innovation_covariance[0, 0])
     expected_hessian = np.diag([n_increments / variance, 2.0 * n_increments])
-    expected_covariance = np.diag([variance / n_increments, 1.0 / (2.0 * n_increments)])
+    expected_covariance = np.diag(
+        [variance / n_increments, 1.0 / (2.0 * n_increments)]
+    )
 
     assert isinstance(inference, LikelihoodInferenceResult)
     assert inference.parameter_names == fitted.optimizer_parameter_names
@@ -105,6 +112,49 @@ def test_missing_data_inference_is_finite_and_immutable() -> None:
     assert not inference.covariance.flags.writeable
     with pytest.raises(ValueError):
         inference.estimates[0] = 0.0
+
+
+def test_singular_hessian_requires_explicit_generalized_inverse(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rng = np.random.default_rng(2303)
+    increments = rng.normal(scale=0.5, size=50)
+    levels = np.concatenate([[0.0], np.cumsum(increments)])[:, None]
+    model = ExactDiffuseKalmanSTARIMA(
+        ar_order=0,
+        integration_order=1,
+        ma_order=0,
+        covariance_type="scalar",
+        include_intercept=True,
+    )
+    fitted = model.fit(levels, identity_weights())
+    point = fitted.raw_optimizer_params
+    curvature = FiniteDifferenceCurvature(
+        point=point,
+        steps=np.full(point.size, 1e-4, dtype=float),
+        function_value=-fitted.log_likelihood,
+        gradient=np.zeros(point.size, dtype=float),
+        hessian=np.diag([1.0, 0.0]),
+        n_function_evaluations=9,
+    )
+    monkeypatch.setattr(
+        inference_module,
+        "finite_difference_curvature",
+        lambda *args, **kwargs: curvature,
+    )
+
+    with pytest.raises(np.linalg.LinAlgError, match="not positive definite"):
+        model.likelihood_inference()
+
+    inference = model.likelihood_inference(allow_singular=True)
+
+    assert inference.used_pseudoinverse
+    assert not inference.positive_definite
+    assert inference.rank == 1
+    assert np.all(np.isfinite(inference.standard_errors))
+    assert np.all(np.isfinite(inference.z_values))
+    assert np.all(np.isfinite(inference.p_values))
+    assert np.all(np.isfinite(inference.correlation))
 
 
 def test_inference_validates_fit_steps_and_rcond() -> None:
