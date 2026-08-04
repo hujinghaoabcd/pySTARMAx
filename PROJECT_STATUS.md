@@ -277,11 +277,12 @@ diffuse autocovariance recursion needs an additional higher-order transition
 term beyond retained `L0` and `L1`. State-disturbance, original innovation, and
 simulation smoothing remain future stages.
 
-## Core validation for 0.0.21
+## Authoritative validation for 0.0.21
 
-GitHub Actions CI #455, run ID `30885891151`, validated the numerical core,
-public exports, model facade, primary method guide, packaging, and full
-cross-platform matrix:
+GitHub Actions CI #463, run ID `30887094839`, validated the complete
+implementation, tests, example, metadata, README, documentation home,
+navigation, exact diffuse filtering/MLE/smoothing guides, roadmap, project
+status, and Step 21 documentation head:
 
 - 184 tests passed in the coverage job;
 - total branch coverage was 87.16%, above the required 80%;
@@ -295,8 +296,9 @@ cross-platform matrix:
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A complete final CI is required on the synchronized documentation head. The
-authoritative final run must be recorded before merge.
+A validation-record-only merge-gate CI is required after this status and the
+Step 21 handoff are updated. No implementation, test, API, example, README, or
+method-guide changes are made after CI #463.
 
 ## Authoritative validation for 0.0.20
 
@@ -340,13 +342,12 @@ method-guide changes are made after CI #440.
 
 ## Immediate next tasks
 
-1. Run complete CI on the synchronized documentation head.
-2. Record the authoritative final run identifier, test count, and coverage.
-3. Update PR #21, mark it ready, and squash-merge it into `main`.
-4. Add exact diffuse lag-one state covariance and disturbance smoothing.
-5. Add exact diffuse observed-information and natural covariance inference.
-6. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
-7. Add forecast intervals, sparse state matrices, parameter-aware paths,
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #21, mark it ready, and squash-merge it into `main`.
+3. Add exact diffuse lag-one state covariance and disturbance smoothing.
+4. Add exact diffuse observed-information and natural covariance inference.
+5. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
+6. Add forecast intervals, sparse state matrices, parameter-aware paths,
    cross-time innovation covariance, order selection, exogenous inputs, GIS
    adapters, and cross-language fixtures.
 

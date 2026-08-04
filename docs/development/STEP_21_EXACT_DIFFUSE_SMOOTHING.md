@@ -7,14 +7,13 @@
 - pull request: PR #21, `Add exact diffuse fixed-interval smoothing`;
 - base: version 0.0.20 on `main` at merge commit
   `36edc8b37f56e456aef1daa2df7aa496a07f13fb`;
-- core validation: GitHub Actions CI #455, run ID `30885891151`;
-- core result: 184 tests passed and 87.16% total branch coverage;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #463, run ID `30887094839`;
+- validation result: 184 tests passed and 87.16% total branch coverage;
 - `src/pystarmax/exact_diffuse_smoothing.py` coverage: 91.6%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
-  macOS Python 3.11–3.14 passed;
-- README, documentation home, exact diffuse guides, navigation, roadmap,
-  project status, example, and this handoff are synchronized on the current
-  documentation-head CI candidate.
+  macOS Python 3.11–3.14 all passed;
+- a validation-record-only merge-gate CI is required before merge.
 
 ## Delivered API
 
@@ -172,9 +171,9 @@ Tests include:
 9. top-level fitted estimator smoothing for training and new data;
 10. the complete inherited package test suite.
 
-Core CI #455 reported:
+Authoritative CI #463 reported:
 
-- 184 tests passed in 43.67 seconds in the coverage job;
+- 184 tests passed in 71.97 seconds in the coverage job;
 - total branch coverage: 87.16%;
 - exact diffuse smoothing module coverage: 91.6%;
 - exact diffuse MLE module coverage: 84.3%;
@@ -183,6 +182,10 @@ Core CI #455 reported:
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
   regeneration passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #21 is
+marked ready and merged.
 
 ## Deliberate omissions
 
