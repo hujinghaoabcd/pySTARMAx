@@ -15,7 +15,9 @@ from pystarmax.kalman_forecasting import (
 from pystarmax.seasonal_likelihood_inference import (
     SeasonalKalmanSTARIMA as _SeasonalKalmanSTARIMA,
 )
-from pystarmax.seasonal_likelihood_inference import infer_seasonal_kalman_starima
+from pystarmax.seasonal_likelihood_inference import (
+    infer_seasonal_kalman_starima,
+)
 from pystarmax.seasonal_maximum_likelihood import (
     SeasonalKalmanAdmissibility,
     SeasonalKalmanSTARIMAResult,

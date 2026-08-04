@@ -93,9 +93,9 @@ def simulate_kalman_forecast_paths(
         filter_result.filtered_covariance[-1],
         name="final filtered covariance",
     )
-    state_offsets = generator.standard_normal(
-        (n_simulations, model.state_dim)
-    ) @ state_factor.T
+    state_offsets = (
+        generator.standard_normal((n_simulations, model.state_dim)) @ state_factor.T
+    )
     states = filter_result.filtered_state[-1][None, :] + state_offsets
     innovations = draw_innovations(
         model.innovation_covariance,
@@ -162,9 +162,7 @@ def kalman_forecast_interval(
         mean=_forecast_mean(filter_result, steps=steps),
         paths=paths,
         level=level,
-        method=(
-            "fixed-parameter Gaussian filtered-state and innovation simulation"
-        ),
+        method=("fixed-parameter Gaussian filtered-state and innovation simulation"),
     )
 
 

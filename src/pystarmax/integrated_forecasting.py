@@ -8,10 +8,10 @@ from __future__ import annotations
 import numpy as np
 
 from pystarmax.forecasting import ForecastInterval
+from pystarmax.integrated_maximum_likelihood import KalmanSTARIMA as _KalmanSTARIMA
 from pystarmax.integrated_maximum_likelihood import (
-    KalmanSTARIMA as _KalmanSTARIMA,
+    KalmanSTARIMAResult,
 )
-from pystarmax.integrated_maximum_likelihood import KalmanSTARIMAResult
 from pystarmax.kalman_forecasting import (
     integrated_kalman_forecast_interval,
     kalman_forecast_interval,
