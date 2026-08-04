@@ -38,9 +38,7 @@ def test_first_order_integrated_likelihood_matches_increment_likelihood() -> Non
     for increment in np.diff(levels[:, 0]):
         residual = increment - drift
         expected -= 0.5 * (
-            np.log(2.0 * np.pi)
-            + np.log(variance)
-            + residual * residual / variance
+            np.log(2.0 * np.pi) + np.log(variance) + residual * residual / variance
         )
 
     assert result.log_likelihood == pytest.approx(expected)
@@ -79,9 +77,7 @@ def test_second_order_integration_recovers_first_and_second_differences() -> Non
     for value in observed_second_differences:
         residual = value - drift
         expected -= 0.5 * (
-            np.log(2.0 * np.pi)
-            + np.log(variance)
-            + residual * residual / variance
+            np.log(2.0 * np.pi) + np.log(variance) + residual * residual / variance
         )
 
     assert result.log_likelihood == pytest.approx(expected)

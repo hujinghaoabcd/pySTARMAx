@@ -99,7 +99,9 @@ class ExactIntegratedStateSpace:
             raise ValueError("initial_state must match the augmented state dimension")
         expected = (self.model.state_dim, self.model.state_dim)
         if finite.shape != expected or diffuse.shape != expected:
-            raise ValueError("initial covariance matrices must match the augmented state")
+            raise ValueError(
+                "initial covariance matrices must match the augmented state"
+            )
         if self.model.n_locations != self.transformed_model.n_locations:
             raise ValueError("augmented and transformed models must share locations")
         object.__setattr__(self, "integration_order", order)
@@ -177,7 +179,7 @@ def build_exact_integrated_state_space(
     transformed_dim = transformed_model.state_dim
     integrated_dim = order * n_locations
     state_dim = integrated_dim + transformed_dim
-    innovation_dim = transformed_model.innovation_dim
+    innovation_dim = int(transformed_model.selection.shape[1])
     identity = np.eye(n_locations, dtype=float)
 
     transition = np.zeros((state_dim, state_dim), dtype=float)
@@ -189,12 +191,8 @@ def build_exact_integrated_state_space(
                 identity
             )
     transformed_effect = transformed_model.design @ transformed_model.transition
-    transformed_intercept = (
-        transformed_model.design @ transformed_model.state_intercept
-    )
-    transformed_selection = (
-        transformed_model.design @ transformed_model.selection
-    )
+    transformed_intercept = transformed_model.design @ transformed_model.state_intercept
+    transformed_selection = transformed_model.design @ transformed_model.selection
     for row_block in range(order):
         row = row_block * n_locations
         transition[
