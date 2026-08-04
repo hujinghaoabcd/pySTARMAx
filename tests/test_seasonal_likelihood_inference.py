@@ -125,7 +125,7 @@ def test_pure_seasonal_ar_inference_and_natural_covariance() -> None:
     )
     natural = result.innovation_covariance_inference()
 
-    assert result.parameter_names == ("sar.t4.W0", "cov.log_sd")
+    assert result.parameter_names == ("sar.t4.W0", "cov.log_std")
     assert result.n_dynamic_params == 1
     assert result.rank == 2
     assert result.positive_definite
