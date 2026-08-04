@@ -1,0 +1,142 @@
+name: Record exact diffuse smoothing validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    if: github.event.pull_request.head.ref == 'agent/exact-diffuse-smoothing'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/exact-diffuse-smoothing
+      - name: Update validation records
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          status_path = Path("PROJECT_STATUS.md")
+          status = status_path.read_text()
+          start = status.index("## Core validation for 0.0.21")
+          end = status.index("## Authoritative validation for 0.0.20")
+          validation = '''## Authoritative validation for 0.0.21
+
+          GitHub Actions CI #463, run ID `30887094839`, validated the complete
+          implementation, tests, example, metadata, README, documentation home,
+          navigation, exact diffuse filtering/MLE/smoothing guides, roadmap, project
+          status, and Step 21 documentation head:
+
+          - 184 tests passed in the coverage job;
+          - total branch coverage was 87.16%, above the required 80%;
+          - `src/pystarmax/exact_diffuse_smoothing.py` coverage was 91.6%;
+          - `src/pystarmax/exact_diffuse_mle.py` coverage was 84.3%;
+          - `src/pystarmax/exact_diffuse.py` coverage was 87.8%;
+          - `src/pystarmax/exact_integrated.py` coverage was 86.9%;
+          - Black, isort, Ruff, and mypy passed;
+          - independent diagnostic-reference regeneration produced a clean diff;
+          - strict MkDocs passed;
+          - source distribution, wheel, and Twine checks passed;
+          - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+          A validation-record-only merge-gate CI is required after this status and the
+          Step 21 handoff are updated. No implementation, test, API, example, README, or
+          method-guide changes are made after CI #463.
+
+          '''
+          status = status[:start] + validation + status[end:]
+          old_tasks = '''## Immediate next tasks
+
+          1. Run complete CI on the synchronized documentation head.
+          2. Record the authoritative final run identifier, test count, and coverage.
+          3. Update PR #21, mark it ready, and squash-merge it into `main`.
+          4. Add exact diffuse lag-one state covariance and disturbance smoothing.
+          5. Add exact diffuse observed-information and natural covariance inference.
+          6. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
+          7. Add forecast intervals, sparse state matrices, parameter-aware paths,
+             cross-time innovation covariance, order selection, exogenous inputs, GIS
+             adapters, and cross-language fixtures.
+          '''
+          new_tasks = '''## Immediate next tasks
+
+          1. Run the validation-record-only merge-gate CI.
+          2. Update PR #21, mark it ready, and squash-merge it into `main`.
+          3. Add exact diffuse lag-one state covariance and disturbance smoothing.
+          4. Add exact diffuse observed-information and natural covariance inference.
+          5. Add exact diffuse simulation smoothing and seasonal diffuse augmentation.
+          6. Add forecast intervals, sparse state matrices, parameter-aware paths,
+             cross-time innovation covariance, order selection, exogenous inputs, GIS
+             adapters, and cross-language fixtures.
+          '''
+          if old_tasks not in status:
+              raise SystemExit("PROJECT_STATUS immediate tasks block not found")
+          status_path.write_text(status.replace(old_tasks, new_tasks, 1))
+
+          step_path = Path("docs/development/STEP_21_EXACT_DIFFUSE_SMOOTHING.md")
+          step = step_path.read_text()
+          old_position = '''- core validation: GitHub Actions CI #455, run ID `30885891151`;
+          - core result: 184 tests passed and 87.16% total branch coverage;
+          - `src/pystarmax/exact_diffuse_smoothing.py` coverage: 91.6%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+            macOS Python 3.11–3.14 passed;
+          - README, documentation home, exact diffuse guides, navigation, roadmap,
+            project status, example, and this handoff are synchronized on the current
+            documentation-head CI candidate.
+          '''
+          new_position = '''- authoritative implementation/documentation validation: GitHub Actions CI
+            #463, run ID `30887094839`;
+          - validation result: 184 tests passed and 87.16% total branch coverage;
+          - `src/pystarmax/exact_diffuse_smoothing.py` coverage: 91.6%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+            macOS Python 3.11–3.14 all passed;
+          - a validation-record-only merge-gate CI is required before merge.
+          '''
+          if old_position not in step:
+              raise SystemExit("Step 21 repository position block not found")
+          step = step.replace(old_position, new_position, 1)
+          old_ci = '''Core CI #455 reported:
+
+          - 184 tests passed in 43.67 seconds in the coverage job;
+          - total branch coverage: 87.16%;
+          - exact diffuse smoothing module coverage: 91.6%;
+          - exact diffuse MLE module coverage: 84.3%;
+          - exact diffuse filter coverage: 87.8%;
+          - exact integrated constructor coverage: 86.9%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
+            regeneration passed;
+          - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+          '''
+          new_ci = '''Authoritative CI #463 reported:
+
+          - 184 tests passed in 71.97 seconds in the coverage job;
+          - total branch coverage: 87.16%;
+          - exact diffuse smoothing module coverage: 91.6%;
+          - exact diffuse MLE module coverage: 84.3%;
+          - exact diffuse filter coverage: 87.8%;
+          - exact integrated constructor coverage: 86.9%;
+          - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
+            regeneration passed;
+          - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+          The validation-record-only head changes only this handoff and
+          `PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #21 is
+          marked ready and merged.
+          '''
+          if old_ci not in step:
+              raise SystemExit("Step 21 validation block not found")
+          step_path.write_text(step.replace(old_ci, new_ci, 1))
+          PY
+      - name: Commit records and remove workflow
+        shell: bash
+        run: |
+          git rm .github/workflows/record-exact-diffuse-smoothing-validation.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PROJECT_STATUS.md docs/development/STEP_21_EXACT_DIFFUSE_SMOOTHING.md
+          git commit -m "Record final exact diffuse smoothing validation"
+          git push
