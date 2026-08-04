@@ -13,7 +13,8 @@
 - `src/pystarmax/exact_diffuse_smoothing.py` coverage: 91.6%;
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
   macOS Python 3.11–3.14 all passed;
-- a validation-record-only merge-gate CI is required before merge.
+- the current validation-record-only head changes only this handoff and
+  `PROJECT_STATUS.md` relative to CI #463 and is the final merge-gate candidate.
 
 ## Delivered API
 
@@ -183,9 +184,9 @@ Authoritative CI #463 reported:
   regeneration passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-The validation-record-only head changes only this handoff and
-`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #21 is
-marked ready and merged.
+No implementation, test, API, example, README, or method-guide changes are made
+after CI #463. The current validation-record-only head receives one final
+merge-gate CI before PR #21 is marked ready and merged.
 
 ## Deliberate omissions
 
