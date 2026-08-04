@@ -5,8 +5,15 @@
 - development version: `0.0.17`;
 - branch: `agent/seasonal-likelihood-inference`;
 - pull request: PR #17, `Add seasonal likelihood-Hessian inference`;
-- base: version 0.0.16 on `main`;
-- final validation results must be recorded before merge.
+- base: version 0.0.16 on `main` at merge commit
+  `7b1fe194abf710e8f929066eb2669dd6b5dc777e`;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #386, run ID `30876026103`;
+- validation result: 148 tests passed and 87.14% total branch coverage;
+- `src/pystarmax/seasonal_likelihood_inference.py` coverage: 93.5%;
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+  macOS Python 3.11–3.14 all passed;
+- a validation-record-only merge-gate CI is required before merge.
 
 ## Delivered API
 
@@ -139,6 +146,24 @@ Tests include:
    generalized inverse;
 7. fitted-state, rank-threshold, and step validation;
 8. the complete inherited package test suite.
+
+## Authoritative validation
+
+GitHub Actions CI #386, run ID `30876026103`, reported:
+
+- 148 tests passed in 22.53 seconds in the coverage job;
+- total branch coverage: 87.14%, above the required 80%;
+- seasonal likelihood-inference module coverage: 93.5%;
+- seasonal Kalman estimator module coverage: 87.6%;
+- Black, isort, Ruff, and mypy passed;
+- diagnostic-reference regeneration produced a clean diff;
+- strict MkDocs passed;
+- source distribution, wheel, and Twine checks passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #17 is marked
+ready and merged.
 
 ## Files introduced or changed
 
