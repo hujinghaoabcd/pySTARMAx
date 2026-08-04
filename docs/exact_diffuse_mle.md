@@ -243,8 +243,23 @@ Highest-difference means use the terminal transformed-state block:
 transformed_forecast = model.predict_differenced(steps=12)
 ```
 
-These are fixed-parameter point forecasts. Version 0.0.20 does not yet expose
-exact-diffuse-model interval simulation through this estimator.
+These are fixed-parameter point forecasts. Forecast interval simulation from
+the exact diffuse estimator is not yet exposed.
+
+## Fixed-interval state smoothing
+
+Version 0.0.21 adds:
+
+```python
+smoothed = model.smooth()
+new_smoothed = model.smooth(new_level_observations)
+```
+
+The exact diffuse smoother propagates ordinary and diffuse backward
+information quantities separately and returns marginal smoothed state and
+observation moments. Smoothing new data starts a new diffuse initialization;
+it does not continue the training posterior. See
+[Exact diffuse smoothing](exact_diffuse_smoothing.md).
 
 ## Missing observations
 
@@ -325,8 +340,9 @@ The test suite checks:
 ## Current limitations
 
 - exact diffuse observed-information inference is not yet implemented;
-- exact diffuse smoothing is not yet implemented;
-- seasonal diffuse state augmentation is not yet implemented;
+- exact diffuse marginal state smoothing is available, but lag-one state
+  covariance and disturbance smoothing are not;
+- seasonal diffuse state augmentation and smoothing are not implemented;
 - forecast intervals are not yet exposed from this estimator;
 - the current observation equation has no separate measurement-noise covariance;
 - exact filtering processes locations sequentially;
