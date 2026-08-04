@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.25"
+__version__ = "0.0.26"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -85,6 +85,12 @@ from pystarmax.exact_integrated import (
     build_exact_integrated_state_space,
     exact_integrated_filter,
     exact_integrated_loglikelihood,
+)
+from pystarmax.exact_seasonal_integrated import (
+    ExactSeasonalIntegratedStateSpace,
+    build_exact_seasonal_integrated_state_space,
+    exact_seasonal_integrated_filter,
+    exact_seasonal_integrated_loglikelihood,
 )
 from pystarmax.forecasting import ForecastInterval
 from pystarmax.innovation_smoothing import (
@@ -169,6 +175,7 @@ __all__ = [
     "InnovationCovarianceTransform",
     "ExactDiffuseFilterResult",
     "ExactIntegratedStateSpace",
+    "ExactSeasonalIntegratedStateSpace",
     "PolynomialAdmissibility",
     "STARMAAdmissibility",
     "PolynomialKind",
@@ -210,6 +217,9 @@ __all__ = [
     "build_exact_integrated_state_space",
     "exact_integrated_filter",
     "exact_integrated_loglikelihood",
+    "build_exact_seasonal_integrated_state_space",
+    "exact_seasonal_integrated_filter",
+    "exact_seasonal_integrated_loglikelihood",
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",
