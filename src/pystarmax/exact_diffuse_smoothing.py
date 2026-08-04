@@ -45,9 +45,7 @@ def _stabilize_covariance(
     threshold = tolerance * scale
     minimum = float(np.min(eigenvalues, initial=0.0))
     if minimum < -100.0 * threshold:
-        raise np.linalg.LinAlgError(
-            "smoothed covariance became materially indefinite"
-        )
+        raise np.linalg.LinAlgError("smoothed covariance became materially indefinite")
     clipped = np.clip(eigenvalues, 0.0, np.inf)
     stabilized = (eigenvectors * clipped) @ eigenvectors.T
     stabilized = _symmetric(cast(FloatArray, stabilized))
@@ -218,12 +216,8 @@ def _forward_measurement_records(
                 location_index,
             ]
         )
-        diffuse_scale = float(np.linalg.norm(diffuse, ord=2)) * float(
-            design @ design
-        )
-        finite_scale = float(np.linalg.norm(finite, ord=2)) * float(
-            design @ design
-        )
+        diffuse_scale = float(np.linalg.norm(diffuse, ord=2)) * float(design @ design)
+        finite_scale = float(np.linalg.norm(finite, ord=2)) * float(design @ design)
         if diffuse_variance > tolerance * max(1.0, diffuse_scale):
             gain_zero = diffuse_cross / diffuse_variance
             gain_one = (
@@ -268,10 +262,7 @@ def _forward_measurement_records(
     )
     diffuse_error = float(
         np.max(
-            np.abs(
-                diffuse
-                - filter_result.filtered_diffuse_covariance[time_index]
-            ),
+            np.abs(diffuse - filter_result.filtered_diffuse_covariance[time_index]),
             initial=0.0,
         )
     )
@@ -338,9 +329,7 @@ def exact_diffuse_smoother(
             l_zero,
             l_one,
         ) in reversed(records):
-            innovation = float(
-                filter_result.innovations[time_index, location_index]
-            )
+            innovation = float(filter_result.innovations[time_index, location_index])
             diffuse_scale = max(1.0, abs(diffuse_variance))
             finite_scale = max(1.0, abs(finite_variance))
             if diffuse_variance > tolerance * diffuse_scale:
@@ -374,10 +363,7 @@ def exact_diffuse_smoother(
             elif finite_variance > tolerance * finite_scale:
                 previous_r = r.copy()
                 previous_n = n_matrix.copy()
-                r = (
-                    design * innovation / finite_variance
-                    + l_zero.T @ previous_r
-                )
+                r = design * innovation / finite_variance + l_zero.T @ previous_r
                 n_matrix = (
                     np.outer(design, design) / finite_variance
                     + l_zero.T @ previous_n @ l_zero
@@ -396,9 +382,7 @@ def exact_diffuse_smoother(
         finite_covariance = filter_result.predicted_covariance[time_index]
         diffuse_covariance = filter_result.predicted_diffuse_covariance[time_index]
         smoothed_state[time_index] = (
-            predicted_state
-            + finite_covariance @ r
-            + diffuse_covariance @ r_diffuse
+            predicted_state + finite_covariance @ r + diffuse_covariance @ r_diffuse
         )
         covariance = (
             finite_covariance
@@ -429,9 +413,7 @@ def exact_diffuse_smoother(
     )
     for time_index in range(n_time):
         smoothed_observation_covariance[time_index] = (
-            model.design
-            @ smoothed_covariance[time_index]
-            @ model.design.T
+            model.design @ smoothed_covariance[time_index] @ model.design.T
         )
 
     return ExactDiffuseSmootherResult(
