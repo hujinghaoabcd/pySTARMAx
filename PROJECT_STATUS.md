@@ -8,6 +8,8 @@
 - Active pull request: PR #28, `Add seasonal exact diffuse smoothing`.
 - Development version: `0.0.28`.
 - PR #1 through PR #27 have been squash-merged.
+- Synchronized merge-gate CI #599, run ID `30952280713`, passed on
+  `e3d9ac6155847bc3dbb8289452953bf54e95189e`.
 
 ## Public model families
 
@@ -126,10 +128,12 @@ The 0.0.28 tests cover:
 - exact reduction to ordinary exact-diffuse state and innovation smoothing when
   all seasonal orders are zero.
 
-## Authoritative implementation validation
+## Authoritative validation
 
-GitHub Actions CI #589, run ID `30951765063`, validated implementation head
-`50a80b5cca2fbca188631bed5beffc8925deaf97`.
+Implementation CI #589, run ID `30951765063`, validated implementation head
+`50a80b5cca2fbca188631bed5beffc8925deaf97`. Synchronized merge-gate CI #599,
+run ID `30952280713`, validated final implementation and documentation head
+`e3d9ac6155847bc3dbb8289452953bf54e95189e`.
 
 Results:
 
@@ -142,8 +146,6 @@ Results:
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
-
-A final synchronized merge-gate CI is required before merge.
 
 ## Numerical and research safeguards
 
@@ -185,17 +187,15 @@ The next implementation stage is seasonal exact-diffuse likelihood inference
 and natural innovation-covariance inference. Forecast paths and intervals should
 remain a later independent stage.
 
-## Merge checklist for PR #28
+## PR #28 merge readiness
 
-1. Synchronize version metadata, README, documentation home, roadmap, remaining
-   work, method guide, example, navigation, and Step 28 handoff.
-2. Pass complete CI on the final synchronized head.
-3. Confirm the bridge, disturbance, partial-observation, and ordinary-reduction
-   tests pass on all platforms.
-4. Confirm no workflow helper, generated artifact, review submission, or
-   unresolved review thread remains.
-5. Mark PR #28 ready and squash-merge version 0.0.28.
-6. Create the next branch for seasonal exact-diffuse inference.
+- implementation CI #589 passed;
+- synchronized merge-gate CI #599 passed;
+- bridge, disturbance, partial-observation, and ordinary-reduction tests passed
+  on all supported platforms;
+- the formal diff contains no workflow helper or generated artifact;
+- no submitted review or unresolved review thread remains;
+- PR #28 is ready for squash merge after the validation-record-only gate.
 
 ## Handoff documents
 
