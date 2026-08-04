@@ -37,9 +37,7 @@ def _negative_seasonal_exact_diffuse_log_likelihood(
     raw: FloatArray,
 ) -> float:
     if model.result_ is None or model.data_ is None or model.weights_ is None:
-        raise RuntimeError(
-            "fit must be called before seasonal exact diffuse inference"
-        )
+        raise RuntimeError("fit must be called before seasonal exact diffuse inference")
     observations = model.data_
     weights = model.weights_
     result = model.result_
@@ -104,12 +102,7 @@ def _negative_seasonal_exact_diffuse_log_likelihood(
             )
             value = -filtered.log_likelihood
             return float(value) if np.isfinite(value) else invalid_base
-    except (
-        ValueError,
-        np.linalg.LinAlgError,
-        FloatingPointError,
-        OverflowError,
-    ):
+    except (ValueError, np.linalg.LinAlgError, FloatingPointError, OverflowError):
         return float(invalid_base + 1e-8 * (raw @ raw))
 
 
@@ -129,19 +122,14 @@ def infer_seasonal_exact_diffuse_kalman_starima(
     parameters.
     """
     if model.result_ is None:
-        raise RuntimeError(
-            "fit must be called before seasonal exact diffuse inference"
-        )
+        raise RuntimeError("fit must be called before seasonal exact diffuse inference")
     if not np.isfinite(rcond) or rcond <= 0.0:
         raise ValueError("rcond must be positive and finite")
 
     result = model.result_
     estimates = np.asarray(result.raw_optimizer_params, dtype=float)
     curvature = finite_difference_curvature(
-        lambda value: _negative_seasonal_exact_diffuse_log_likelihood(
-            model,
-            value,
-        ),
+        lambda value: _negative_seasonal_exact_diffuse_log_likelihood(model, value),
         estimates,
         relative_step=relative_step,
         absolute_step=absolute_step,
