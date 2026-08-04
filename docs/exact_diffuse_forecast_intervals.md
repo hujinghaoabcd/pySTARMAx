@@ -57,7 +57,7 @@ interval = exact_diffuse_forecast_interval(
 ```
 
 The returned immutable `ForecastInterval` contains `mean`, `lower`, `upper`,
-`level`, `method`, `n_simulations`, and `refit_parameters`.
+`level`, `n_simulations`, and `method`.
 
 ## Exact diffuse terminal state
 
@@ -233,9 +233,9 @@ negative eigenvalues raise. No diagonal jitter is added.
 Partial-location and fully missing rows are handled by the exact diffuse filter.
 A fully missing row performs prediction only and does not reduce diffuse rank.
 
-Forecast intervals remain available after trailing missing observations when
-later filtering has already resolved every diffuse direction. The terminal
-finite posterior then reflects prediction through those missing rows.
+Forecast intervals remain available with trailing missing rows only when all
+diffuse directions were resolved by earlier informative observations. The
+terminal finite posterior then reflects prediction through those missing rows.
 
 Intervals are unavailable when the sample never identifies all initial diffuse
 directions. This can occur with:
