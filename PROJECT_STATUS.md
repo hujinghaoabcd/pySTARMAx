@@ -11,17 +11,17 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #16 have been squash-merged into `main`.
-- `main` is version `0.0.16` at merge commit
-  `7b1fe194abf710e8f929066eb2669dd6b5dc777e`.
-- Current branch: `agent/seasonal-likelihood-inference`.
-- Current draft pull request: PR #17, `Add seasonal likelihood-Hessian
-  inference`.
-- Current development version: `0.0.17`.
-- The branch adds observed-information inference for multiplicative ordinary and
-  seasonal factor parameters and covariance optimizer coordinates.
-- Every finite-difference stencil point reconstructs the complete expanded
-  recursion and rejects enabled stationarity/invertibility penalty regions.
+- PR #1 through PR #17 have been squash-merged into `main`.
+- `main` is version `0.0.17` at merge commit
+  `d62cadf210c223d3da62e87dbc9ea82c2b1a7803`.
+- Current branch: `agent/kalman-original-scale-intervals`.
+- Current draft pull request: PR #18, `Add original-scale Kalman forecast
+  intervals`.
+- Current development version: `0.0.18`.
+- The branch adds fixed-parameter Gaussian forecast paths from the final
+  filtered state posterior and future fitted process innovations.
+- Ordinary and seasonal integrated intervals are reconstructed pathwise before
+  original-scale quantiles.
 
 ## Completed baseline through 0.0.15
 
@@ -133,84 +133,186 @@ are non-finite.
 
 ### Seasonal observed-information inference
 
-- added `infer_seasonal_kalman_starima()`;
-- added `SeasonalKalmanSTARIMA.infer()`;
+- added `infer_seasonal_kalman_starima()` and
+  `SeasonalKalmanSTARIMA.infer()`;
 - reused the central finite-difference curvature engine and immutable
   `LikelihoodInferenceResult` contract;
-- evaluates central score differences, diagonal second differences, and
-  four-corner mixed partials on the raw optimizer scale;
-- reconstructs the optional intercept, ordinary/seasonal AR and MA factors,
-  innovation covariance, multiplicative matrix expansion, arbitrary-lag state
-  space, and Gaussian likelihood at every objective point;
+- reconstructs optional intercept, ordinary/seasonal AR and MA factors,
+  innovation covariance, multiplicative expansion, arbitrary-lag state space,
+  and Gaussian likelihood at every objective point;
 - rejects stencil points that enter enabled expanded AR-stationarity or
-  MA-invertibility penalty regions rather than differentiating the penalty;
-- reports factor-only and complete optimizer tables, standard errors, normal
-  statistics, p-values, confidence intervals, correlation, score, finite-
-  difference steps, Hessian eigenvalues, rank, condition number, objective
-  value, evaluation count, and admissibility-boundary distances;
+  MA-invertibility penalty regions;
+- reports factor and optimizer tables, standard errors, normal tests,
+  confidence intervals, correlation, score, steps, Hessian eigenvalues, rank,
+  condition number, objective, evaluation count, and boundary distances;
 - requires positive-definite full-rank observed information by default;
 - permits an explicit positive-eigenspace generalized inverse only through
-  `allow_singular=True` and records `used_pseudoinverse=True`;
+  `allow_singular=True`;
 - reuses scalar, diagonal, and full-Cholesky natural innovation-covariance delta
-  inference;
-- preserves ordinary/seasonal factor-to-natural-covariance cross uncertainty.
+  inference with factor-to-covariance cross uncertainty.
 
-### Public result contract
-
-The seasonal estimator returns the same `LikelihoodInferenceResult` used by
-stationary Kalman STARMA. Natural covariance inference is obtained with
-
-```python
-natural = inference.innovation_covariance_inference()
-```
-
-The public natural-result accessors are `parameter_names`, `estimates`, `table`,
-`confidence_intervals()`, covariance/standard-error arrays, and
+The public natural covariance accessors are `parameter_names`, `estimates`,
+`table`, `confidence_intervals()`, covariance/standard-error arrays, and
 `dynamic_cross_covariance`. Lower-level element metadata remains on
 `natural.transform`.
+
+## Completed in 0.0.18
+
+### Conditional Gaussian forecast paths
+
+For
+
+\[
+\alpha_{t+1}=c+T\alpha_t+R\eta_{t+1},
+\qquad
+\eta_{t+1}\sim\mathcal N(0,Q),
+\]
+
+\[
+x_{t+1}=Z\alpha_{t+1},
+\]
+
+paths begin from
+
+\[
+\alpha_T\mid y_{1:T}
+\sim
+\mathcal N(a_{T\mid T},P_{T\mid T}).
+\]
+
+For every simulation:
+
+1. draw the terminal state from the final filtered Gaussian posterior;
+2. draw future original location-level process innovations from the fitted
+   innovation covariance;
+3. propagate the fitted transition and state intercept;
+4. apply the design matrix at every horizon;
+5. retain the complete transformed path.
+
+The intervals therefore include final filtered-state uncertainty and future
+process-innovation uncertainty. Fitted parameters remain fixed.
+
+### Positive-semidefinite covariance handling
+
+- symmetrizes the final filtered covariance;
+- uses an eigendecomposition rather than requiring a strictly positive-definite
+  Cholesky factor;
+- clips only floating-point-scale negative eigenvalues to zero;
+- raises for materially negative covariance eigenvalues;
+- supports singular Gaussian state posteriors without arbitrary jitter.
+
+### Public API and scale contract
+
+Stationary:
+
+```python
+interval = fitted_starma.predict_interval(...)
+```
+
+Ordinary integrated:
+
+```python
+transformed = fitted_starima.predict_differenced_interval(...)
+original = fitted_starima.predict_interval(...)
+```
+
+Multiplicative seasonal integrated:
+
+```python
+transformed = fitted_seasonal.predict_differenced_interval(...)
+original = fitted_seasonal.predict_interval(...)
+```
+
+Low-level functions are:
+
+- `simulate_kalman_forecast_paths()`;
+- `kalman_forecast_interval()`;
+- `integrated_kalman_forecast_interval()`;
+- `inverse_forecast_paths()`.
+
+All methods return the existing immutable `ForecastInterval`. The reported mean
+is the deterministic recursive point forecast rather than a seed-dependent
+Monte Carlo sample mean.
+
+### Pathwise original-scale reconstruction
+
+For ordinary integration,
+
+\[
+y_{T+h}=y_T+\sum_{j=1}^{h}x_{T+j}
+\]
+
+at order one, with nested recursions for higher orders. Seasonal integration
+uses rolling cycle histories,
+
+\[
+y_{T+h}=x_{T+h}+y_{T+h-s}.
+\]
+
+The implementation inverse-differences every complete simulated path and only
+then takes horizon-location quantiles. It never inverse-transforms marginal
+transformed lower and upper bounds as though forecast horizons were
+independent.
+
+Combined seasonal-ordinary paths reverse seasonal differencing first and
+ordinary differencing second, matching the point forecast convention.
+
+### Terminal history and reproducibility policy
+
+- transformed intervals remain available when trailing missing levels prevent
+  original-scale reconstruction;
+- original intervals require every ordinary anchor and seasonal rolling
+  history;
+- missing histories raise rather than being imputed or carried forward;
+- `random_state` accepts an integer, NumPy `Generator`, or `None`;
+- repeated integer seeds reproduce the same paths and bounds;
+- the default is 2,000 paths, with larger values recommended for more stable
+  tail quantiles.
 
 ### Validation coverage
 
 Tests cover:
 
-1. exact zero-seasonal-order inference equivalence with `KalmanSTARMA` under
-   identical observations, starts, and finite-difference settings;
-2. full-rank pure seasonal AR curvature;
-3. equality between `.infer()` and `infer_seasonal_kalman_starima()`;
-4. natural scalar innovation-variance inference and factor/covariance cross
+1. an analytic scalar state model with first two forecast means `1.5` and `2.0`
+   and variances `5.0` and `6.0`;
+2. inclusion of both terminal filtered covariance and future innovation
    covariance;
-5. direct expanded non-stationary objective penalty verification;
-6. strict singular-Hessian rejection and explicit finite positive-eigenspace
-   generalized inverse;
-7. fitted-state, rank-threshold, and finite-difference-step validation;
-8. the complete inherited package test suite.
+3. stationary reproducibility and exact point-forecast centering;
+4. exact per-path first-difference reconstruction;
+5. ordinary random-walk first-horizon shifts and later widening;
+6. seasonal rolling-cycle shifts and widening after one full period;
+7. transformed interval availability and original interval refusal when the
+   terminal anchor is missing;
+8. steps, level, simulation count, covariance, shape, and type validation;
+9. the complete inherited package test suite.
 
-## Authoritative validation for 0.0.17
+## Core validation for 0.0.18
 
-GitHub Actions CI #386, run ID `30876026103`, validated the complete
-implementation, tests, example, metadata, and documentation head:
+GitHub Actions CI #394, run ID `30877591713`, validated the numerical core and
+current documentation head before the final project-status synchronization:
 
-- 148 tests passed in the coverage job;
-- total branch coverage was 87.14%, above the required 80%;
-- `src/pystarmax/seasonal_likelihood_inference.py` coverage was 93.5%;
-- `src/pystarmax/seasonal_maximum_likelihood.py` coverage remained 87.6%;
+- 155 tests passed in the coverage job;
+- total branch coverage was 87.09%, above the required 80%;
+- `src/pystarmax/kalman_forecasting.py` coverage was 80.2%;
+- `src/pystarmax/integrated_maximum_likelihood.py` coverage was 84.3%;
+- `src/pystarmax/seasonal_forecasting.py` coverage was 89.5%;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A validation-record-only merge-gate CI is required after this status and the
-Step 17 handoff are updated. No implementation, test, API, example, or method
-changes are made after CI #386.
+A complete final documentation-head CI is required after README, method guides,
+status, and Step 18 are synchronized. The authoritative final run must be
+recorded before merge.
 
-## Prior validation for 0.0.16
+## Prior validation for 0.0.17
 
-GitHub Actions CI #360, run ID `30858747303`, reported 143 passing tests,
-87.04% total branch coverage, 87.6% coverage for the seasonal Kalman module, and
+GitHub Actions CI #386, run ID `30876026103`, reported 148 passing tests,
+87.14% total branch coverage, 93.5% seasonal inference module coverage, and
 successful quality, strict documentation, packaging, and Ubuntu/Windows/macOS
-Python 3.11–3.14 checks. Validation-record-only CI #363 also passed before PR
-#16 was squash-merged.
+Python 3.11–3.14 checks. Validation-record-only CI #388 also passed before PR
+#17 was squash-merged.
 
 ## Design principles
 
@@ -227,28 +329,33 @@ Python 3.11–3.14 checks. Validation-record-only CI #363 also passed before PR
 7. Keep transformed and original scales explicitly labelled.
 8. Never reconstruct original forecasts without finite ordinary anchors and
    seasonal histories.
-9. Use the positive MA sign consistently in inverse-recursion diagnostics.
-10. Treat spectral-radius penalties as feasibility controls, not smooth
+9. Inverse-difference complete forecast paths before original-scale quantiles.
+10. Distinguish filtered-state uncertainty, future innovation uncertainty, and
+    parameter uncertainty.
+11. Use the positive MA sign consistently in inverse-recursion diagnostics.
+12. Treat spectral-radius penalties as feasibility controls, not smooth
     parameterizations.
-11. Do not interpret finite-difference penalty curvature as likelihood
+13. Do not interpret finite-difference penalty curvature as likelihood
     information.
-12. Require positive-definite full-rank observed information by default and
+14. Require positive-definite full-rank observed information by default and
     label diagnostic pseudoinverses explicitly.
-13. Use stable solves before explicit inverses and expose pseudoinverse use.
-14. Distinguish state disturbances from original location innovations.
-15. Preserve innovation uncertainty not identified by the state selection map.
-16. Require analytic or independent Gaussian references for numerical claims.
-17. Keep public numerical arrays immutable.
+15. Use stable solves before explicit inverses and expose pseudoinverse use.
+16. Distinguish state disturbances from original location innovations.
+17. Preserve innovation uncertainty not identified by the state selection map.
+18. Require analytic or independent Gaussian references for numerical claims.
+19. Keep public numerical arrays immutable.
 
 ## Immediate next tasks
 
-1. Run the validation-record-only merge-gate CI.
-2. Update PR #17, mark it ready, and squash-merge it into `main`.
-3. Add original-scale Gaussian forecast intervals for ordinary and seasonal
-   Kalman STARIMA.
+1. Run the complete final CI matrix on the documentation head.
+2. Record the final run identifier, test count, and coverage in this status and
+   the Step 18 handoff.
+3. Update PR #18, mark it ready, and squash-merge it into `main`.
 4. Design exact diffuse integrated level-state likelihood and smoothing as a
    separate API.
-5. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
+5. Add parameter-aware Kalman paths using constrained observed-information or
+   model-refitting bootstrap draws.
+6. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
    simulation smoothing, order selection, exogenous inputs, adapters, and
    cross-language fixtures.
 
@@ -256,6 +363,11 @@ Python 3.11–3.14 checks. Validation-record-only CI #363 also passed before PR
 
 - ordinary and seasonal Kalman STARIMA likelihoods are conditional on
   transformation history, not exact diffuse on the level process;
+- Kalman forecast intervals condition on fitted parameters;
+- parameter covariance is not propagated into forecast paths;
+- forecast bounds are Monte Carlo quantiles and have finite-simulation error;
+- large dense states and path arrays can be computationally and memory
+  intensive;
 - central finite-difference inference requires `1 + 2*k**2` objective
   evaluations for `k` optimizer coordinates;
 - inference can be sensitive to step size in flat, highly curved, or
@@ -264,7 +376,6 @@ Python 3.11–3.14 checks. Validation-record-only CI #363 also passed before PR
   parameterization;
 - robust, sandwich, profile-likelihood, likelihood-ratio, and Kalman bootstrap
   inference are unavailable;
-- original-scale Kalman STARIMA forecast intervals are unavailable;
 - original-scale filtered and smoothed level-state distributions are not
   returned;
 - state and innovation smoothing treat parameters as fixed;
@@ -281,8 +392,9 @@ Python 3.11–3.14 checks. Validation-record-only CI #363 also passed before PR
 Before the next substantial step, read this file, `docs/model.md`,
 `docs/starima.md`, `docs/integrated_maximum_likelihood.md`, `docs/seasonal.md`,
 `docs/seasonal_maximum_likelihood.md`, `docs/seasonal_likelihood_inference.md`,
-`docs/admissibility.md`, `docs/state_space.md`, `docs/smoothing.md`,
-`docs/innovation_smoothing.md`, `docs/maximum_likelihood.md`,
-`docs/likelihood_inference.md`, `docs/covariance_inference.md`, and the latest
-development handoff. Update repository state, validation, next tasks, and
-limitations after every completed stage.
+`docs/kalman_forecast_intervals.md`, `docs/admissibility.md`,
+`docs/state_space.md`, `docs/smoothing.md`, `docs/innovation_smoothing.md`,
+`docs/maximum_likelihood.md`, `docs/likelihood_inference.md`,
+`docs/covariance_inference.md`, and the latest development handoff. Update
+repository state, validation, next tasks, and limitations after every completed
+stage.
