@@ -24,6 +24,10 @@ from pystarmax.exact_diffuse_mle import (
 from pystarmax.exact_diffuse_mle import (
     ExactDiffuseKalmanSTARIMAResult,
 )
+from pystarmax.exact_diffuse_simulation_smoothing import (
+    ExactDiffuseSimulationSmootherResult,
+    exact_diffuse_simulation_smoother,
+)
 from pystarmax.exact_diffuse_smoothing import (
     ExactDiffuseSmootherResult,
     exact_diffuse_smoother,
@@ -44,6 +48,24 @@ class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
         """Smooth training or newly initialized original-level observations."""
         return exact_diffuse_smoother(
             self.filter(data),
+            tolerance=tolerance,
+        )
+
+    def simulate_smoothing_paths(
+        self,
+        data: Any | None = None,
+        *,
+        n_simulations: int = 1000,
+        random_state: int | np.random.Generator | None = None,
+        rcond: float = 1e-10,
+        tolerance: float | None = None,
+    ) -> ExactDiffuseSimulationSmootherResult:
+        """Draw complete state paths conditional on training or new observations."""
+        return exact_diffuse_simulation_smoother(
+            self.filter(data),
+            n_simulations=n_simulations,
+            random_state=random_state,
+            rcond=rcond,
             tolerance=tolerance,
         )
 
@@ -128,6 +150,7 @@ __all__ = [
     "ExactDiffuseDisturbanceResult",
     "ExactDiffuseKalmanSTARIMA",
     "ExactDiffuseKalmanSTARIMAResult",
+    "ExactDiffuseSimulationSmootherResult",
     "ExactDiffuseSmootherResult",
     "ForecastInterval",
     "LikelihoodInferenceResult",
