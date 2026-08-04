@@ -241,25 +241,27 @@ Tests cover:
 10. constructor, fitted-state, data-length, and start validation;
 11. the complete inherited package test suite.
 
-## Core validation for 0.0.20
+## Authoritative validation for 0.0.20
 
-GitHub Actions CI #433, run ID `30883369794`, validated the implementation,
-unit tests, primary method guide, navigation, packaging, and cross-platform
-matrix before the final README/status synchronization:
+GitHub Actions CI #440, run ID `30884139939`, validated the complete
+implementation, tests, example, metadata, README, documentation home,
+navigation, exact-diffuse guides, conditional-integrated guide, roadmap,
+project status, and Step 20 documentation head:
 
 - 176 tests passed in the coverage job;
 - total branch coverage was 86.99%, above the required 80%;
 - `src/pystarmax/exact_diffuse_mle.py` coverage was 84.3%;
+- `src/pystarmax/exact_diffuse.py` coverage was 87.8%;
+- `src/pystarmax/exact_integrated.py` coverage was 86.9%;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A complete final CI is required on the synchronized README, documentation home,
-exact-diffuse guide, conditional-integrated guide, roadmap, project status,
-example, and Step 20 head. The authoritative final run must be recorded before
-merge.
+A validation-record-only merge-gate CI is required after this status and the
+Step 20 handoff are updated. No implementation, test, API, example, README, or
+method-guide changes are made after CI #440.
 
 ## Design principles
 
@@ -281,14 +283,13 @@ merge.
 
 ## Immediate next tasks
 
-1. Run complete CI on the synchronized documentation head.
-2. Record the authoritative final run identifier, test count, and coverage.
-3. Update PR #20, mark it ready, and squash-merge it into `main`.
-4. Add exact diffuse fixed-interval smoothing and disturbance smoothing.
-5. Add exact diffuse observed-information and natural covariance inference.
-6. Add ordinary-seasonal diffuse state augmentation.
-7. Add forecast intervals for the exact diffuse estimator.
-8. Add sparse state matrices, parameter-aware forecast paths, cross-time
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #20, mark it ready, and squash-merge it into `main`.
+3. Add exact diffuse fixed-interval smoothing and disturbance smoothing.
+4. Add exact diffuse observed-information and natural covariance inference.
+5. Add ordinary-seasonal diffuse state augmentation.
+6. Add forecast intervals for the exact diffuse estimator.
+7. Add sparse state matrices, parameter-aware forecast paths, cross-time
    innovation covariance, simulation smoothing, order selection, exogenous
    inputs, GIS adapters, and cross-language fixtures.
 

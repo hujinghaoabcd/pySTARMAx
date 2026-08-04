@@ -7,12 +7,13 @@
 - pull request: PR #20, `Add exact diffuse STARIMA maximum likelihood`;
 - base: version 0.0.19 on `main` at merge commit
   `405b9886f446330e5adf479e03ccb595b95740eb`;
-- core validation: GitHub Actions CI #433, run ID `30883369794`;
-- core result: 176 tests passed and 86.99% total branch coverage;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #440, run ID `30884139939`;
+- validation result: 176 tests passed and 86.99% total branch coverage;
 - `src/pystarmax/exact_diffuse_mle.py` coverage: 84.3%;
-- quality, mypy, strict MkDocs, distributions, coverage, Ubuntu, and macOS were
-  green when the core result was recorded;
-- a complete final documentation-head CI is required before merge.
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+  macOS Python 3.11–3.14 all passed;
+- a validation-record-only merge-gate CI is required before merge.
 
 ## Delivered API
 
@@ -183,14 +184,20 @@ Tests include:
 10. constructor, fitted-state, data-length, and start validation;
 11. the complete inherited package test suite.
 
-Core CI #433 reported:
+Authoritative CI #440 reported:
 
-- 176 tests passed in 42.17 seconds in the coverage job;
+- 176 tests passed in 72.39 seconds in the coverage job;
 - total branch coverage: 86.99%;
 - exact diffuse MLE module coverage: 84.3%;
-- Black, isort, Ruff, mypy, strict MkDocs, distribution checks, and diagnostic
-  fixture regeneration passed;
-- final cross-platform completion is confirmed by the documentation-head CI.
+- exact diffuse filter coverage: 87.8%;
+- exact integrated constructor coverage: 86.9%;
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
+  regeneration passed;
+- Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #20 is
+marked ready and merged.
 
 ## Files introduced or changed
 
