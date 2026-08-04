@@ -5,8 +5,10 @@ ordinary STARIMA, and multiplicative seasonal STARIMA modelling in Python. The
 current workflow covers spatial-weight construction, simulation, conditional
 and Gaussian Kalman maximum-likelihood estimation, conditional ordinary and
 multiplicative seasonal Kalman STARIMA, AR stationarity and positive-sign MA
-invertibility diagnostics, observed-likelihood Hessian inference, natural-scale
-innovation covariance inference, missing-observation filtering, fixed-interval
+invertibility diagnostics, observed-likelihood Hessian and natural-scale
+innovation covariance inference for stationary, conditional integrated,
+seasonal, and original-level exact diffuse likelihoods, missing-observation
+filtering, fixed-interval
 state smoothing, original location-level innovation disturbance smoothing,
 combined differencing, original-scale forecast reconstruction, fixed-parameter
 Gaussian Kalman forecast intervals, a separate exact diffuse filter and ordinary
@@ -84,8 +86,12 @@ print(exact_integrated_result.summary())
 print(exact_integrated_mle.predict(steps=6))
 exact_smoothed = exact_integrated_mle.smooth()
 exact_disturbances = exact_integrated_mle.smooth_innovation_disturbances()
+exact_inference = exact_integrated_mle.likelihood_inference()
+exact_natural = exact_inference.innovation_covariance_inference()
 print(exact_smoothed.smoothed_observations)
 print(exact_disturbances.innovation_mean)
+print(exact_inference.optimizer_table)
+print(exact_natural.table)
 
 seasonal_mle = SeasonalKalmanSTARIMA(
     ar_order=1,
@@ -153,8 +159,10 @@ smoothing](exact_diffuse_smoothing.md) documents the backward `r`, `r_inf`,
 [Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md)
 documents primitive innovation and state-equation disturbance posteriors from
 `Q R.T r_t` and `Q - Q R.T N_t R Q`, without fabricating diffuse lag-one
-autocovariance. The conditional `KalmanSTARIMA` likelihood remains a separate
-API.
+autocovariance. [Exact diffuse likelihood inference](exact_diffuse_inference.md)
+documents original-level finite-difference curvature, strict singular-Hessian
+handling, and natural covariance delta inference. The conditional
+`KalmanSTARIMA` likelihood remains a separate API.
 
 [Seasonal likelihood inference](seasonal_likelihood_inference.md) reuses the
 observed-information result contract for ordinary and seasonal factor

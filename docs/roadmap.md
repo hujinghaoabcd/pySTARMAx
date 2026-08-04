@@ -227,14 +227,36 @@
 - method guide, runnable example, navigation, README, status, and Step 22
   handoff.
 
+## Implemented in 0.0.23: exact diffuse likelihood inference
+
+- observed-information curvature of the original-level exact diffuse objective;
+- transformed STARMA, integrated state, covariance, and exact diffuse filter
+  reconstruction at every finite-difference candidate;
+- shared AR stationarity and positive-sign inverse-MA feasibility boundaries;
+- immutable Hessian, covariance, standard errors, Wald summaries, correlations,
+  rank, eigenvalues, score, steps, and condition diagnostics;
+- strict full-rank positive-definite Hessian policy by default;
+- explicitly labelled positive-eigenspace generalized inverse diagnostics;
+- scalar, diagonal, and full-Cholesky natural innovation covariance delta
+  inference with dynamic/covariance cross uncertainty;
+- scalar random-walk closed-form Hessian, optimizer covariance, and natural
+  variance standard-error references;
+- missing-data-aware candidate reconstruction;
+- fitted `ExactDiffuseKalmanSTARIMA.likelihood_inference()` and low-level
+  `infer_exact_diffuse_kalman_starima()`;
+- method guide, analytic example, navigation, README, status, and Step 23
+  handoff.
+
 ## Next priorities
 
-1. Exact diffuse observed-information and natural covariance inference.
+1. Forecast intervals for the exact diffuse estimator.
 2. Exact diffuse simulation smoothing.
-3. Seasonal ordinary-seasonal diffuse state augmentation and smoothing.
-4. Forecast intervals for the exact diffuse estimator.
-5. Research the nontrivial diffuse `L2` recursion required for lag-one state
+3. Seasonal ordinary-seasonal diffuse state augmentation, smoothing, and
+   inference.
+4. Research the nontrivial diffuse `L2` recursion required for lag-one state
    autocovariance and cross-time disturbance covariance.
+5. Robust, profile-likelihood, and parameter-uncertainty propagation for exact
+   diffuse inference.
 6. Parameter-aware paths, sparse state matrices, and cross-time innovation
    covariance.
 7. Smooth admissibility parameterization and automatic order selection.
