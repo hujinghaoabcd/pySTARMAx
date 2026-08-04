@@ -56,7 +56,6 @@ jobs:
 > exogenous regressors, and time-varying extensions remain planned.
 """,
           )
-
           replace(
               "docs/index.md",
               """simulation of complete latent state paths, a fixed-parameter seasonal exact diffuse
@@ -78,7 +77,6 @@ bootstrap intervals, and rolling-origin calibration diagnostics.
     rolling_origin_evaluate,
 """,
           )
-
           replace(
               "PROJECT_STATUS.md",
               """- PR #1 through PR #25 have been squash-merged into `main`.
@@ -118,8 +116,7 @@ bootstrap intervals, and rolling-origin calibration diagnostics.
           )
           replace(
               "PROJECT_STATUS.md",
-              """## Numerical and research safeguards
-""",
+              "## Numerical and research safeguards\n",
               """## Completed in 0.0.27
 
 ### Seasonal exact diffuse maximum likelihood
@@ -202,7 +199,6 @@ parameter-aware paths, or sparse execution.
 - `docs/exact_seasonal_integrated.md`;
 """,
           )
-
           replace(
               "docs/roadmap.md",
               """## Next priorities
@@ -258,7 +254,6 @@ parameter-aware paths, or sparse execution.
    models.
 """,
           )
-
           Path("docs/development/REMAINING_WORK.md").write_text(
               """# Remaining work inventory
 
