@@ -41,7 +41,11 @@ print(result.summary())
 print("Final diffuse rank:", result.filter_result.final_diffuse_rank)
 print("\nOriginal-level forecast interval")
 for horizon, (mean, lower, upper) in enumerate(
-    zip(original.mean[:, 0], original.lower[:, 0], original.upper[:, 0]),
+    zip(
+        original.mean[:, 0],
+        original.lower[:, 0],
+        original.upper[:, 0],
+    ),
     start=1,
 ):
     print(f"h={horizon:2d}: mean={mean: .4f}, [{lower: .4f}, {upper: .4f}]")
