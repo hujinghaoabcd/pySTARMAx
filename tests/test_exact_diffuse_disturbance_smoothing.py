@@ -145,14 +145,20 @@ def test_selection_null_space_retains_primitive_innovation_variance() -> None:
     unresolved_variance = 2.5
     model = StateSpaceModel(
         transition=np.array([[1.0]]),
-        design=np.array([[1.0]]),
+        design=np.array([[1.0], [0.0]]),
         selection=np.array([[1.0, 0.0]]),
         state_intercept=np.array([0.0]),
         innovation_covariance=np.diag([first_variance, unresolved_variance]),
         ar_order=1,
         ma_order=0,
     )
-    data = np.array([[0.0], [1.0], [3.0]])
+    data = np.array(
+        [
+            [0.0, np.nan],
+            [1.0, np.nan],
+            [3.0, np.nan],
+        ]
+    )
     result = exact_diffuse_disturbance_smoother(
         exact_diffuse_smoother(exact_diffuse_filter(data, model))
     )
