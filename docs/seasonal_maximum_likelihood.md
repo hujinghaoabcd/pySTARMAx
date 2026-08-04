@@ -311,6 +311,25 @@ For `K` spatial weights, the dynamic factor count is
 not the number of expanded temporal lags. Covariance parameters are added
 according to scalar, diagonal, or full Cholesky covariance type.
 
+## Observed-information inference
+
+```python
+inference = model.infer(
+    relative_step=1e-4,
+    absolute_step=1e-6,
+    rcond=1e-10,
+)
+```
+
+Version 0.0.17 reconstructs every finite-difference point through the complete
+factor expansion and arbitrary-lag state space. An enabled expanded
+stationarity/invertibility penalty point invalidates the stencil. The shared
+`LikelihoodInferenceResult` provides factor and optimizer tables, standard
+errors, intervals, score and Hessian diagnostics, and natural innovation
+covariance delta-method inference.
+
+See [Seasonal likelihood inference](seasonal_likelihood_inference.md).
+
 ## Validation references
 
 The implementation is checked through:
@@ -332,8 +351,8 @@ The implementation is checked through:
 
 - likelihood is conditional on the ordinary-seasonal transformation history,
   not exact diffuse on a level-state representation;
-- observed-information Hessian and covariance delta-method inference are not yet
-  exposed for the seasonal factor optimizer;
+- observed-information inference uses central finite differences and can be
+  expensive or step sensitive for large seasonal/full-covariance models;
 - original-scale forecast intervals are unavailable;
 - original-scale filtered and smoothed level-state distributions are not
   returned;

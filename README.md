@@ -9,15 +9,15 @@ spatial lag zero is the identity matrix, non-symmetric spatial weights retain
 their supplied orientation, missing observations are never silently imputed,
 and public numerical result arrays are immutable.
 
-> **Status — 0.0.16:** conditional and Gaussian Kalman maximum-likelihood
-> STARMA estimation, conditional ordinary and multiplicative seasonal Kalman
-> STARIMA, AR stationarity and positive-sign MA invertibility diagnostics,
-> observed-information and natural covariance inference for the stationary core,
-> missing-observation filtering, fixed-interval state and original innovation
-> smoothing, original-scale reconstruction, conditional/bootstrap intervals, and
-> rolling-origin evaluation. Exact diffuse integrated likelihood, seasonal-factor
-> Hessian inference, original-scale Kalman intervals, sparse computation,
-> exogenous regressors, and time-varying extensions remain planned.
+> **Status — 0.0.17:** stationary, ordinary-integrated, and
+> multiplicative seasonal Gaussian Kalman STARMA/STARIMA estimation;
+> expanded AR stationarity and positive-sign MA invertibility diagnostics;
+> observed-information Hessian inference for stationary and seasonal factor
+> models; natural innovation covariance delta-method inference; missing-data
+> filtering; RTS state and original innovation smoothing; original-scale
+> reconstruction; conditional/bootstrap intervals; and rolling evaluation.
+> Exact diffuse integrated likelihood, original-scale Kalman intervals, sparse
+> computation, exogenous regressors, and time-varying extensions remain planned.
 
 ## Installation
 
@@ -425,6 +425,22 @@ terminal anchors and seasonal histories.
 See [`docs/seasonal.md`](docs/seasonal.md) and
 [`docs/seasonal_maximum_likelihood.md`](docs/seasonal_maximum_likelihood.md).
 
+
+Seasonal factor observed-information inference is available directly:
+
+```python
+seasonal_inference = seasonal_mle.infer(relative_step=1e-4)
+print(seasonal_inference.coefficient_table)
+print(seasonal_inference.confidence_intervals())
+print(seasonal_inference.innovation_covariance_inference().element_table)
+```
+
+Every finite-difference point is reconstructed through the complete
+multiplicative matrix expansion. Points entering an enabled expanded
+stationarity or invertibility penalty region are rejected rather than treated
+as likelihood curvature. See
+[`docs/seasonal_likelihood_inference.md`](docs/seasonal_likelihood_inference.md).
+
 ## Forecast intervals and rolling evaluation
 
 Conditional future-innovation intervals:
@@ -519,7 +535,7 @@ coverage, pull request, and next-stage handoff.
 
 - `KalmanSTARIMA` uses a conditional differenced likelihood rather than exact
   diffuse integration on the level process;
-- seasonal-factor observed-information and natural covariance inference are not yet exposed;
+- seasonal likelihood-Hessian inference uses finite differences and can be costly or step sensitive;
 - original-scale ordinary and seasonal Kalman STARIMA forecast intervals are not yet exposed;
 - exact diffuse filtering and smoothing are unavailable;
 - state and innovation smoothing treat parameters as fixed;

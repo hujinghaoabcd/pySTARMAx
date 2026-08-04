@@ -11,19 +11,17 @@ cross-platform CI.
 
 ## Repository state
 
-- PR #1 through PR #15 have been squash-merged into `main`.
-- `main` is version `0.0.15` at merge commit
-  `6306da985ec760142f15cb113760ab58d758afae`.
-- Current branch: `agent/seasonal-kalman-starima`.
-- Current draft pull request: PR #16, `Add multiplicative seasonal Kalman
-  STARIMA`.
-- Current development version: `0.0.16`.
-- The current estimator fits ordinary and seasonal factor parameters by a
-  Gaussian Kalman likelihood on the combined transformed process.
-- Multiplicative cross-lag matrices are ordered products of factor matrices,
-  applied directly without projection onto the spatial-weight basis.
-- The likelihood remains conditional on the ordinary-seasonal transformation
-  history and is not presented as an exact diffuse level-state likelihood.
+- PR #1 through PR #16 have been squash-merged into `main`.
+- `main` is version `0.0.16` at merge commit
+  `7b1fe194abf710e8f929066eb2669dd6b5dc777e`.
+- Current branch: `agent/seasonal-likelihood-inference`.
+- Current draft pull request: PR #17, `Add seasonal likelihood-Hessian
+  inference`.
+- Current development version: `0.0.17`.
+- The branch adds observed-information inference for multiplicative ordinary and
+  seasonal factor parameters and covariance optimizer coordinates.
+- Every finite-difference stencil point reconstructs the complete expanded
+  recursion and rejects enabled stationarity/invertibility penalty regions.
 
 ## Completed baseline through 0.0.15
 
@@ -46,7 +44,7 @@ cross-platform CI.
 
 ## Completed in 0.0.16
 
-### Multiplicative factor model
+### Multiplicative seasonal Gaussian Kalman model
 
 For
 
@@ -86,138 +84,140 @@ Consequently:
 - ordinary and seasonal positive-sign MA terms are `+M_j` and `+N_u`;
 - MA cross terms are `+N_u @ M_j`.
 
-Matrix order is preserved for non-commuting spatial operators.
+Matrix order is preserved for non-commuting spatial operators. Multiplicative
+cross-lag matrices are applied directly and are not projected onto the supplied
+spatial-weight basis.
 
-### Arbitrary-lag state-space construction
+### Arbitrary-lag state space and admissibility
 
 - equal temporal lags from factor expansion are aggregated;
-- expanded matrices remain arbitrary location-by-location matrices;
-- no cross term is projected back onto `(W0, W1, ...)`;
-- dense zero blocks represent absent temporal lags up to the maximum lag;
-- the companion state includes observation histories and MA innovation
-  histories;
-- the current innovation enters the current observation block and, when needed,
-  the first innovation-history block;
-- transformed predictions, filtering, RTS smoothing, and original innovation
-  smoothing use this single state-space representation.
+- dense zero blocks represent absent temporal lags through the maximum lag;
+- the companion state contains observation and MA-innovation histories;
+- one state-space representation is reused for likelihood, filtering,
+  prediction, RTS smoothing, and original innovation smoothing;
+- AR stationarity is checked on the complete expanded AR companion;
+- positive-sign MA invertibility is checked on the inverse-recursion companion;
+- ordinary and seasonal factor starts are shrunk toward feasible regions;
+- infeasible optimizer candidates receive explicit penalties and final hard
+  checks.
 
-### Parameterization and information criteria
-
-For `K` spatial weights, dynamic factor count is
+For `K` spatial weights, the dynamic factor count is
 
 \[
 \mathbf 1_c+K(p+P+q+Q).
 \]
 
-Cross-lag matrices are deterministic functions of factor parameters and are not
-counted as independent AIC/BIC parameters. Covariance parameter counts follow
-the scalar, diagonal, or full Cholesky codec.
+Deterministic multiplicative cross matrices are not counted as independent
+AIC/BIC parameters.
 
-The result exposes:
+### Conditional likelihood and scale contract
 
-- optional intercept;
-- ordinary and seasonal AR/MA factor arrays;
-- raw optimizer parameters and names;
-- complete expanded AR/MA lags and matrices;
-- innovation covariance;
-- likelihood, AIC, BIC, finite observation count, and optimizer diagnostics;
-- expanded AR and inverse-MA spectral radii and configured limits;
-- original/transformed row and missing-cell counts;
-- original-scale forecast availability and the training filter result.
-
-### Expanded admissibility
-
-- AR stationarity uses the companion of the complete expanded AR recursion;
-- MA invertibility uses the companion whose top row contains the negatives of
-  the complete expanded positive-sign MA matrices;
-- ordinary and seasonal AR factor starts are shrunk together when necessary;
-- ordinary and seasonal MA factor starts are shrunk together independently;
-- infeasible optimizer candidates receive explicit penalties;
-- final candidates are checked again before a result is accepted;
-- `SeasonalKalmanAdmissibility` preserves expanded lags, matrices, radii,
-  limits, and joint status.
-
-### Conditional transformation likelihood
-
-The combined offset is
+The combined transformation offset is
 
 \[
 o=d+Ds.
 \]
 
-The evaluated likelihood is
+The evaluated likelihood is conditional on the removed ordinary and seasonal
+history. Approximate diffuse initialization applies to the stationary expanded
+transformed state; it is not an exact diffuse likelihood for the original level
+process.
 
-\[
-\ell_c(\vartheta;y_{1:T})
-=
-\ell\left(
-\vartheta;(1-B)^d(1-B^s)^D y_{o+1:T}
-\mid\mathcal H_o
-\right).
-\]
+Missing level cells are never imputed. `NaN` propagates through ordinary and
+seasonal differencing stencils. Filtering and smoothing operate on the combined
+transformed scale. Original-scale forecasts reverse seasonal histories first
+and ordinary anchors second, and are refused when required terminal histories
+are non-finite.
 
-The removed ordinary and seasonal history is conditioned on. Approximate
-diffuse initialization applies only to the stationary expanded state and does
-not convert the method into an exact diffuse level-state likelihood.
+## Completed in 0.0.17
 
-### Missing observations and scale boundaries
+### Seasonal observed-information inference
 
-- level observations are never imputed before transformation;
-- `NaN` propagates through ordinary and seasonal difference stencils;
-- transformed finite locations participate in measurement updates;
-- fully missing transformed rows perform prediction only;
-- both original and transformed missing-cell counts are retained;
-- new level matrices are transformed before filtering and smoothing;
-- `filter()`, `smooth()`, `smooth_innovation_disturbances()`,
-  `to_state_space()`, `predict_differenced()`, and `fitted_differenced()` remain
-  on the combined transformed scale;
-- `predict()` reverses seasonal histories first and ordinary anchors second;
-- `fitted_original()` uses the complete combined differencing polynomial and
-  observed lag history;
-- original-scale prediction is refused when any required ordinary anchor or
-  seasonal history is non-finite.
+- added `infer_seasonal_kalman_starima()`;
+- added `SeasonalKalmanSTARIMA.infer()`;
+- reused the central finite-difference curvature engine and immutable
+  `LikelihoodInferenceResult` contract;
+- evaluates central score differences, diagonal second differences, and
+  four-corner mixed partials on the raw optimizer scale;
+- reconstructs the optional intercept, ordinary/seasonal AR and MA factors,
+  innovation covariance, multiplicative matrix expansion, arbitrary-lag state
+  space, and Gaussian likelihood at every objective point;
+- rejects stencil points that enter enabled expanded AR-stationarity or
+  MA-invertibility penalty regions rather than differentiating the penalty;
+- reports factor-only and complete optimizer tables, standard errors, normal
+  statistics, p-values, confidence intervals, correlation, score, finite-
+  difference steps, Hessian eigenvalues, rank, condition number, objective
+  value, evaluation count, and admissibility-boundary distances;
+- requires positive-definite full-rank observed information by default;
+- permits an explicit positive-eigenspace generalized inverse only through
+  `allow_singular=True` and records `used_pseudoinverse=True`;
+- reuses scalar, diagonal, and full-Cholesky natural innovation-covariance delta
+  inference;
+- preserves ordinary/seasonal factor-to-natural-covariance cross uncertainty.
 
-### Validation references
+### Public result contract
+
+The seasonal estimator returns the same `LikelihoodInferenceResult` used by
+stationary Kalman STARMA. Natural covariance inference is obtained with
+
+```python
+natural = inference.innovation_covariance_inference()
+```
+
+The public natural-result accessors are `parameter_names`, `estimates`, `table`,
+`confidence_intervals()`, covariance/standard-error arrays, and
+`dynamic_cross_covariance`. Lower-level element metadata remains on
+`natural.transform`.
+
+### Validation coverage
 
 Tests cover:
 
-1. exact zero-seasonal-order equivalence with `KalmanSTARMA` under identical
-   starts;
-2. direct AR and MA multiplicative cross-lag signs;
-3. pure seasonal AR estimation and complete companion admissibility;
-4. seasonal random-walk cycle reconstruction;
-5. seasonal missing-value propagation and finite likelihood counts;
-6. transformed forecasts with refusal of original forecasts when terminal
-   seasonal history is incomplete;
-7. combined ordinary-seasonal new-data filter, smoother, and innovation lengths;
-8. original fitted alignment using the complete combined lag polynomial;
-9. constructor, sample-offset, dimensionality, infinity, and fitted-state
-   validation.
+1. exact zero-seasonal-order inference equivalence with `KalmanSTARMA` under
+   identical observations, starts, and finite-difference settings;
+2. full-rank pure seasonal AR curvature;
+3. equality between `.infer()` and `infer_seasonal_kalman_starima()`;
+4. natural scalar innovation-variance inference and factor/covariance cross
+   covariance;
+5. direct expanded non-stationary objective penalty verification;
+6. strict singular-Hessian rejection and explicit finite positive-eigenspace
+   generalized inverse;
+7. fitted-state, rank-threshold, and finite-difference-step validation;
+8. the complete inherited package test suite.
 
-## Authoritative validation for 0.0.16
+## Authoritative validation for 0.0.17
 
-GitHub Actions CI #360, run ID `30858747303`, validated the complete
-implementation and documentation head:
+GitHub Actions CI #386, run ID `30876026103`, validated the complete
+implementation, tests, example, metadata, and documentation head:
 
-- 143 tests passed in the coverage job;
-- total branch coverage was 87.04%, above the required 80%;
-- `src/pystarmax/seasonal_maximum_likelihood.py` coverage was 87.6%;
+- 148 tests passed in the coverage job;
+- total branch coverage was 87.14%, above the required 80%;
+- `src/pystarmax/seasonal_likelihood_inference.py` coverage was 93.5%;
+- `src/pystarmax/seasonal_maximum_likelihood.py` coverage remained 87.6%;
 - Black, isort, Ruff, and mypy passed;
 - independent diagnostic-reference regeneration produced a clean diff;
 - strict MkDocs passed;
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A final validation-record-only merge-gate CI is run after this status and the
-Step 16 handoff are updated. No implementation, test, API, example, or method
-document changes are made after CI #360.
+A validation-record-only merge-gate CI is required after this status and the
+Step 17 handoff are updated. No implementation, test, API, example, or method
+changes are made after CI #386.
+
+## Prior validation for 0.0.16
+
+GitHub Actions CI #360, run ID `30858747303`, reported 143 passing tests,
+87.04% total branch coverage, 87.6% coverage for the seasonal Kalman module, and
+successful quality, strict documentation, packaging, and Ubuntu/Windows/macOS
+Python 3.11–3.14 checks. Validation-record-only CI #363 also passed before PR
+#16 was squash-merged.
 
 ## Design principles
 
 1. Keep conditional least-squares and Gaussian maximum-likelihood estimators
    separate and explicit.
-2. Distinguish conditional transformed likelihoods from exact diffuse level-state
-   likelihoods.
+2. Distinguish conditional transformed likelihoods from exact diffuse
+   level-state likelihoods.
 3. Optimize and count multiplicative factor parameters, not deterministic
    expanded cross terms.
 4. Preserve ordered matrix products and non-symmetric spatial orientation.
@@ -230,23 +230,25 @@ document changes are made after CI #360.
 9. Use the positive MA sign consistently in inverse-recursion diagnostics.
 10. Treat spectral-radius penalties as feasibility controls, not smooth
     parameterizations.
-11. Use stable solves before explicit inverses and expose pseudoinverse use.
-12. Distinguish state disturbances from original location innovations.
-13. Preserve innovation uncertainty not identified by the state selection map.
-14. Require analytic or independent Gaussian references for numerical claims.
-15. Keep public numerical arrays immutable.
+11. Do not interpret finite-difference penalty curvature as likelihood
+    information.
+12. Require positive-definite full-rank observed information by default and
+    label diagnostic pseudoinverses explicitly.
+13. Use stable solves before explicit inverses and expose pseudoinverse use.
+14. Distinguish state disturbances from original location innovations.
+15. Preserve innovation uncertainty not identified by the state selection map.
+16. Require analytic or independent Gaussian references for numerical claims.
+17. Keep public numerical arrays immutable.
 
 ## Immediate next tasks
 
 1. Run the validation-record-only merge-gate CI.
-2. Update PR #16, mark it ready, and squash-merge it into `main`.
-3. Add observed-information and natural covariance inference for seasonal factor
-   parameters.
-4. Add original-scale Gaussian forecast intervals for ordinary and seasonal
+2. Update PR #17, mark it ready, and squash-merge it into `main`.
+3. Add original-scale Gaussian forecast intervals for ordinary and seasonal
    Kalman STARIMA.
-5. Design exact diffuse integrated level-state likelihood and smoothing as a
+4. Design exact diffuse integrated level-state likelihood and smoothing as a
    separate API.
-6. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
+5. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
    simulation smoothing, order selection, exogenous inputs, adapters, and
    cross-language fixtures.
 
@@ -254,30 +256,33 @@ document changes are made after CI #360.
 
 - ordinary and seasonal Kalman STARIMA likelihoods are conditional on
   transformation history, not exact diffuse on the level process;
-- seasonal-factor observed-information and natural covariance inference are not
-  yet exposed;
+- central finite-difference inference requires `1 + 2*k**2` objective
+  evaluations for `k` optimizer coordinates;
+- inference can be sensitive to step size in flat, highly curved, or
+  near-boundary likelihood directions;
+- feasibility uses penalties rather than a smooth constrained
+  parameterization;
+- robust, sandwich, profile-likelihood, likelihood-ratio, and Kalman bootstrap
+  inference are unavailable;
 - original-scale Kalman STARIMA forecast intervals are unavailable;
 - original-scale filtered and smoothed level-state distributions are not
   returned;
 - state and innovation smoothing treat parameters as fixed;
-- innovation smoothing exposes marginal covariance by transition, not cross-time
-  covariance;
+- innovation smoothing exposes marginal covariance by transition, not
+  cross-time covariance;
 - exact diffuse filtering and smoothing are unavailable;
 - simulation smoothing is unavailable;
-- feasibility uses penalties rather than a smooth bijection;
 - dense arbitrary-lag companions can grow rapidly with seasonal period/order and
   spatial dimension;
-- robust, sandwich, profile-likelihood, likelihood-ratio, and Kalman bootstrap
-  inference are unavailable;
 - exogenous regressors and intervention variables are unsupported.
 
 ## Handoff instruction
 
 Before the next substantial step, read this file, `docs/model.md`,
 `docs/starima.md`, `docs/integrated_maximum_likelihood.md`, `docs/seasonal.md`,
-`docs/seasonal_maximum_likelihood.md`, `docs/admissibility.md`,
-`docs/state_space.md`, `docs/smoothing.md`, `docs/innovation_smoothing.md`,
-`docs/maximum_likelihood.md`, `docs/likelihood_inference.md`,
-`docs/covariance_inference.md`, and the latest development handoff. Update
-repository state, validation, next tasks, and limitations after every completed
-stage.
+`docs/seasonal_maximum_likelihood.md`, `docs/seasonal_likelihood_inference.md`,
+`docs/admissibility.md`, `docs/state_space.md`, `docs/smoothing.md`,
+`docs/innovation_smoothing.md`, `docs/maximum_likelihood.md`,
+`docs/likelihood_inference.md`, `docs/covariance_inference.md`, and the latest
+development handoff. Update repository state, validation, next tasks, and
+limitations after every completed stage.

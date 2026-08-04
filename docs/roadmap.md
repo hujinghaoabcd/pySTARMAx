@@ -111,11 +111,30 @@
 - method guide, runnable example, navigation, README, status, and Step 16
   handoff.
 
+## Implemented in 0.0.17: seasonal likelihood-Hessian inference
+
+- package-root seasonal inference facade and low-level
+  `infer_seasonal_kalman_starima()`;
+- central finite-difference score and observed-information Hessian for ordinary
+  and seasonal factor parameters plus covariance optimizer coordinates;
+- objective reconstruction through the complete multiplicative matrix expansion
+  and arbitrary-lag state space at every stencil point;
+- rejection of expanded AR-stationarity and positive-sign MA-invertibility
+  penalty points;
+- shared immutable coefficient/optimizer tables, covariance, standard errors,
+  normal tests, intervals, correlation, score, rank, eigenvalue, condition, and
+  boundary diagnostics;
+- strict full-rank positive-definite Hessian policy and explicit diagnostic
+  positive-eigenspace generalized inverse;
+- scalar, diagonal, and full natural innovation covariance delta-method inference
+  with seasonal factor/covariance cross uncertainty;
+- zero-seasonal equivalence, pure seasonal factor, penalty, singular-Hessian,
+  and validation tests;
+- method guide, example, navigation, README, status, and Step 17 handoff.
+
 ## Next priorities
 
-1. Observed-information Hessian and natural innovation covariance inference for
-   `SeasonalKalmanSTARIMA` factor parameters.
-2. Original-scale Gaussian forecast intervals for ordinary and seasonal Kalman
+1. Original-scale Gaussian forecast intervals for ordinary and seasonal Kalman
    STARIMA, with pathwise inverse differencing before quantiles.
 3. Exact diffuse integrated level-state likelihood and smoothing as a separate
    API from the conditional transformed likelihoods.

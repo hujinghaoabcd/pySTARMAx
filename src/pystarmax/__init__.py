@@ -7,7 +7,7 @@ from __future__ import annotations
 
 __author__ = "Jinghao Hu"
 __license__ = "MIT"
-__version__ = "0.0.16"
+__version__ = "0.0.17"
 
 from pystarmax.admissibility import (
     PolynomialAdmissibility,
@@ -76,9 +76,12 @@ from pystarmax.maximum_likelihood import (
 from pystarmax.models import STAR, STARIMA, STARMA, SeasonalSTARIMA
 from pystarmax.results import STARMAResult
 from pystarmax.seasonal import LagOperator, expand_multiplicative_operators
+from pystarmax.seasonal_likelihood_inference import (
+    SeasonalKalmanSTARIMA,
+    infer_seasonal_kalman_starima,
+)
 from pystarmax.seasonal_maximum_likelihood import (
     SeasonalKalmanAdmissibility,
-    SeasonalKalmanSTARIMA,
     SeasonalKalmanSTARIMAResult,
 )
 from pystarmax.simulation import (
@@ -152,6 +155,7 @@ __all__ = [
     "finite_difference_curvature",
     "finite_difference_hessian",
     "infer_kalman_starma",
+    "infer_seasonal_kalman_starima",
     "innovation_covariance_transform",
     "innovation_covariance_delta_inference",
     "delta_method_covariance",

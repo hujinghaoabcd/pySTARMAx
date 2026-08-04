@@ -12,6 +12,7 @@ nav:
   - Conditional Kalman STARIMA: integrated_maximum_likelihood.md
   - Seasonal STARIMA: seasonal.md
   - Seasonal Kalman STARIMA: seasonal_maximum_likelihood.md
+  - Seasonal likelihood inference: seasonal_likelihood_inference.md
   - State-space filtering: state_space.md
   - Fixed-interval smoothing: smoothing.md
   - Original innovation smoothing: innovation_smoothing.md
