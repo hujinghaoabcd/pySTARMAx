@@ -7,10 +7,13 @@
 - pull request: PR #18, `Add original-scale Kalman forecast intervals`;
 - base: version 0.0.17 on `main` at merge commit
   `d62cadf210c223d3da62e87dbc9ea82c2b1a7803`;
-- core validation: GitHub Actions CI #394, run ID `30877591713`;
-- core result: 155 tests passed and 87.09% total branch coverage;
+- authoritative implementation/documentation validation: GitHub Actions CI
+  #403, run ID `30878184542`;
+- validation result: 155 tests passed and 87.09% total branch coverage;
 - `src/pystarmax/kalman_forecasting.py` coverage: 80.2%;
-- a complete final documentation-head CI is required before merge.
+- Black, isort, Ruff, mypy, strict MkDocs, distributions, and Ubuntu/Windows/
+  macOS Python 3.11–3.14 all passed;
+- a validation-record-only merge-gate CI is required before merge.
 
 ## Delivered API
 
@@ -177,9 +180,9 @@ Tests include:
 8. steps, level, simulation count, covariance, shape, and type validation;
 9. the complete inherited package test suite.
 
-Core CI #394 reported:
+Authoritative CI #403 reported:
 
-- 155 tests passed in 63.51 seconds;
+- 155 tests passed in 36.77 seconds in the coverage job;
 - total branch coverage: 87.09%;
 - Kalman forecast module coverage: 80.2%;
 - ordinary integrated core coverage: 84.3%;
@@ -187,6 +190,10 @@ Core CI #394 reported:
 - Black, isort, Ruff, mypy, strict MkDocs, distributions, and diagnostic fixture
   regeneration passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
+
+The validation-record-only head changes only this handoff and
+`PROJECT_STATUS.md`. It receives one final merge-gate CI before PR #18 is
+marked ready and merged.
 
 ## Files introduced or changed
 

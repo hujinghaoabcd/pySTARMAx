@@ -286,10 +286,11 @@ Tests cover:
 8. steps, level, simulation count, covariance, shape, and type validation;
 9. the complete inherited package test suite.
 
-## Core validation for 0.0.18
+## Authoritative validation for 0.0.18
 
-GitHub Actions CI #394, run ID `30877591713`, validated the numerical core and
-current documentation head before the final project-status synchronization:
+GitHub Actions CI #403, run ID `30878184542`, validated the complete
+implementation, tests, example, metadata, README, method guides, navigation,
+roadmap, project status, and Step 18 documentation head:
 
 - 155 tests passed in the coverage job;
 - total branch coverage was 87.09%, above the required 80%;
@@ -302,9 +303,9 @@ current documentation head before the final project-status synchronization:
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11, 3.12, 3.13, and 3.14.
 
-A complete final documentation-head CI is required after README, method guides,
-status, and Step 18 are synchronized. The authoritative final run must be
-recorded before merge.
+A validation-record-only merge-gate CI is required after this status and the
+Step 18 handoff are updated. No implementation, test, API, example, README, or
+method-guide changes are made after CI #403.
 
 ## Prior validation for 0.0.17
 
@@ -347,15 +348,13 @@ Python 3.11–3.14 checks. Validation-record-only CI #388 also passed before PR
 
 ## Immediate next tasks
 
-1. Run the complete final CI matrix on the documentation head.
-2. Record the final run identifier, test count, and coverage in this status and
-   the Step 18 handoff.
-3. Update PR #18, mark it ready, and squash-merge it into `main`.
-4. Design exact diffuse integrated level-state likelihood and smoothing as a
+1. Run the validation-record-only merge-gate CI.
+2. Update PR #18, mark it ready, and squash-merge it into `main`.
+3. Design exact diffuse integrated level-state likelihood and smoothing as a
    separate API.
-5. Add parameter-aware Kalman paths using constrained observed-information or
+4. Add parameter-aware Kalman paths using constrained observed-information or
    model-refitting bootstrap draws.
-6. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
+5. Add sparse arbitrary-lag state matrices, cross-time innovation covariance,
    simulation smoothing, order selection, exogenous inputs, adapters, and
    cross-language fixtures.
 
