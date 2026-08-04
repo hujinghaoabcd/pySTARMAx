@@ -3,10 +3,11 @@
 pySTARMAx is a typed Python toolkit for classical and extended space-time
 autoregressive moving-average modelling.
 
-Version 0.0.28 supports stationary, integrated, multiplicative seasonal, and
+Version 0.0.29 supports stationary, integrated, multiplicative seasonal, and
 original-level exact-diffuse workflows, including optimizer-facing seasonal
-exact-diffuse maximum likelihood plus fixed-interval state and primitive
-innovation/state-disturbance smoothing for
+exact-diffuse maximum likelihood, fixed-interval state and disturbance
+smoothing, observed-information inference, and natural innovation-covariance
+inference for
 
 \[
 (1-B)^d(1-B^s)^D y_t.
@@ -100,23 +101,30 @@ seasonal original-level exact-diffuse state, and evaluates the exact-diffuse
 likelihood. Expanded cross-lag matrices are deterministic and do not add free
 AIC/BIC parameters.
 
-Version 0.0.28 adds fitted posterior routes:
+The fitted posterior and uncertainty routes are:
 
 ```python
 smoothed = model.smooth()
 disturbances = model.smooth_innovation_disturbances()
+inference = model.likelihood_inference()
+natural_covariance = inference.innovation_covariance_inference()
 ```
 
-The state route returns original-level state and observation posterior
-marginals. The disturbance route returns primitive innovations and their
-state-equation images using the complete seasonal selection matrix. Passing new
-data starts a fresh exact-diffuse initialization under the fitted parameters.
+The smoother routes use the generic exact-diffuse backward information
+recursions and the complete seasonal augmented-state selection matrix.
+
+The inference route rebuilds the factor expansion, transformed state, seasonal
+exact-diffuse state, and original-level exact filter at every finite-difference
+candidate. Its Hessian therefore uses the same likelihood scope as fitting.
+Expanded cross lags remain deterministic rather than becoming extra inference
+parameters.
 
 See:
 
 - [Seasonal exact diffuse integration](exact_seasonal_integrated.md)
 - [Seasonal exact diffuse MLE](seasonal_exact_diffuse_mle.md)
 - [Seasonal exact diffuse smoothing](seasonal_exact_diffuse_smoothing.md)
+- [Seasonal exact diffuse inference](seasonal_exact_diffuse_inference.md)
 
 ## Diagnostics and uncertainty
 
@@ -125,9 +133,10 @@ The package includes:
 - STACF and STPACF diagnostics;
 - space-time portmanteau testing;
 - AR stationarity and inverse-MA invertibility diagnostics;
-- finite-difference observed-information inference;
+- stationary, conditional-integrated, conditional-seasonal, ordinary exact-
+  diffuse, and seasonal exact-diffuse observed-information inference;
 - natural innovation-covariance delta-method inference;
-- Gaussian, bootstrap, and exact-diffuse interval workflows;
+- Gaussian, bootstrap, and ordinary exact-diffuse interval workflows;
 - rolling-origin calibration evaluation.
 
 See [Diagnostics](diagnostics.md), [Likelihood inference](likelihood_inference.md),
@@ -136,7 +145,8 @@ See [Diagnostics](diagnostics.md), [Likelihood inference](likelihood_inference.m
 
 ## Likelihood scope
 
-Do not combine AIC or BIC from different likelihood conventions:
+Do not combine likelihoods, AIC, BIC, Hessians, or covariance estimates from
+different likelihood conventions:
 
 - conditional transformed-data estimators remove or condition on differencing
   history;
@@ -147,16 +157,15 @@ This boundary is part of the public API and test suite.
 
 ## Validation status
 
-The 0.0.28 implementation is validated by 238 tests with 87.16% total branch
-coverage. The fitted smoothing facade is fully covered, and the seasonal
-exact-diffuse MLE module reaches 83.9% branch coverage. CI covers Ubuntu,
-Windows, and macOS on Python 3.11–3.14, strict MkDocs, formatting, linting,
-typing, reference regeneration, and package builds.
+Version 0.0.29 adds closed-form seasonal-random-walk information, natural scalar-
+variance delta-method inference, ordinary exact-diffuse reduction, missing-data
+curvature, full-Cholesky covariance transformation, singular-Hessian policy, and
+public API tests.
 
-Independent references include a period-two seasonal random-walk bridge,
-primitive innovation posterior moments, multivariate partial observations,
-fresh-data diffuse initialization, and exact reduction to ordinary
-exact-diffuse smoothing when seasonal orders are zero.
+The final synchronized test count and coverage are recorded in
+`PROJECT_STATUS.md` and the Step 29 handoff. CI covers Ubuntu, Windows, and macOS
+on Python 3.11–3.14, strict MkDocs, formatting, linting, typing, reference
+regeneration, and package builds.
 
 ## Development
 
