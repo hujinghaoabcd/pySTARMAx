@@ -68,8 +68,7 @@ def main() -> None:
     print(paths.maximum_mean_discrepancy)
 
     seasonal_difference = (
-        paths.observation_paths[:, 4:, 0]
-        - paths.observation_paths[:, :-4, 0]
+        paths.observation_paths[:, 4:, 0] - paths.observation_paths[:, :-4, 0]
     )
     np.testing.assert_allclose(
         paths.transformed_observation_paths[:, 4:, 0],
