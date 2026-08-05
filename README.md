@@ -13,10 +13,12 @@ The package keeps its numerical contracts explicit:
 - public numerical result arrays are immutable;
 - conditional and original-level exact-diffuse likelihoods remain separate.
 
-> **Status — 0.0.31:** stationary, ordinary-integrated, multiplicative seasonal,
+> **Status — 0.0.32:** stationary, ordinary-integrated, multiplicative seasonal,
 > and original-level exact-diffuse STARMA/STARIMA workflows are available.
-> Version 0.0.31 adds seasonal exact-diffuse conditional simulation smoothing
-> for complete augmented paths and their transformed-state projections.
+> Version 0.0.32 adds an exact dense reference for adjacent-time smoothed state
+> covariance during genuine diffuse phases, with ordinary and seasonal fitted
+> facades and independent closed-form, RTS, disturbance, and conditional-path
+> validation.
 
 ## Installation
 
@@ -120,11 +122,89 @@ large variance. Ordinary exact-diffuse posterior operations include:
 
 ```python
 exact.smooth()
+exact.smooth_lag_one_covariance()
 exact.smooth_innovation_disturbances()
 exact.likelihood_inference()
 exact.predict_interval(steps=6, n_simulations=5000, random_state=42)
-exact.simulation_smoother(n_simulations=1000, random_state=42)
+exact.simulate_smoothing_paths(n_simulations=1000, random_state=42)
 ```
+
+## Exact-diffuse lag-one covariance
+
+Version 0.0.32 evaluates
+
+\[
+C_t=
+\operatorname{Cov}(\alpha_t,\alpha_{t+1}\mid Y_{1:T})
+\]
+
+with the same left-time/right-time orientation as the ordinary RTS smoother:
+
+```python
+moments = exact.smooth_lag_one_covariance()
+moments.lag_one_covariance
+moments.observation_lag_one_covariance
+moments.state_disturbance_mean
+moments.state_disturbance_covariance
+```
+
+The functional API is:
+
+```python
+from pystarmax import exact_diffuse_lag_one_covariance
+
+moments = exact_diffuse_lag_one_covariance(filter_result)
+```
+
+The complete state path is represented as
+
+\[
+\alpha=b+D\delta+G\xi,
+\]
+
+where `delta` contains flat diffuse coordinates and `xi` contains proper
+standard-normal coordinates. Exact observations impose
+
+\[
+A\delta+B\xi=c.
+\]
+
+After analytic elimination of the identified diffuse coordinates and exact
+conditioning of the proper source vector, a posterior path loading `H` is
+obtained. Adjacent covariance is then
+
+\[
+C_t=H_tH_{t+1}^{\mathsf T}.
+\]
+
+This is an analytic dense calculation, not a Monte Carlo covariance estimate.
+It does not substitute a large finite covariance for diffuse directions.
+Conditional simulation is used only as an independent verification route.
+
+The result reconstructs state-disturbance covariance through
+
+\[
+P_{t+1}+TP_tT^{\mathsf T}
+-C_t^{\mathsf T}T^{\mathsf T}
+-TC_t
+\]
+
+and compares it with the separate information-form exact disturbance smoother.
+This check detects time-index and orientation errors, including for
+non-symmetric transitions.
+
+The method requires:
+
+```python
+moments.filter_result.final_diffuse_rank == 0
+```
+
+because unresolved diffuse directions do not define a proper finite posterior
+source distribution.
+
+The implementation materializes complete path loadings and dense constraints.
+It is a transparent moderate-sample numerical reference and an oracle for a
+future memory-linear diffuse `L2` recursion.
 
 ## Seasonal exact-diffuse STARIMA
 
@@ -171,6 +251,7 @@ The fitted model exposes:
 seasonal_exact.predict_differenced(steps=12)
 seasonal_exact.predict(steps=12)
 seasonal_exact.smooth()
+seasonal_exact.smooth_lag_one_covariance()
 seasonal_exact.smooth_innovation_disturbances()
 seasonal_exact.likelihood_inference()
 seasonal_exact.simulate_smoothing_paths(
@@ -178,6 +259,11 @@ seasonal_exact.simulate_smoothing_paths(
     random_state=42,
 )
 ```
+
+For seasonal models, `lag_one_covariance` describes the complete augmented
+state, including inverse-differencing companion blocks and the stationary
+transformed-state block. The same generic exact dense routine is used; no
+competing seasonal covariance convention is introduced.
 
 ## Seasonal exact-diffuse conditional simulation smoothing
 
@@ -196,10 +282,8 @@ paths.transformed_state_paths
 paths.transformed_observation_paths
 ```
 
-The method reuses the generic exact-diffuse source-conditioning algorithm. It
-represents the full path as a linear function of initial diffuse coordinates,
-proper finite initial coordinates, and future primitive innovations. Observed
-cells are imposed as exact linear constraints; diffuse coordinates are
+The method reuses the generic exact-diffuse source-conditioning algorithm.
+Observed cells are exact linear constraints and diffuse coordinates are
 eliminated analytically before the proper Gaussian source vector is sampled.
 
 The transformed state starts at block offset
@@ -208,19 +292,9 @@ The transformed state starts at block offset
 (d+Ds)n_{\mathrm{locations}}.
 \]
 
-`transformed_state_paths` and `transformed_observation_paths` are direct
-projections of the same complete conditional draws. No second seasonal smoother
-and no finite large-variance approximation are introduced.
-
-Every finite original observation is reproduced for every simulation up to
-numerical tolerance. Missing cells are sampled jointly. The method requires
-
-```python
-paths.filter_result.final_diffuse_rank == 0
-```
-
-because unresolved diffuse directions do not define a proper conditional
-Gaussian distribution.
+The transformed arrays are direct projections of the same complete conditional
+draws. Every finite original observation is reproduced up to numerical
+tolerance, while missing cells are sampled jointly.
 
 Passing new data starts a fresh exact-diffuse initialization under the fitted
 parameters:
@@ -235,7 +309,7 @@ new_paths = seasonal_exact.simulate_smoothing_paths(
 
 ## Seasonal exact-diffuse forecast paths and intervals
 
-Version 0.0.30 added fixed-parameter paths and intervals on both scales:
+Fixed-parameter paths and intervals are available on both scales:
 
 ```python
 original_paths = seasonal_exact.simulate_forecast_paths(
@@ -264,9 +338,8 @@ transformed_interval = seasonal_exact.predict_differenced_interval(
 
 The complete augmented seasonal state is simulated from the terminal filtered
 posterior. Each replication restores ordinary and seasonal levels before
-original-level quantiles are computed. Forecasting also requires a resolved
-terminal diffuse rank. Intervals include terminal state and future fitted
-innovation uncertainty, but not fitted-parameter uncertainty.
+original-level quantiles are computed. Intervals include terminal state and
+future fitted innovation uncertainty, but not fitted-parameter uncertainty.
 
 ## Multiplicative seasonal convention
 
@@ -305,25 +378,30 @@ The package includes:
 - Gaussian, bootstrap, ordinary exact-diffuse, and seasonal exact-diffuse
   interval workflows;
 - ordinary and seasonal exact-diffuse conditional path simulation;
+- exact dense adjacent-time covariance for ordinary and seasonal augmented
+  states;
 - rolling-origin evaluation and interval scoring.
 
 ## Validation
 
-The 0.0.31 suite independently checks:
+The 0.0.32 implementation suite independently checks:
 
-- period-two seasonal-random-walk conditional bridge means and variances;
-- exact reproduction of every observed original-level cell;
-- pathwise seasonal-difference identities;
-- partially observed multivariate locations;
-- exact reduction to the ordinary exact-diffuse simulation smoother when
-  seasonal integration is zero;
-- fitted training-data reuse and new-data reinitialization;
-- unresolved diffuse-rank and mismatched-state rejection;
-- immutable complete and transformed results;
-- public exports and version metadata.
+- a genuine diffuse local-level closed-form adjacent covariance;
+- exact reduction to ordinary RTS lag-one covariance when diffuse covariance is
+  zero;
+- non-symmetric transition orientation and partial observations;
+- conditional-path Monte Carlo adjacent cross-covariance;
+- seasonal augmented-state path cross-covariance;
+- state-disturbance covariance reconstructed from adjacent moments against an
+  independent information-form smoother;
+- ordinary and seasonal fitted training-data reuse and new-data
+  reinitialization;
+- one-time-point empty-transition results;
+- unresolved diffuse-rank rejection, validation, immutability, and public
+  exports.
 
-Implementation CI #644 passed 259 tests with 87.31% total branch coverage. The
-new seasonal simulation-smoothing module has 88.8% branch coverage. CI covers
+Authoritative implementation CI #660 passed 266 tests with 87.40% total branch
+coverage. The new lag-one covariance module has 89.7% branch coverage. CI covers
 Ubuntu, Windows, and macOS on Python 3.11–3.14, formatting, linting, typing,
 strict MkDocs, reference regeneration, package builds, and Twine checks.
 
@@ -336,8 +414,8 @@ python -m mkdocs serve
 ```
 
 Dedicated guides cover filtering, estimation, smoothing, inference,
-forecasting, simulation smoothing, diagnostics, evaluation, and development
-handoffs.
+forecasting, simulation smoothing, adjacent-time covariance, diagnostics,
+evaluation, and development handoffs.
 
 ## License and citation
 
