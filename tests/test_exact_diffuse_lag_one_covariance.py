@@ -110,6 +110,9 @@ def test_diffuse_random_walk_final_anchor_has_closed_form_lag_covariance() -> No
         variance,
         atol=1e-12,
     )
+    assert not result.lag_one_covariance.flags.writeable
+    with pytest.raises(ValueError):
+        result.lag_one_covariance[0, 0, 0] = 0.0
     assert result.diffuse_rank == 1
     assert result.maximum_mean_discrepancy < 1e-12
     assert result.maximum_marginal_covariance_discrepancy < 1e-12
@@ -291,8 +294,6 @@ def test_single_observation_empty_transition_contract_and_immutability() -> None
     assert result.state_disturbance_covariance.shape == (0, 1, 1)
     assert not result.lag_one_covariance.flags.writeable
     assert not result.state_disturbance_covariance.flags.writeable
-    with pytest.raises(ValueError):
-        result.lag_one_covariance.setflags(write=True)
 
 
 def test_unresolved_diffuse_rank_and_invalid_arguments_are_rejected() -> None:
