@@ -1,0 +1,34 @@
+name: Apply seasonal simulation Black formatting
+
+on:
+  push:
+    branches:
+      - agent/seasonal-exact-diffuse-simulation-smoothing
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/seasonal-exact-diffuse-simulation-smoothing
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install black==26.5.1
+      - run: >-
+          python -m black
+          src/pystarmax/seasonal_exact_diffuse_simulation_smoothing.py
+          tests/test_seasonal_exact_diffuse_public_api.py
+          tests/test_seasonal_exact_diffuse_simulation_smoothing.py
+      - run: rm .github/workflows/black-format-seasonal-simulation.yml
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pystarmax/seasonal_exact_diffuse_simulation_smoothing.py tests/test_seasonal_exact_diffuse_public_api.py tests/test_seasonal_exact_diffuse_simulation_smoothing.py .github/workflows/black-format-seasonal-simulation.yml
+          git commit -m "Apply Black formatting to seasonal simulation smoother"
+          git push origin HEAD:agent/seasonal-exact-diffuse-simulation-smoothing
