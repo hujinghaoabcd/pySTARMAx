@@ -191,8 +191,18 @@ Authoritative implementation CI #660, run ID `30964497447`, passed on exact head
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11–3.14.
 
-A synchronized documentation CI and a final record gate remain required on the
-exact merge candidate.
+Synchronized documentation CI #669, run ID `30964956888`, passed on exact head
+`d93f198f8abd0d08ea438b8c548b7349a8aa4b54`:
+
+- 266 tests passed with 87.40% total branch coverage;
+- the new module retained 89.7% branch coverage;
+- the complete method guide and example passed Black, lint, typing, and strict
+  MkDocs;
+- all package-build and Python 3.11–3.14 platform jobs passed.
+
+The validation records in this handoff and `PROJECT_STATUS.md` are the only
+changes after CI #669. A final record gate is required on the resulting exact
+merge candidate.
 
 ## Deliberate boundary
 
