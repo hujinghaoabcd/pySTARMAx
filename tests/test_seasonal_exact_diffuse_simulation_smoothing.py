@@ -106,8 +106,7 @@ def test_period_two_bridge_paths_match_closed_form_and_difference_identity() -> 
     )
     np.testing.assert_allclose(
         result.transformed_observation_paths[:, 2:, 0],
-        result.observation_paths[:, 2:, 0]
-        - result.observation_paths[:, :-2, 0],
+        result.observation_paths[:, 2:, 0] - result.observation_paths[:, :-2, 0],
         atol=2e-12,
     )
     np.testing.assert_allclose(

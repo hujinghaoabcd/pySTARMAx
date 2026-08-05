@@ -45,10 +45,7 @@ def test_seasonal_exact_diffuse_public_exports() -> None:
     assert pystarmax.__version__ == "0.0.31"
     assert SeasonalExactDiffuseKalmanSTARIMA is ModuleEstimator
     assert SeasonalExactDiffuseKalmanSTARIMAResult is ModuleResult
-    assert (
-        SeasonalExactDiffuseSimulationSmootherResult
-        is ModuleSimulationResult
-    )
+    assert SeasonalExactDiffuseSimulationSmootherResult is ModuleSimulationResult
     assert infer_seasonal_exact_diffuse_kalman_starima is ModuleInference
     assert seasonal_exact_diffuse_simulation_smoother is ModuleSimulationSmoother
     assert seasonal_exact_diffuse_forecast_interval is ModuleInterval
@@ -83,10 +80,7 @@ def test_seasonal_exact_diffuse_public_exports() -> None:
     )
     assert "SeasonalExactDiffuseKalmanSTARIMA" in pystarmax.__all__
     assert "SeasonalExactDiffuseKalmanSTARIMAResult" in pystarmax.__all__
-    assert (
-        "SeasonalExactDiffuseSimulationSmootherResult"
-        in pystarmax.__all__
-    )
+    assert "SeasonalExactDiffuseSimulationSmootherResult" in pystarmax.__all__
     assert "infer_seasonal_exact_diffuse_kalman_starima" in pystarmax.__all__
     assert "seasonal_exact_diffuse_simulation_smoother" in pystarmax.__all__
     assert "simulate_seasonal_exact_diffuse_forecast_paths" in pystarmax.__all__

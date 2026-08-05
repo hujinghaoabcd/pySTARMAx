@@ -39,8 +39,7 @@ def _validate_inputs(
         raise TypeError("filter_result must be an ExactDiffuseFilterResult")
     if not isinstance(integrated_state_space, ExactSeasonalIntegratedStateSpace):
         raise TypeError(
-            "integrated_state_space must be an "
-            "ExactSeasonalIntegratedStateSpace"
+            "integrated_state_space must be an " "ExactSeasonalIntegratedStateSpace"
         )
     if integrated_state_space.model is not filter_result.model:
         raise ValueError(
@@ -74,16 +73,14 @@ class SeasonalExactDiffuseSimulationSmootherResult:
             ExactDiffuseSimulationSmootherResult,
         ):
             raise TypeError(
-                "simulation_result must be an "
-                "ExactDiffuseSimulationSmootherResult"
+                "simulation_result must be an " "ExactDiffuseSimulationSmootherResult"
             )
         if not isinstance(
             self.integrated_state_space,
             ExactSeasonalIntegratedStateSpace,
         ):
             raise TypeError(
-                "integrated_state_space must be an "
-                "ExactSeasonalIntegratedStateSpace"
+                "integrated_state_space must be an " "ExactSeasonalIntegratedStateSpace"
             )
         if (
             self.integrated_state_space.model
@@ -133,9 +130,7 @@ class SeasonalExactDiffuseSimulationSmootherResult:
 
         offset = _transformed_offset(self.integrated_state_space)
         expected_state_paths = base.state_paths[..., offset:]
-        expected_observation_paths = (
-            expected_state_paths @ transformed_model.design.T
-        )
+        expected_observation_paths = expected_state_paths @ transformed_model.design.T
         expected_mean = base.posterior_state_mean[:, offset:]
         expected_covariance = base.posterior_state_covariance[
             :,
@@ -173,9 +168,7 @@ class SeasonalExactDiffuseSimulationSmootherResult:
         )
         for name, actual, expected in checks:
             if not np.allclose(actual, expected, rtol=0.0, atol=atol):
-                raise ValueError(
-                    f"{name} must equal the transformed-state projection"
-                )
+                raise ValueError(f"{name} must equal the transformed-state projection")
 
     @property
     def n_simulations(self) -> int:
