@@ -263,8 +263,7 @@ def test_fitted_facades_reuse_training_filter_and_refilter_new_data() -> None:
     seasonal_innovations = rng.normal(scale=0.25, size=70)
     for time_index in range(2, 70):
         seasonal_data[time_index, 0] = (
-            seasonal_data[time_index - 2, 0]
-            + seasonal_innovations[time_index]
+            seasonal_data[time_index - 2, 0] + seasonal_innovations[time_index]
         )
     seasonal = SeasonalExactDiffuseKalmanSTARIMA(
         ar_order=0,
