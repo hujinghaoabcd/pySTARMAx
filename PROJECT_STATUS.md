@@ -198,8 +198,14 @@ Authoritative implementation CI #660, run ID `30964497447`, passed on exact head
 - source distribution, wheel, and Twine checks passed;
 - Ubuntu, Windows, and macOS passed on Python 3.11–3.14.
 
-A synchronized documentation and merge-gate CI remains required on the final PR
-head.
+Synchronized documentation CI #669, run ID `30964956888`, passed on exact head
+`d93f198f8abd0d08ea438b8c548b7349a8aa4b54` with the same 266-test and
+87.40%-coverage results. The method guide, example, README, documentation home,
+MkDocs navigation, roadmap, inventory, project status, and Step 32 handoff all
+passed strict documentation and cross-platform gates.
+
+A final record-only merge gate remains required on the exact candidate produced
+by this validation-record update.
 
 ## Numerical and research safeguards
 
