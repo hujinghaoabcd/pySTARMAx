@@ -14,6 +14,10 @@ from pystarmax.exact_diffuse_disturbance_smoothing import (
     ExactDiffuseDisturbanceResult,
     exact_diffuse_disturbance_smoother,
 )
+from pystarmax.exact_diffuse_lag_one_covariance import (
+    ExactDiffuseLagOneCovarianceResult,
+    exact_diffuse_lag_one_covariance,
+)
 from pystarmax.exact_diffuse_smoothing import (
     ExactDiffuseSmootherResult,
     exact_diffuse_smoother,
@@ -58,6 +62,20 @@ class SeasonalExactDiffuseKalmanSTARIMA(_SeasonalExactDiffuseKalmanSTARIMA):
         """
         return exact_diffuse_smoother(
             self.filter(data),
+            tolerance=tolerance,
+        )
+
+    def smooth_lag_one_covariance(
+        self,
+        data: Any | None = None,
+        *,
+        rcond: float = 1e-10,
+        tolerance: float | None = None,
+    ) -> ExactDiffuseLagOneCovarianceResult:
+        """Return adjacent-time covariance for the complete seasonal state."""
+        return exact_diffuse_lag_one_covariance(
+            self.filter(data),
+            rcond=rcond,
             tolerance=tolerance,
         )
 
@@ -190,6 +208,7 @@ class SeasonalExactDiffuseKalmanSTARIMA(_SeasonalExactDiffuseKalmanSTARIMA):
 
 __all__ = [
     "ExactDiffuseDisturbanceResult",
+    "ExactDiffuseLagOneCovarianceResult",
     "ExactDiffuseSmootherResult",
     "ForecastInterval",
     "LikelihoodInferenceResult",

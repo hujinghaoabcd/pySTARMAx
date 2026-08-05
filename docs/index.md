@@ -3,14 +3,10 @@
 pySTARMAx is a typed Python toolkit for classical and extended space-time
 autoregressive moving-average modelling.
 
-Version 0.0.31 supports stationary, integrated, multiplicative seasonal, and
-original-level exact-diffuse workflows. The seasonal exact-diffuse fitted model
-now includes estimation, smoothing, likelihood inference, forecast paths and
-intervals, and complete conditional simulation smoothing for
-
-\[
-(1-B)^d(1-B^s)^D y_t.
-\]
+Version 0.0.32 supports stationary, integrated, multiplicative seasonal, and
+original-level exact-diffuse workflows. Ordinary and seasonal exact-diffuse
+models now include estimation, smoothing, adjacent-time covariance, likelihood
+inference, forecasting, and conditional path simulation.
 
 ## Core conventions
 
@@ -52,14 +48,27 @@ See [Maximum likelihood](maximum_likelihood.md),
 
 Use `ExactDiffuseKalmanSTARIMA` when integration directions must be represented
 on the original scale with exact diffuse initialization. Its fitted facade
-includes smoothing, disturbance smoothing, likelihood inference, forecast
-intervals, and conditional simulation smoothing.
+includes:
+
+```python
+model.smooth()
+model.smooth_lag_one_covariance()
+model.smooth_innovation_disturbances()
+model.likelihood_inference()
+model.simulate_smoothing_paths(
+    n_simulations=1000,
+    random_state=7,
+)
+model.predict_interval(steps=12, n_simulations=5000, random_state=7)
+```
 
 See:
 
 - [Exact diffuse filtering](exact_diffuse.md)
 - [Exact diffuse STARIMA MLE](exact_diffuse_mle.md)
 - [Exact diffuse smoothing](exact_diffuse_smoothing.md)
+- [Exact diffuse disturbance smoothing](exact_diffuse_disturbance_smoothing.md)
+- [Exact diffuse lag-one covariance](exact_diffuse_lag_one_covariance.md)
 - [Exact diffuse likelihood inference](exact_diffuse_inference.md)
 - [Exact diffuse forecast intervals](exact_diffuse_forecast_intervals.md)
 - [Exact diffuse simulation smoothing](exact_diffuse_simulation_smoothing.md)
@@ -86,10 +95,12 @@ original-level exact-diffuse augmentation, and filters the original
 observations. Expanded cross lags remain deterministic and do not add free
 parameters.
 
-Posterior and uncertainty operations are:
+The seasonal fitted facade exposes the same posterior operations on the complete
+augmented state:
 
 ```python
 model.smooth()
+model.smooth_lag_one_covariance()
 model.smooth_innovation_disturbances()
 model.likelihood_inference()
 model.simulate_smoothing_paths(
@@ -104,12 +115,6 @@ model.predict_differenced_interval(
 )
 ```
 
-The 0.0.31 simulation-smoothing route conditions the complete seasonal
-augmented state on every observed original-level cell. Initial diffuse
-coordinates are eliminated analytically and the remaining proper Gaussian
-sources are sampled. The transformed-state paths are projections from the same
-complete draws. A nonzero final diffuse rank is rejected explicitly.
-
 See:
 
 - [Seasonal exact diffuse integration](exact_seasonal_integrated.md)
@@ -118,6 +123,35 @@ See:
 - [Seasonal exact diffuse inference](seasonal_exact_diffuse_inference.md)
 - [Seasonal exact diffuse forecasting](seasonal_exact_diffuse_forecasting.md)
 - [Seasonal exact diffuse simulation smoothing](seasonal_exact_diffuse_simulation_smoothing.md)
+
+## Exact adjacent-time covariance
+
+Version 0.0.32 returns
+
+\[
+\operatorname{Cov}(\alpha_t,\alpha_{t+1}\mid Y_{1:T})
+\]
+
+for genuine diffuse phases. The dense exact construction analytically eliminates
+identified diffuse coordinates and conditions the remaining proper Gaussian
+source vector. It does not use a large finite diffuse variance or a Monte Carlo
+covariance estimate.
+
+The output uses the ordinary RTS orientation
+
+```python
+result.lag_one_covariance[t]
+```
+
+for left state `alpha_t` and right state `alpha_(t+1)`. State-disturbance
+covariance reconstructed from these moments is checked against the independent
+exact information-form disturbance smoother.
+
+The same routine covers ordinary states and complete seasonal augmented states.
+It is a transparent moderate-sample reference for the future memory-linear
+exact diffuse `L2` recursion.
+
+See [Exact diffuse lag-one covariance](exact_diffuse_lag_one_covariance.md).
 
 ## Diagnostics and uncertainty
 
@@ -129,7 +163,7 @@ The package includes:
 - observed-information and natural innovation-covariance inference;
 - Gaussian, bootstrap, ordinary exact-diffuse, and seasonal exact-diffuse
   interval workflows;
-- ordinary and seasonal exact-diffuse conditional path simulation;
+- exact-diffuse conditional path simulation and adjacent-time covariance;
 - rolling-origin calibration evaluation.
 
 See [Diagnostics](diagnostics.md), [Likelihood inference](likelihood_inference.md),
@@ -147,12 +181,12 @@ parameters. Parameter uncertainty remains a separate future contract.
 
 ## Validation status
 
-Implementation CI #644 passed 259 tests with 87.31% total branch coverage. The
-new seasonal simulation-smoothing module has 88.8% branch coverage. Independent
-references include seasonal-random-walk bridges, pathwise differencing,
-observed-cell consistency, partial-location masks, ordinary exact-diffuse
-reduction, fresh new-data initialization, diffuse-rank rejection, and immutable
-outputs.
+Authoritative implementation CI #660 passed 266 tests with 87.40% total branch
+coverage. The new exact-diffuse lag-one covariance module has 89.7% branch
+coverage. Independent references include a diffuse local-level closed form,
+exact ordinary RTS reduction, non-symmetric transition orientation,
+conditional-path Monte Carlo cross-covariance, seasonal augmented states, and
+state-disturbance reconstruction.
 
 CI covers Ubuntu, Windows, and macOS on Python 3.11–3.14, strict MkDocs,
 formatting, linting, typing, reference regeneration, and package builds.
