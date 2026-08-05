@@ -3,10 +3,10 @@
 pySTARMAx is a typed Python toolkit for classical and extended space-time
 autoregressive moving-average modelling.
 
-Version 0.0.30 supports stationary, integrated, multiplicative seasonal, and
+Version 0.0.31 supports stationary, integrated, multiplicative seasonal, and
 original-level exact-diffuse workflows. The seasonal exact-diffuse fitted model
-now includes estimation, state and disturbance smoothing, likelihood inference,
-and original-level plus transformed-scale forecast paths and intervals for
+now includes estimation, smoothing, likelihood inference, forecast paths and
+intervals, and complete conditional simulation smoothing for
 
 \[
 (1-B)^d(1-B^s)^D y_t.
@@ -52,8 +52,8 @@ See [Maximum likelihood](maximum_likelihood.md),
 
 Use `ExactDiffuseKalmanSTARIMA` when integration directions must be represented
 on the original scale with exact diffuse initialization. Its fitted facade
-includes smoothing, primitive disturbance smoothing, likelihood inference,
-forecast intervals, and conditional simulation smoothing.
+includes smoothing, disturbance smoothing, likelihood inference, forecast
+intervals, and conditional simulation smoothing.
 
 See:
 
@@ -82,8 +82,9 @@ result = model.fit(data, weights)
 
 At each optimizer candidate the estimator expands the ordered ordinary and
 seasonal factor polynomials, builds the transformed state, constructs the
-original-level exact-diffuse augmentation, and filters the original observations.
-Expanded cross lags remain deterministic and do not add free parameters.
+original-level exact-diffuse augmentation, and filters the original
+observations. Expanded cross lags remain deterministic and do not add free
+parameters.
 
 Posterior and uncertainty operations are:
 
@@ -91,6 +92,10 @@ Posterior and uncertainty operations are:
 model.smooth()
 model.smooth_innovation_disturbances()
 model.likelihood_inference()
+model.simulate_smoothing_paths(
+    n_simulations=1000,
+    random_state=7,
+)
 model.predict_interval(steps=12, n_simulations=5000, random_state=7)
 model.predict_differenced_interval(
     steps=12,
@@ -99,10 +104,11 @@ model.predict_differenced_interval(
 )
 ```
 
-The 0.0.30 forecasting route samples the complete augmented state from the
-proper terminal posterior and propagates it with future fitted innovations.
-Original levels are restored independently for every path before empirical
-quantiles are formed. A nonzero terminal diffuse rank is rejected explicitly.
+The 0.0.31 simulation-smoothing route conditions the complete seasonal
+augmented state on every observed original-level cell. Initial diffuse
+coordinates are eliminated analytically and the remaining proper Gaussian
+sources are sampled. The transformed-state paths are projections from the same
+complete draws. A nonzero final diffuse rank is rejected explicitly.
 
 See:
 
@@ -111,6 +117,7 @@ See:
 - [Seasonal exact diffuse smoothing](seasonal_exact_diffuse_smoothing.md)
 - [Seasonal exact diffuse inference](seasonal_exact_diffuse_inference.md)
 - [Seasonal exact diffuse forecasting](seasonal_exact_diffuse_forecasting.md)
+- [Seasonal exact diffuse simulation smoothing](seasonal_exact_diffuse_simulation_smoothing.md)
 
 ## Diagnostics and uncertainty
 
@@ -122,6 +129,7 @@ The package includes:
 - observed-information and natural innovation-covariance inference;
 - Gaussian, bootstrap, ordinary exact-diffuse, and seasonal exact-diffuse
   interval workflows;
+- ordinary and seasonal exact-diffuse conditional path simulation;
 - rolling-origin calibration evaluation.
 
 See [Diagnostics](diagnostics.md), [Likelihood inference](likelihood_inference.md),
@@ -134,16 +142,17 @@ Do not combine likelihoods, AIC, BIC, Hessians, or covariance estimates from
 different likelihood conventions. Conditional estimators remove or condition on
 differencing history; exact-diffuse estimators evaluate original observations.
 
-The 0.0.30 intervals include terminal state uncertainty and future fitted
-innovation uncertainty, but not fitted-parameter uncertainty.
+Forecast intervals and conditional paths currently condition on fitted
+parameters. Parameter uncertainty remains a separate future contract.
 
 ## Validation status
 
-The 0.0.30 implementation CI passed 252 tests with 87.28% total branch coverage.
-The new forecasting module is fully covered. Independent references include
-pathwise seasonal inverse differencing, seasonal-random-walk variance growth,
-empirical quantile identity, ordinary exact-diffuse reduction, fitted-facade
-consistency, terminal diffuse-rank rejection, and immutable outputs.
+Implementation CI #644 passed 259 tests with 87.31% total branch coverage. The
+new seasonal simulation-smoothing module has 88.8% branch coverage. Independent
+references include seasonal-random-walk bridges, pathwise differencing,
+observed-cell consistency, partial-location masks, ordinary exact-diffuse
+reduction, fresh new-data initialization, diffuse-rank rejection, and immutable
+outputs.
 
 CI covers Ubuntu, Windows, and macOS on Python 3.11–3.14, strict MkDocs,
 formatting, linting, typing, reference regeneration, and package builds.

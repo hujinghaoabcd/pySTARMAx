@@ -13,11 +13,10 @@ The package keeps its numerical contracts explicit:
 - public numerical result arrays are immutable;
 - conditional and original-level exact-diffuse likelihoods remain separate.
 
-> **Status — 0.0.30:** stationary, ordinary-integrated, multiplicative seasonal,
+> **Status — 0.0.31:** stationary, ordinary-integrated, multiplicative seasonal,
 > and original-level exact-diffuse STARMA/STARIMA workflows are available.
-> Version 0.0.30 adds seasonal exact-diffuse original-level and transformed-scale
-> forecast paths and intervals with pathwise ordinary-seasonal level restoration
-> and explicit terminal diffuse-rank protection.
+> Version 0.0.31 adds seasonal exact-diffuse conditional simulation smoothing
+> for complete augmented paths and their transformed-state projections.
 
 ## Installation
 
@@ -166,8 +165,7 @@ Expanded cross-lag matrices are deterministic functions of the factor
 parameters. They are not independent optimization parameters and do not add
 AIC/BIC degrees of freedom.
 
-The fitted model exposes point forecasting, smoothing, disturbance smoothing,
-and likelihood inference:
+The fitted model exposes:
 
 ```python
 seasonal_exact.predict_differenced(steps=12)
@@ -175,11 +173,69 @@ seasonal_exact.predict(steps=12)
 seasonal_exact.smooth()
 seasonal_exact.smooth_innovation_disturbances()
 seasonal_exact.likelihood_inference()
+seasonal_exact.simulate_smoothing_paths(
+    n_simulations=1000,
+    random_state=42,
+)
+```
+
+## Seasonal exact-diffuse conditional simulation smoothing
+
+Version 0.0.31 conditions complete seasonal augmented-state paths on the
+original observations:
+
+```python
+paths = seasonal_exact.simulate_smoothing_paths(
+    n_simulations=2000,
+    random_state=42,
+)
+
+paths.state_paths
+paths.observation_paths
+paths.transformed_state_paths
+paths.transformed_observation_paths
+```
+
+The method reuses the generic exact-diffuse source-conditioning algorithm. It
+represents the full path as a linear function of initial diffuse coordinates,
+proper finite initial coordinates, and future primitive innovations. Observed
+cells are imposed as exact linear constraints; diffuse coordinates are
+eliminated analytically before the proper Gaussian source vector is sampled.
+
+The transformed state starts at block offset
+
+\[
+(d+Ds)n_{\mathrm{locations}}.
+\]
+
+`transformed_state_paths` and `transformed_observation_paths` are direct
+projections of the same complete conditional draws. No second seasonal smoother
+and no finite large-variance approximation are introduced.
+
+Every finite original observation is reproduced for every simulation up to
+numerical tolerance. Missing cells are sampled jointly. The method requires
+
+```python
+paths.filter_result.final_diffuse_rank == 0
+```
+
+because unresolved diffuse directions do not define a proper conditional
+Gaussian distribution.
+
+Passing new data starts a fresh exact-diffuse initialization under the fitted
+parameters:
+
+```python
+new_paths = seasonal_exact.simulate_smoothing_paths(
+    new_level_series,
+    n_simulations=1000,
+    random_state=42,
+)
 ```
 
 ## Seasonal exact-diffuse forecast paths and intervals
 
-Version 0.0.30 adds fixed-parameter paths and intervals on both scales:
+Version 0.0.30 added fixed-parameter paths and intervals on both scales:
 
 ```python
 original_paths = seasonal_exact.simulate_forecast_paths(
@@ -192,7 +248,6 @@ transformed_paths = seasonal_exact.simulate_differenced_forecast_paths(
     n_simulations=5000,
     random_state=42,
 )
-
 original_interval = seasonal_exact.predict_interval(
     steps=12,
     level=0.95,
@@ -208,22 +263,10 @@ transformed_interval = seasonal_exact.predict_differenced_interval(
 ```
 
 The complete augmented seasonal state is simulated from the terminal filtered
-posterior. Each replication restores ordinary and seasonal levels through the
-state transition before original-level quantiles are computed. The code does
-not transform marginal quantiles after the fact.
-
-Forecasting requires
-
-```python
-result.filter_result.final_diffuse_rank == 0
-```
-
-because an unresolved diffuse direction does not define a proper finite
-terminal Gaussian posterior. Such cases raise an error rather than substituting
-a large finite covariance.
-
-The intervals include terminal state uncertainty and future fitted innovation
-uncertainty. They do not yet include fitted-parameter uncertainty.
+posterior. Each replication restores ordinary and seasonal levels before
+original-level quantiles are computed. Forecasting also requires a resolved
+terminal diffuse rank. Intervals include terminal state and future fitted
+innovation uncertainty, but not fitted-parameter uncertainty.
 
 ## Multiplicative seasonal convention
 
@@ -234,8 +277,8 @@ Seasonal factors multiply ordinary factors on the left. For the AR side,
 \]
 
 cross terms have ordered form `-S_j @ A_i`. Moving-average cross terms have
-positive sign. Equal temporal lags are aggregated without projecting the
-result back onto the supplied spatial-weight basis.
+positive sign. Equal temporal lags are aggregated without projecting the result
+back onto the supplied spatial-weight basis.
 
 ## Likelihood scope
 
@@ -261,27 +304,28 @@ The package includes:
 - natural innovation-covariance delta-method inference;
 - Gaussian, bootstrap, ordinary exact-diffuse, and seasonal exact-diffuse
   interval workflows;
+- ordinary and seasonal exact-diffuse conditional path simulation;
 - rolling-origin evaluation and interval scoring.
 
 ## Validation
 
-The 0.0.30 suite independently checks:
+The 0.0.31 suite independently checks:
 
-- pathwise seasonal inverse-differencing identities;
-- period-two seasonal-random-walk forecast means and variance growth;
-- transformed-scale constant innovation variance;
-- exact empirical-quantile agreement between path and interval APIs;
-- exact reduction to ordinary exact-diffuse forecasting when seasonal orders
-  are zero;
-- fitted facade consistency with deterministic point forecasts;
-- invalid arguments, mismatched state specifications, and unresolved terminal
-  diffuse rank;
-- immutable interval outputs and public exports.
+- period-two seasonal-random-walk conditional bridge means and variances;
+- exact reproduction of every observed original-level cell;
+- pathwise seasonal-difference identities;
+- partially observed multivariate locations;
+- exact reduction to the ordinary exact-diffuse simulation smoother when
+  seasonal integration is zero;
+- fitted training-data reuse and new-data reinitialization;
+- unresolved diffuse-rank and mismatched-state rejection;
+- immutable complete and transformed results;
+- public exports and version metadata.
 
-The synchronized CI record is maintained in `PROJECT_STATUS.md` and the Step 30
-handoff. CI covers Ubuntu, Windows, and macOS on Python 3.11–3.14, formatting,
-linting, typing, strict MkDocs, reference regeneration, package builds, and
-Twine checks.
+Implementation CI #644 passed 259 tests with 87.31% total branch coverage. The
+new seasonal simulation-smoothing module has 88.8% branch coverage. CI covers
+Ubuntu, Windows, and macOS on Python 3.11–3.14, formatting, linting, typing,
+strict MkDocs, reference regeneration, package builds, and Twine checks.
 
 ## Documentation
 
@@ -292,7 +336,8 @@ python -m mkdocs serve
 ```
 
 Dedicated guides cover filtering, estimation, smoothing, inference,
-forecasting, diagnostics, evaluation, and development handoffs.
+forecasting, simulation smoothing, diagnostics, evaluation, and development
+handoffs.
 
 ## License and citation
 

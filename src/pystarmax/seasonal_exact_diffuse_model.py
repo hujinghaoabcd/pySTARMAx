@@ -35,6 +35,10 @@ from pystarmax.seasonal_exact_diffuse_mle import (
 from pystarmax.seasonal_exact_diffuse_mle import (
     SeasonalExactDiffuseKalmanSTARIMAResult,
 )
+from pystarmax.seasonal_exact_diffuse_simulation_smoothing import (
+    SeasonalExactDiffuseSimulationSmootherResult,
+    seasonal_exact_diffuse_simulation_smoother,
+)
 
 
 class SeasonalExactDiffuseKalmanSTARIMA(_SeasonalExactDiffuseKalmanSTARIMA):
@@ -54,6 +58,31 @@ class SeasonalExactDiffuseKalmanSTARIMA(_SeasonalExactDiffuseKalmanSTARIMA):
         """
         return exact_diffuse_smoother(
             self.filter(data),
+            tolerance=tolerance,
+        )
+
+    def simulate_smoothing_paths(
+        self,
+        data: Any | None = None,
+        *,
+        n_simulations: int = 1000,
+        random_state: int | np.random.Generator | None = None,
+        rcond: float = 1e-10,
+        tolerance: float | None = None,
+    ) -> SeasonalExactDiffuseSimulationSmootherResult:
+        """Draw conditional complete and transformed seasonal state paths.
+
+        Passing ``data`` starts a fresh exact diffuse filter under the fitted
+        seasonal parameters. Every observed original-level cell is conditioned
+        exactly; the transformed paths are projections of those same draws.
+        """
+        _result, integrated, _filtered = self._require_fit()
+        return seasonal_exact_diffuse_simulation_smoother(
+            self.filter(data),
+            integrated,
+            n_simulations=n_simulations,
+            random_state=random_state,
+            rcond=rcond,
             tolerance=tolerance,
         )
 
@@ -166,4 +195,5 @@ __all__ = [
     "LikelihoodInferenceResult",
     "SeasonalExactDiffuseKalmanSTARIMA",
     "SeasonalExactDiffuseKalmanSTARIMAResult",
+    "SeasonalExactDiffuseSimulationSmootherResult",
 ]

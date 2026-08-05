@@ -2,42 +2,40 @@
 
 ## Snapshot
 
-This inventory is based on development version 0.0.30 and PR #30.
+This inventory is based on development version 0.0.31 and PR #31.
 
-Step 30 completes fixed-parameter seasonal exact-diffuse forecast paths and
-central simulation intervals on original and transformed scales. After this
-merge, the plan contains:
+Step 31 completes the planned seasonal exact-diffuse posterior operations by
+adding complete conditional simulation smoothing. After this merge, the plan
+contains:
 
-- **6 major technical workstreams**;
+- **5 major technical workstreams**;
 - **6 numbered core milestones**;
-- approximately **11–15 independently reviewable projects** after ecosystem
+- approximately **10–14 independently reviewable projects** after ecosystem
   work is split.
 
 This is a delivery inventory, not a claim that every research extension already
 has a production-ready derivation.
 
-## Workstream 1: remaining seasonal posterior operation
+## Completed seasonal posterior contract
 
-Status: next implementation candidate.
+The seasonal exact-diffuse workflow now includes:
 
-Add seasonal exact-diffuse conditional simulation smoothing after the 0.0.30
-path and interval contracts are stable.
+- fixed-interval state and observation smoothing;
+- primitive innovation and state-disturbance smoothing;
+- observed-information and natural covariance inference;
+- original-level and transformed forecast paths and intervals;
+- complete conditional simulation smoothing;
+- transformed-state projections from the same conditional draws;
+- explicit rejection of unresolved diffuse directions;
+- exact reduction to ordinary posterior operations when seasonal integration is
+  zero.
 
-The implementation should:
+Future work must reuse this state layout and must not introduce a competing
+seasonal exact-diffuse convention.
 
-- reuse the 0.0.26 augmented state without creating another seasonal layout;
-- condition complete latent paths on original observations and missing masks;
-- retain deterministic observation consistency where posterior variance is zero;
-- reject unresolved terminal or smoothing diffuse directions when a proper draw
-  cannot be defined;
-- reduce exactly to the ordinary exact-diffuse simulation smoother when seasonal
-  orders are zero;
-- keep dense reference behavior explicit before introducing chunking or sparse
-  execution.
+## Workstream 1: diffuse cross-time covariance theory
 
-## Workstream 2: diffuse cross-time covariance theory
-
-Status: method research required.
+Status: next theory-and-validation project.
 
 15. Derive and independently validate the diffuse `L2` recursion required for
     lag-one smoothed state covariance.
@@ -45,9 +43,12 @@ Status: method research required.
     innovation covariance.
 
 This workstream must not substitute a finite large covariance while continuing
-to call the method exact diffuse.
+to call the method exact diffuse. The derivation requires analytic recursions,
+small closed-form bridge references, ordinary finite-phase reduction, missing
+observations, and numerical comparison against conditional source simulations
+where identifiable.
 
-## Workstream 3: stronger likelihood and parameter uncertainty
+## Workstream 2: stronger likelihood and parameter uncertainty
 
 Status: not started.
 
@@ -59,7 +60,7 @@ Status: not started.
 Analytic derivatives may be added only with independent checks against the
 existing finite-difference objectives.
 
-## Workstream 4: scalable numerical execution
+## Workstream 3: scalable numerical execution
 
 Status: not started.
 
@@ -69,10 +70,11 @@ Status: not started.
     dense-reference equivalence.
 
 For forecasting, chunked empirical quantiles must define their approximation or
-storage contract explicitly. The current dense path arrays remain transparent
-moderate-sample references rather than large-data performance claims.
+storage contract explicitly. For simulation smoothing, sparse conditioning must
+preserve observed-cell constraints and posterior marginal checks. Current dense
+implementations remain transparent moderate-sample references.
 
-## Workstream 5: model specification automation
+## Workstream 4: model specification automation
 
 Status: split into independent future pull requests.
 
@@ -82,7 +84,7 @@ Status: split into independent future pull requests.
 - model-selection reporting that never mixes conditional and exact-diffuse
   likelihood conventions.
 
-## Workstream 6: exogenous inputs and ecosystem integration
+## Workstream 5: exogenous inputs and ecosystem integration
 
 Status: split into independent future pull requests.
 
@@ -94,9 +96,11 @@ Status: split into independent future pull requests.
 
 ## Recommended sequence
 
-1. Merge PR #30 after final synchronized CI.
-2. Add seasonal exact-diffuse conditional simulation smoothing.
-3. Run the diffuse `L2` derivation as a separate theory-and-validation project.
+1. Merge PR #31 after final synchronized CI.
+2. Run the diffuse `L2` lag-one covariance derivation as an isolated
+   theory-and-validation project.
+3. Add cross-time disturbance covariance only after the `L2` recursion is
+   independently verified.
 4. Add robust, profile, and parameter-aware uncertainty after posterior
    contracts are stable.
 5. Introduce sparse and chunked execution before broad GIS adapters or automatic
