@@ -18,6 +18,10 @@ from pystarmax.exact_diffuse_forecasting import (
     exact_diffuse_forecast_interval,
 )
 from pystarmax.exact_diffuse_inference import infer_exact_diffuse_kalman_starima
+from pystarmax.exact_diffuse_lag_one_covariance import (
+    ExactDiffuseLagOneCovarianceResult,
+    exact_diffuse_lag_one_covariance,
+)
 from pystarmax.exact_diffuse_mle import (
     ExactDiffuseKalmanSTARIMA as _ExactDiffuseKalmanSTARIMA,
 )
@@ -48,6 +52,20 @@ class ExactDiffuseKalmanSTARIMA(_ExactDiffuseKalmanSTARIMA):
         """Smooth training or newly initialized original-level observations."""
         return exact_diffuse_smoother(
             self.filter(data),
+            tolerance=tolerance,
+        )
+
+    def smooth_lag_one_covariance(
+        self,
+        data: Any | None = None,
+        *,
+        rcond: float = 1e-10,
+        tolerance: float | None = None,
+    ) -> ExactDiffuseLagOneCovarianceResult:
+        """Return exact adjacent-time covariance for training or new data."""
+        return exact_diffuse_lag_one_covariance(
+            self.filter(data),
+            rcond=rcond,
             tolerance=tolerance,
         )
 
@@ -150,6 +168,7 @@ __all__ = [
     "ExactDiffuseDisturbanceResult",
     "ExactDiffuseKalmanSTARIMA",
     "ExactDiffuseKalmanSTARIMAResult",
+    "ExactDiffuseLagOneCovarianceResult",
     "ExactDiffuseSimulationSmootherResult",
     "ExactDiffuseSmootherResult",
     "ForecastInterval",
