@@ -2,51 +2,55 @@
 
 ## Snapshot
 
-This inventory is based on development version 0.0.31 and PR #31.
+This inventory is based on development version 0.0.32 and PR #32.
 
-Step 31 completes the planned seasonal exact-diffuse posterior operations by
-adding complete conditional simulation smoothing. After this merge, the plan
-contains:
+Step 32 adds an exact dense adjacent-time covariance oracle for genuine diffuse
+phases. After this merge, the plan contains:
 
 - **5 major technical workstreams**;
-- **6 numbered core milestones**;
-- approximately **10–14 independently reviewable projects** after ecosystem
-  work is split.
+- **6 numbered core milestones**, with the recursive part of milestone 15 still
+  outstanding;
+- approximately **9–13 independently reviewable projects** after ecosystem work
+  is split.
 
 This is a delivery inventory, not a claim that every research extension already
 has a production-ready derivation.
 
-## Completed seasonal posterior contract
+## Completed exact-diffuse posterior contract
 
-The seasonal exact-diffuse workflow now includes:
+The ordinary and seasonal exact-diffuse workflows now include:
 
 - fixed-interval state and observation smoothing;
 - primitive innovation and state-disturbance smoothing;
 - observed-information and natural covariance inference;
 - original-level and transformed forecast paths and intervals;
 - complete conditional simulation smoothing;
+- exact dense adjacent-time state and observation covariance;
 - transformed-state projections from the same conditional draws;
 - explicit rejection of unresolved diffuse directions;
-- exact reduction to ordinary posterior operations when seasonal integration is
-  zero.
+- exact reduction to ordinary posterior operations when diffuse or seasonal
+  integration components vanish.
 
-Future work must reuse this state layout and must not introduce a competing
-seasonal exact-diffuse convention.
+The 0.0.32 adjacent covariance is a dense moderate-sample exact reference. Future
+recursive or sparse implementations must agree with it and must reuse the same
+state layout and orientation.
 
-## Workstream 1: diffuse cross-time covariance theory
+## Workstream 1: recursive diffuse cross-time covariance theory
 
-Status: next theory-and-validation project.
+Status: dense oracle complete; recursive theory remains.
 
-15. Derive and independently validate the diffuse `L2` recursion required for
-    lag-one smoothed state covariance.
-16. Use that recursion to expose cross-time state-disturbance and primitive
-    innovation covariance.
+15. Derive and independently validate the memory-linear diffuse `L2` recursion
+    required for lag-one smoothed state covariance. The implementation must
+    reproduce the 0.0.32 dense oracle across genuine diffuse, zero-diffuse,
+    missing-data, non-symmetric-transition, ordinary, and seasonal cases.
+16. Use the validated recursion to expose arbitrary cross-time state covariance,
+    cross-time state-disturbance covariance, and primitive-innovation
+    covariance.
 
 This workstream must not substitute a finite large covariance while continuing
-to call the method exact diffuse. The derivation requires analytic recursions,
-small closed-form bridge references, ordinary finite-phase reduction, missing
-observations, and numerical comparison against conditional source simulations
-where identifiable.
+to call the method exact diffuse. It requires analytic recursions, closed-form
+bridge references, ordinary finite-phase reduction, and independent comparison
+against both dense source conditioning and conditional path simulation.
 
 ## Workstream 2: stronger likelihood and parameter uncertainty
 
@@ -70,9 +74,10 @@ Status: not started.
     dense-reference equivalence.
 
 For forecasting, chunked empirical quantiles must define their approximation or
-storage contract explicitly. For simulation smoothing, sparse conditioning must
-preserve observed-cell constraints and posterior marginal checks. Current dense
-implementations remain transparent moderate-sample references.
+storage contract explicitly. For simulation smoothing and adjacent covariance,
+sparse methods must preserve observed-cell constraints, covariance orientation,
+and agreement with dense references. Current dense implementations remain
+transparent moderate-sample oracles.
 
 ## Workstream 4: model specification automation
 
@@ -96,11 +101,11 @@ Status: split into independent future pull requests.
 
 ## Recommended sequence
 
-1. Merge PR #31 after final synchronized CI.
-2. Run the diffuse `L2` lag-one covariance derivation as an isolated
-   theory-and-validation project.
-3. Add cross-time disturbance covariance only after the `L2` recursion is
-   independently verified.
+1. Merge PR #32 after final synchronized CI.
+2. Derive the memory-linear diffuse `L2` recursion and compare it directly with
+   the 0.0.32 dense adjacent covariance oracle.
+3. Add arbitrary cross-time disturbance covariance only after recursive/dense
+   equivalence is established.
 4. Add robust, profile, and parameter-aware uncertainty after posterior
    contracts are stable.
 5. Introduce sparse and chunked execution before broad GIS adapters or automatic
